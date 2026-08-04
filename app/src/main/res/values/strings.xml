@@ -1,4 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">邮轮助手</string>
+
+    <!-- 引导页 -->
+    <string name="onboarding_title">添加航次</string>
+    <string name="onboarding_subtitle">填好上下船时间，自动生成时间轴</string>
+    <string name="ship_name_label">船名（可选）</string>
+    <string name="board_date_label">上船日期</string>
+    <string name="board_time_label">上船时间</string>
+    <string name="disembark_date_label">下船日期</string>
+    <string name="disembark_time_hint">下船时间固定为当天 07:00</string>
+    <string name="max_deck_label">最高层数</string>
+    <string name="generate_timeline">生成时间轴</string>
+    <string name="error_disembark_before_board">下船日期不能早于上船日期</string>
+
+    <!-- 时间轴 -->
+    <string name="day_index_format">第 %1$d/%2$d 天</string>
+    <string name="finalized_badge">已定稿</string>
+    <string name="unlock">解锁</string>
+    <string name="generate_plan">生成计划表</string>
+    <string name="now_marker">现在</string>
+    <string name="ongoing_label">进行中</string>
+    <string name="next_label">下一个</string>
+    <string name="hidden_before_format">上方还有 %1$d 件</string>
+    <string name="hidden_after_format">下方还有 %1$d 件</string>
+    <string name="show_full_day">看全天</string>
+    <string name="empty_day">这一天还没有安排，点右下角 + 添加</string>
+    <string name="add_event">添加事件</string>
+    <string name="edit_event">编辑事件</string>
+    <string name="move_to_lane_format">移到第 %1$d 栏</string>
+    <string name="delete">删除</string>
+    <string name="edit">编辑</string>
+    <string name="cancel">取消</string>
+    <string name="confirm">确认</string>
+    <string name="system_event_undeletable">上船/下船不能删除，只能改时间</string>
+
+    <!-- 事件弹窗 -->
+    <string name="select_category">选择事项</string>
+    <string name="manage_categories">编辑</string>
+    <string name="event_title_hint">事件内容</string>
+    <string name="location_label">地点</string>
+    <string name="deck_label">楼层</string>
+    <string name="place_name_hint">地点名（可选）</string>
+    <string name="no_location">不设地点</string>
+    <string name="start_time">开始时间</string>
+    <string name="end_time">结束时间</string>
+    <string name="recur_daily">每日同一时间循环</string>
+    <string name="recur_until_format">循环至 %1$s（下船日不含）</string>
+    <string name="error_end_before_start">结束时间必须晚于开始时间</string>
+    <string name="error_title_required">请填写事件内容</string>
+    <string name="error_no_category">请选择事项</string>
+    <string name="recur_scope_title">这是一个重复事件</string>
+    <string name="recur_scope_this_day">仅本日</string>
+    <string name="recur_scope_whole_group">所有重复项</string>
+
+    <!-- 类别弹窗 -->
+    <string name="category_sheet_title_add">添加图标</string>
+    <string name="category_sheet_title_edit">编辑图标</string>
+    <string name="category_name_label">名称</string>
+    <string name="category_name_hint">输入名称</string>
+    <string name="sub_category">二级分类</string>
+    <string name="parent_category_label">上级分类</string>
+    <string name="archive">归档</string>
+    <string name="timeline_theme_color">时间轴主题色</string>
+    <string name="select_icon">选择图标</string>
+    <string name="save_changes">保存修改</string>
+    <string name="builtin_undeletable">内置事项不能删除</string>
+    <string name="delete_category_warning_format">有 %1$d 个事件在用它，删除后会移到\"琐事\"</string>
+
+    <!-- 定稿 -->
+    <string name="conflict_dialog_title">发现时间冲突</string>
+    <string name="conflict_dialog_none">没有冲突，可以生成计划表</string>
+    <string name="conflict_item_format">%1$s %2$s ⇄ %3$s %4$s</string>
+    <string name="go_fix">去修改</string>
+    <string name="ignore_and_finalize">忽略冲突继续生成</string>
+
+    <!-- 显示范围 -->
+    <string name="display_range_title">显示时间范围</string>
+    <string name="range_from">起</string>
+    <string name="range_to">止</string>
+    <string name="hour_height_label">每小时高度</string>
+    <string name="collapse_empty_gaps">自动隐藏无事件的空时段</string>
+    <string name="error_range_too_short">显示范围至少要 2 小时</string>
+
+    <!-- 设置 -->
+    <string name="settings">设置</string>
+    <string name="reminder_section">提醒</string>
+    <string name="reminder_enabled">开启提醒</string>
+    <string name="reminder_lead_time">提前提醒</string>
+    <string name="minutes_format">%1$d 分钟</string>
+    <string name="voyage_section">航次</string>
+    <string name="edit_voyage">修改航次</string>
+    <string name="reset_voyage">重建航次</string>
+    <string name="reset_voyage_warning">会清空所有事件和计划，无法恢复。确定吗？</string>
+    <string name="category_section">事项管理</string>
+    <string name="permission_notification_rationale">需要通知权限才能在事件开始前提醒你</string>
+    <string name="exact_alarm_unavailable">系统未授予精确闹钟权限，提醒可能会延迟几分钟</string>
+
+    <!-- 通知 -->
+    <string name="notification_channel_name">行程提醒</string>
+    <string name="notification_channel_desc">事件开始前提醒</string>
+    <string name="notification_title_format">%1$s · %2$s</string>
 </resources>
