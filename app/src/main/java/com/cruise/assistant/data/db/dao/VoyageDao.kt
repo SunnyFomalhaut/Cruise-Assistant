@@ -25,6 +25,9 @@ interface VoyageDao {
     @Query("SELECT * FROM day_plan ORDER BY date")
     fun observeDayPlans(): Flow<List<DayPlanEntity>>
 
+    @Query("SELECT * FROM day_plan ORDER BY date")
+    suspend fun observeDayPlansOnce(): List<DayPlanEntity>
+
     @Query("SELECT * FROM day_plan WHERE date = :date")
     fun observeDayPlan(date: LocalDate): Flow<DayPlanEntity?>
 
