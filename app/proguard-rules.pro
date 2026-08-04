@@ -1,0 +1,1 @@
+-keep class com.cruise.assistant.data.db.entity.** { *; }
