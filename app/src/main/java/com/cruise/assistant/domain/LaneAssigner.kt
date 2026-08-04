@@ -3,9 +3,10 @@ package com.cruise.assistant.domain
 /**
  * 半开区间重叠判定：[aStart, aEnd) 与 [bStart, bEnd)。
  * 相邻（一个的结束等于另一个的开始）不算重叠。
+ * 空区间（start == end，如零时长事件）不占据任何时间，永远不算重叠。
  */
 fun overlaps(aStart: Int, aEnd: Int, bStart: Int, bEnd: Int): Boolean =
-    aStart < bEnd && bStart < aEnd
+    aStart < aEnd && bStart < bEnd && aStart < bEnd && bStart < aEnd
 
 /**
  * 需求4：为新事件挑选栏位。依次尝试栏 0 → 1 → 2，
