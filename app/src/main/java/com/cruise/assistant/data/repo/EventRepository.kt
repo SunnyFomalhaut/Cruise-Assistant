@@ -50,8 +50,10 @@ class EventRepository(
     }
 
     /**
-     * 更新事件。WHOLE_GROUP 时把同组所有事件的时间/内容/地点/类别一起改，
-     * 但各自重算 lane（不同日期的邻居不同）。
+     * 更新事件。WHOLE_GROUP 时把同组所有事件的时间/内容/地点/类别一起改。
+     * spec：编辑时若时间未变则保留原 lane，只有时间真的变了才重算——避免用户只改标题/
+     * 类别/地点却发现卡片跳栏。WHOLE_GROUP 下每个成员各自比较自己的原时间，
+     * 不与某个共享参照事件比较。
      */
     suspend fun updateEvent(event: CruiseEvent, scope: RecurrenceScope) {
         val groupId = event.recurrenceGroupId
@@ -67,8 +69,14 @@ class EventRepository(
                 recurrenceGroupId = target.recurrenceGroupId,
                 isSystemGenerated = target.isSystemGenerated,
             )
-            val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }
-            val lane = assignLane(merged.startMinute, merged.endMinute, sameDay, excludeId = merged.id)
+            val timingUnchanged = merged.startTime == target.startTime &&
+                merged.durationMinutes == target.durationMinutes
+            val lane = if (timingUnchanged) {
+                target.lane
+            } else {
+                val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }
+                assignLane(merged.startMinute, merged.endMinute, sameDay, excludeId = merged.id)
+            }
             eventDao.update(merged.copy(lane = lane).toEntity())
         }
     }

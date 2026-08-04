@@ -105,11 +105,15 @@ class VoyageRepository(
         val newPlans = validDates.filter { it !in existingPlans }.map { DayPlan(date = it).toEntity() }
         if (newPlans.isNotEmpty()) voyageDao.upsertDayPlans(newPlans)
 
-        // 只查一次，供下面两步复用；删除步骤不影响这份内存快照，第二步仍能按原样定位系统事件。
+        // 只查一次，供下面两步复用。
         val allEvents = eventDao.getAll()
 
+        // 系统事件（上船/下船）必须排除在删除范围外：它们是"挪到新时间"而不是"落在范围外就删掉"。
+        // 若先把它们删了，下面的 update(entity.copy(...)) 是按 id 匹配的 UPDATE，行已不存在，
+        // 会静默影响 0 行、不抛异常——事件永久消失却毫无提示（与 LocationPresetDao 文档警告的
+        // 同一类"按 id 更新命中 0 行被静默吞掉"问题）。
         allEvents
-            .filter { it.date !in validDates }
+            .filter { it.date !in validDates && !it.isSystemGenerated }
             .forEach { eventDao.delete(it) }
 
         // 注意：这里用中文标题 "上船"/"下船" 识别系统事件，与 createVoyage() 中生成时写的标题严格耦合。
