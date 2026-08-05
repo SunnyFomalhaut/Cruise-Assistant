@@ -1,0 +1,161 @@
+package com.cruise.assistant.ui.timeline
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.cruise.assistant.domain.Category
+import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.endMinute
+import com.cruise.assistant.domain.formatLocation
+import com.cruise.assistant.domain.startMinute
+import com.cruise.assistant.ui.common.CategoryChip
+import com.cruise.assistant.ui.theme.cardBackgroundFor
+import com.cruise.assistant.ui.theme.cardTextColorFor
+
+/** 低于这个高度就压缩成单行显示 */
+private val COMPACT_THRESHOLD = 44.dp
+
+/**
+ * 需求3：事件卡片。
+ * 第1行 [类别chip] 事件内容 / 第2行 地点 / 第3行 时间+时长。
+ * 左侧一条类别色条（截图1）。
+ */
+@Composable
+fun EventCard(
+    event: CruiseEvent,
+    category: Category?,
+    heightDp: Dp,
+    hasConflict: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colorArgb = category?.colorArgb ?: 0xFF9E9E9E.toInt()
+    val textColor = cardTextColorFor(colorArgb)
+    val compact = heightDp < COMPACT_THRESHOLD
+    val location = formatLocation(event.deck, event.zone, event.placeName)
+
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(cardBackgroundFor(colorArgb))
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+    ) {
+        // 左侧色条
+        Box(
+            Modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .background(Color(colorArgb)),
+        )
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(horizontal = 6.dp, vertical = 3.dp),
+        ) {
+            if (compact) {
+                // 太矮：一行塞下类别、内容、开始时间
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    category?.let {
+                        CategoryChip(it.name, colorArgb)
+                        Spacer(Modifier.width(4.dp))
+                    }
+                    Text(
+                        text = event.title,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = formatStart(event),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textColor.copy(alpha = 0.75f),
+                        maxLines = 1,
+                    )
+                }
+            } else {
+                // 第1行
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    category?.let {
+                        CategoryChip(it.name, colorArgb)
+                        Spacer(Modifier.width(4.dp))
+                    }
+                    Text(
+                        text = event.title,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (hasConflict) {
+                        Text(
+                            "!",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+                // 第2行：地点。deck 为 null 时整行不显示（上船/下船）
+                location?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textColor.copy(alpha = 0.85f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                // 第3行：时间 + 时长
+                Text(
+                    text = formatTimeRange(event),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = textColor.copy(alpha = 0.7f),
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+private fun formatStart(event: CruiseEvent): String =
+    "%02d:%02d".format(event.startTime.hour, event.startTime.minute)
+
+/** "13:15 – 13:45  30m" / 超过 1 小时 "1h 30m" */
+private fun formatTimeRange(event: CruiseEvent): String {
+    val endMin = event.endMinute
+    val end = "%02d:%02d".format((endMin / 60) % 24, endMin % 60)
+    return "${formatStart(event)} – $end  ${formatDuration(event.durationMinutes)}"
+}
+
+fun formatDuration(minutes: Int): String = when {
+    minutes < 60 -> "${minutes}m"
+    minutes % 60 == 0 -> "${minutes / 60}h"
+    else -> "${minutes / 60}h ${minutes % 60}m"
+}
