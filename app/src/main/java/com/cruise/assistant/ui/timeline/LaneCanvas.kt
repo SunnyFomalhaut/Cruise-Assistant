@@ -1,0 +1,100 @@
+package com.cruise.assistant.ui.timeline
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.cruise.assistant.domain.Category
+import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.LANE_COUNT
+import com.cruise.assistant.domain.TimelineLayout
+import com.cruise.assistant.domain.endMinute
+import com.cruise.assistant.domain.minuteToDp
+import com.cruise.assistant.domain.startMinute
+import com.cruise.assistant.ui.theme.NowRed
+
+/** 需求4：栏0/栏1 等宽偏左，栏2 更窄贴最右 */
+private val LANE_WEIGHTS = floatArrayOf(1f, 1f, 0.45f)
+private val LANE_GAP = 3.dp
+private val MIN_CARD_HEIGHT = 22.dp
+
+/** 3 栏竖分隔线的位置（占总宽的比例），供 TimelineGrid 画线 */
+fun laneBoundaryFractions(): List<Float> {
+    val total = LANE_WEIGHTS.sum()
+    var acc = 0f
+    return LANE_WEIGHTS.dropLast(1).map { w ->
+        acc += w
+        acc / total
+    }
+}
+
+/**
+ * 事件区域。planning 模式按 lane 分 3 栏；finalized 模式忽略 lane 单栏满宽。
+ */
+@Composable
+fun LaneCanvas(
+    layout: TimelineLayout,
+    events: List<CruiseEvent>,
+    categories: Map<Long, Category>,
+    conflictIds: Set<Long>,
+    singleLane: Boolean,
+    onEventClick: (CruiseEvent) -> Unit,
+    onEventLongClick: (CruiseEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier.fillMaxWidth().height(layout.totalHeightDp.dp)) {
+        val totalWidth = maxWidth
+        val weightSum = LANE_WEIGHTS.sum()
+
+        events.forEach { event ->
+            val top = layout.minuteToDp(event.startMinute)
+            val bottom = layout.minuteToDp(event.endMinute)
+            // 范围外的事件不画（顶部提示条负责告知）
+            if (bottom <= 0f || top >= layout.totalHeightDp) return@forEach
+
+            val heightDp = (bottom - top).dp.coerceAtLeast(MIN_CARD_HEIGHT)
+
+            val (offsetX, cardWidth) = if (singleLane) {
+                0.dp to totalWidth
+            } else {
+                val lane = event.lane.coerceIn(0, LANE_COUNT - 1)
+                val leftFraction = LANE_WEIGHTS.take(lane).sum() / weightSum
+                val widthFraction = LANE_WEIGHTS[lane] / weightSum
+                (totalWidth * leftFraction) to (totalWidth * widthFraction - LANE_GAP)
+            }
+
+            EventCard(
+                event = event,
+                category = categories[event.categoryId],
+                heightDp = heightDp,
+                hasConflict = event.id in conflictIds,
+                onClick = { onEventClick(event) },
+                onLongClick = { onEventLongClick(event) },
+                modifier = Modifier
+                    .offset(x = offsetX, y = top.dp)
+                    .width(cardWidth)
+                    .height(heightDp),
+            )
+        }
+    }
+}
+
+/** 红色"现在"指示线 */
+@Composable
+fun NowIndicator(layout: TimelineLayout, nowMinute: Int, modifier: Modifier = Modifier) {
+    if (nowMinute < layout.rangeStartMinute || nowMinute > layout.rangeEndMinute) return
+    val y = layout.minuteToDp(nowMinute)
+    Box(
+        modifier
+            .offset(y = y.dp)
+            .fillMaxWidth()
+            .height(2.dp)
+            .background(NowRed),
+    )
+}
