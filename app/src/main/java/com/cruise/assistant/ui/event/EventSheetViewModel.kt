@@ -59,6 +59,9 @@ class EventSheetViewModel(
 
     private val _state = MutableStateFlow(
         EventSheetState(
+            // 提前用 editingEventId 占位，让 isEditing 从第一次 composition 起就正确
+            // （标题/字段仍在 init 里异步加载），避免编辑已有事件时先闪一下"添加事件"UI。
+            editingId = editingEventId,
             date = date,
             startTime = LocalTime.of(defaultStartMinute / 60, defaultStartMinute % 60),
             endTime = LocalTime.of(

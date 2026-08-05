@@ -104,7 +104,13 @@ fun EventSheet(
                                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                     },
                                 )
-                                .clickable { onCategorySelect(category.id) },
+                                .then(
+                                    if (state.isSystemEvent) {
+                                        Modifier
+                                    } else {
+                                        Modifier.clickable { onCategorySelect(category.id) }
+                                    },
+                                ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -147,21 +153,33 @@ fun EventSheet(
                 onValueChange = onTitleChange,
                 label = { Text(stringResource(R.string.event_title_hint)) },
                 singleLine = true,
+                enabled = !state.isSystemEvent,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            if (state.isSystemEvent) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    stringResource(R.string.system_event_time_only),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(Modifier.height(16.dp))
 
             // ---- 地点（新增，需求3）----
+            // 上船/下船按设计没有地点，且地点不参与 VoyageRepository 的标题匹配，禁用是为了
+            // 和"只能改时间"的措辞保持一致，避免用户误以为还能编辑更多字段。
             LocationPicker(
                 maxDeck = state.maxDeck,
                 deck = state.deck,
                 zone = state.zone,
                 placeName = state.placeName,
                 presets = state.presets,
-                noLocation = state.noLocation,
+                noLocation = if (state.isSystemEvent) true else state.noLocation,
                 onDeckChange = onDeckChange,
                 onZoneChange = onZoneChange,
                 onPlaceNameChange = onPlaceNameChange,

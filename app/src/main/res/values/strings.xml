@@ -34,6 +34,7 @@
     <string name="cancel">取消</string>
     <string name="confirm">确认</string>
     <string name="system_event_undeletable">上船/下船不能删除，只能改时间</string>
+    <string name="system_event_time_only">上船/下船只能修改时间</string>
 
     <!-- 事件弹窗 -->
     <string name="select_category">选择事项</string>
