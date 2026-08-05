@@ -58,7 +58,15 @@ class EventRepository(
     suspend fun updateEvent(event: CruiseEvent, scope: RecurrenceScope) {
         val groupId = event.recurrenceGroupId
         val targets = if (scope == RecurrenceScope.WHOLE_GROUP && groupId != null) {
+            // 需求8：已定稿的日子是只读的——WHOLE_GROUP 编辑从别的（仍在规划中的）日子发起时，
+            // 不能悄悄改写某个已定稿成员的行，否则破坏"定稿=只读"的承诺，且不会重新触发冲突检查。
+            // 但用户直接点开来编辑的那一条必须始终生效——即使它自己所在的日子已定稿；
+            // Task 7/8 已经在 UI 层挡掉了"打开已定稿日子的卡片"这条路径，这里只过滤*其他*成员。
+            val finalizedDates = voyageDao.observeDayPlansOnce()
+                .filter { it.finalized }
+                .mapTo(mutableSetOf()) { it.date }
             eventDao.getByGroup(groupId).map { it.toDomain() }
+                .filter { it.id == event.id || it.date !in finalizedDates }
         } else {
             listOf(event)
         }
@@ -66,7 +74,17 @@ class EventRepository(
             val merged = event.copy(
                 id = target.id,
                 date = target.date,
-                recurrenceGroupId = target.recurrenceGroupId,
+                // THIS_DAY_ONLY 编辑必须让这一天从循环组里"脱钩"永久独立：否则这天的自定义
+                // 标题/地点/类别会在之后某次从别的仍属于该组的日子发起的 WHOLE_GROUP 编辑中被
+                // 静默覆盖回去（复现场景：Day2-5 循环早餐，Day3 仅改本日改了地点，随后从 Day2
+                // 发起修改所有重复项——若不脱钩，Day3 的改动会被 Day2 的值覆盖）。非循环事件
+                // target.recurrenceGroupId 本就是 null，这里置 null 无影响；系统事件不受循环
+                // 编辑入口触达，同样安全。
+                recurrenceGroupId = if (scope == RecurrenceScope.THIS_DAY_ONLY) {
+                    null
+                } else {
+                    target.recurrenceGroupId
+                },
                 isSystemGenerated = target.isSystemGenerated,
             )
             val timingUnchanged = merged.startTime == target.startTime &&

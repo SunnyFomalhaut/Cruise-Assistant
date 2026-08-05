@@ -272,7 +272,9 @@ fun CruiseNavHost(container: AppContainer) {
                 if (showCategorySheet) {
                     val catVm: CategoryViewModel = viewModel(
                         key = "category-sheet",
-                        factory = viewModelFactory { CategoryViewModel(container.categoryRepository) },
+                        factory = viewModelFactory {
+                            CategoryViewModel(container.categoryRepository, container.reminderScheduler)
+                        },
                     )
                     val catState by catVm.state.collectAsState()
                     CategorySheet(
@@ -330,7 +332,9 @@ fun CruiseNavHost(container: AppContainer) {
             if (showCategorySheet) {
                 val catVm: CategoryViewModel = viewModel(
                     key = "settings-category-sheet",
-                    factory = viewModelFactory { CategoryViewModel(container.categoryRepository) },
+                    factory = viewModelFactory {
+                        CategoryViewModel(container.categoryRepository, container.reminderScheduler)
+                    },
                 )
                 val catState by catVm.state.collectAsState()
                 CategorySheet(

@@ -39,6 +39,11 @@ data class EventSheetState(
     val disembarkDate: LocalDate? = null,
     val isSystemEvent: Boolean = false,
     val isRecurrenceMember: Boolean = false,
+    // 编辑已有事件时从数据库读到的原始 recurrenceGroupId——save() 必须把它带回去，
+    // 否则 EventRepository.updateEvent() 收到的 event.recurrenceGroupId 永远是 null，
+    // WHOLE_GROUP 分支的 groupId 判断就失效，"修改所有重复项" 在真实 UI 路径上会
+    // 静默退化成只改当前这一条（仅测试直接调用 repository 才会走到 fan-out 分支）。
+    val recurrenceGroupId: String? = null,
     val errorResId: Int? = null,
     val saving: Boolean = false,
 ) {
@@ -119,6 +124,7 @@ class EventSheetViewModel(
                             ),
                             isSystemEvent = event.isSystemGenerated,
                             isRecurrenceMember = event.recurrenceGroupId != null,
+                            recurrenceGroupId = event.recurrenceGroupId,
                         )
                     }
                 }
@@ -196,6 +202,9 @@ class EventSheetViewModel(
             zone = if (s.noLocation) null else s.zone,
             placeName = if (s.noLocation) null else s.placeName.trim().takeIf { it.isNotEmpty() },
             isSystemGenerated = s.isSystemEvent,
+            // 必须带上原始 recurrenceGroupId：EventRepository.updateEvent() 靠这个字段
+            // （而不是数据库里 target 行的字段）判断 WHOLE_GROUP 是否要 fan out 到整组。
+            recurrenceGroupId = s.recurrenceGroupId,
         )
 
         _state.update { it.copy(saving = true) }

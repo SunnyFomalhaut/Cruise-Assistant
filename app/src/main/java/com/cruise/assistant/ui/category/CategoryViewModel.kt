@@ -6,6 +6,7 @@ import com.cruise.assistant.R
 import com.cruise.assistant.data.CATEGORY_PALETTE
 import com.cruise.assistant.data.repo.CategoryRepository
 import com.cruise.assistant.domain.Category
+import com.cruise.assistant.reminder.ReminderScheduler
 import com.cruise.assistant.ui.common.ICON_REGISTRY
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,7 @@ data class CategorySheetState(
 
 class CategoryViewModel(
     private val categoryRepository: CategoryRepository,
+    private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CategorySheetState())
@@ -153,6 +155,9 @@ class CategoryViewModel(
             _state.update {
                 if (editSession == session) it.copy(saving = false, editingId = savedId) else it.copy(saving = false)
             }
+            // 类别名字被 ReminderScheduler 提前烤进了已排闹钟的通知标题里；改名后不重排，
+            // 已经armed的通知会一直显示旧名字直到别的触发点（设置变更/App 重启等）碰巧重排。
+            reminderScheduler.rescheduleAll()
             onDone()
         }
     }
@@ -174,6 +179,10 @@ class CategoryViewModel(
             val fallback = others.firstOrNull { it.iconKey == FALLBACK_ICON_KEY } ?: others.first()
             categoryRepository.delete(category, fallback.id)
             _state.update { it.copy(saving = false) }
+            // 删除的类别名字也可能已经烤进已排闹钟的通知标题里（该类别下的事件已迁移到
+            // fallback 类别，但旧闹钟的 PendingIntent extras 里的文案是排程当时生成的静态
+            // 字符串，不会自动跟着数据库改变）——同 save() 一样必须重排才能清掉残留文案。
+            reminderScheduler.rescheduleAll()
             onDone()
         }
     }
