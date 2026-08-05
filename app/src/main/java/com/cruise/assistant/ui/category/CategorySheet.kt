@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -36,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,12 +70,18 @@ fun CategorySheet(
     onParentSelect: (Long) -> Unit,
     onArchiveToggle: (Boolean) -> Unit,
     onEditExisting: (Long) -> Unit,
+    onNewCategory: () -> Unit,
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var parentMenuOpen by remember { mutableStateOf(false) }
+
+    // 弹窗每次打开都重置成"新建"状态：VM 在导航图里活得比一次开合久（同一 Timeline
+    // 条目复用），如果不主动重置，上次编辑/新建留下的名称、颜色、图标会原样留着，
+    // 用户什么都没改就再点一次保存修改会把上次的内容插成第二条重复记录。
+    LaunchedEffect(Unit) { onNewCategory() }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -108,6 +117,14 @@ fun CategorySheet(
                             label = { Text(category.name) },
                         )
                     }
+                    // 新建入口：编辑过一个已有类别后，用它切回空白的"新建"状态。
+                    FilterChip(
+                        selected = !state.isEditing,
+                        onClick = onNewCategory,
+                        label = {
+                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.category_sheet_title_add))
+                        },
+                    )
                 }
                 Spacer(Modifier.height(16.dp))
             }
@@ -242,7 +259,7 @@ fun CategorySheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                TextButton(onClick = onDelete) {
+                TextButton(onClick = onDelete, enabled = !state.saving) {
                     Text(
                         stringResource(R.string.delete),
                         color = MaterialTheme.colorScheme.error,

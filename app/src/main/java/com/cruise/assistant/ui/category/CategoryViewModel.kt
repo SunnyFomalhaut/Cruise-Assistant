@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cruise.assistant.R
 import com.cruise.assistant.data.CATEGORY_PALETTE
-import com.cruise.assistant.data.FALLBACK_CATEGORY_NAME
 import com.cruise.assistant.data.repo.CategoryRepository
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.ui.common.ICON_REGISTRY
@@ -14,6 +13,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** 兜底类别（琐事）用图标 key 识别，而不是名字——名字可被用户改掉，图标 key 不可编辑、稳定。 */
+private const val FALLBACK_ICON_KEY = "chore"
 
 data class CategorySheetState(
     val editingId: Long = 0,
@@ -86,13 +88,24 @@ class CategoryViewModel(
     fun onArchiveToggle(value: Boolean) = _state.update { it.copy(isArchived = value) }
 
     fun onSubCategoryToggle(value: Boolean) = _state.update {
-        if (value) it.copy(isSubCategory = true) else it.copy(isSubCategory = false, parentId = null)
+        if (value) {
+            // 开二级分类时如果还没选上级，自动挑第一个候选，避免"开了开关但没选上级"
+            // 时静默存成顶级类别。
+            it.copy(isSubCategory = true, parentId = it.parentId ?: it.parentCandidates.firstOrNull()?.id)
+        } else {
+            it.copy(isSubCategory = false, parentId = null)
+        }
     }
 
     fun onParentSelect(id: Long) = _state.update { it.copy(parentId = id, isSubCategory = true) }
 
+    /**
+     * 用 s.saving 挡快速二次点击：保存期间再次调用直接忽略，避免插入两次
+     * （镜像 EventSheetViewModel.save 的做法）。
+     */
     fun save(onDone: () -> Unit) {
         val s = _state.value
+        if (s.saving) return
         if (s.name.isBlank()) {
             _state.update { it.copy(errorResId = R.string.error_title_required) }
             return
@@ -100,7 +113,7 @@ class CategoryViewModel(
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
             val existing = if (s.isEditing) categoryRepository.getById(s.editingId) else null
-            categoryRepository.save(
+            val savedId = categoryRepository.save(
                 Category(
                     id = s.editingId,
                     name = s.name.trim(),
@@ -112,21 +125,30 @@ class CategoryViewModel(
                     sortOrder = existing?.sortOrder ?: (s.allCategories.size),
                 ),
             )
-            _state.update { it.copy(saving = false) }
+            // 插入后把返回的新 id 记进 editingId：否则立刻再点一次"保存修改"
+            // 会因 editingId 还是 0 而再插入一条重复行。
+            _state.update { it.copy(saving = false, editingId = savedId) }
             onDone()
         }
     }
 
-    /** 内置类别不删；引用它的事件迁移到"琐事" */
+    /**
+     * 内置类别不删；引用它的事件迁移到"琐事"。
+     * 用 s.saving 挡快速二次点击（例如刚点了保存修改，紧接着点删除）。
+     */
     fun delete(onDone: () -> Unit) {
         val s = _state.value
+        if (s.saving) return
         if (!s.isEditing || s.isBuiltIn) return
+        _state.update { it.copy(saving = true) }
         viewModelScope.launch {
             val category = categoryRepository.getById(s.editingId) ?: return@launch
-            val fallback = categoryRepository.observeAll().first()
-                .firstOrNull { it.name == FALLBACK_CATEGORY_NAME && it.id != category.id }
-                ?: categoryRepository.observeAll().first().first { it.id != category.id }
+            val others = categoryRepository.observeAll().first().filter { it.id != category.id }
+            // 按 iconKey 识别兜底类别（琐事），而不是按名字——名字可被改掉，iconKey 不可编辑、稳定。
+            // 只有在找不到时才退化为"随便挑第一个别的类别"，且该分支同样排除自己。
+            val fallback = others.firstOrNull { it.iconKey == FALLBACK_ICON_KEY } ?: others.first()
             categoryRepository.delete(category, fallback.id)
+            _state.update { it.copy(saving = false) }
             onDone()
         }
     }

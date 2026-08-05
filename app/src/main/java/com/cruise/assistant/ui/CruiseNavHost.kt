@@ -201,6 +201,7 @@ fun CruiseNavHost(container: AppContainer) {
                         onParentSelect = catVm::onParentSelect,
                         onArchiveToggle = catVm::onArchiveToggle,
                         onEditExisting = catVm::startEdit,
+                        onNewCategory = catVm::startNew,
                         onSave = { catVm.save { showCategorySheet = false } },
                         onDelete = { catVm.delete { showCategorySheet = false } },
                         onDismiss = { showCategorySheet = false },
