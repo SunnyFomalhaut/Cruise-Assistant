@@ -17,6 +17,9 @@ import com.cruise.assistant.AppContainer
 import com.cruise.assistant.ui.common.viewModelFactory
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
+import com.cruise.assistant.ui.timeline.TimelineLoading
+import com.cruise.assistant.ui.timeline.TimelineScreen
+import com.cruise.assistant.ui.timeline.TimelineViewModel
 import java.time.LocalDate
 
 object Routes {
@@ -71,9 +74,35 @@ fun CruiseNavHost(container: AppContainer) {
             )
         }
         composable(Routes.TIMELINE) {
-            // Task 7 填入 TimelineScreen
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("时间轴（Task 7）")
+            val vm: TimelineViewModel = viewModel(
+                factory = viewModelFactory {
+                    TimelineViewModel(
+                        container.voyageRepository,
+                        container.eventRepository,
+                        container.categoryRepository,
+                        container.settingsStore,
+                    )
+                },
+            )
+            val timelineState by vm.state.collectAsState()
+            val current = timelineState
+            if (current == null) {
+                TimelineLoading()
+            } else {
+                TimelineScreen(
+                    state = current,
+                    onSelectDate = vm::selectDate,
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenDisplayRange = { /* Task 10：显示范围面板 */ },
+                    onAddEvent = { /* Task 8：事件弹窗 */ },
+                    onEditEvent = { /* Task 8：事件弹窗 */ },
+                    onMoveToLane = vm::moveToLane,
+                    onDeleteEvent = vm::deleteEvent,
+                    onGeneratePlan = { /* Task 11：定稿流程与冲突弹窗 */ },
+                    onUnlockDay = { vm.unlockDay(current.selectedDate) },
+                    onToggleFullDay = { /* Task 10：把临时展开范围传给 ViewModel */ },
+                    conflictIds = emptySet(),
+                )
             }
         }
         composable(Routes.SETTINGS) {
