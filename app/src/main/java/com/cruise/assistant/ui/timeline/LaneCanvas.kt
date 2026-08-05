@@ -60,14 +60,16 @@ fun LaneCanvas(
 
             val heightDp = (bottom - top).dp.coerceAtLeast(MIN_CARD_HEIGHT)
 
+            val lane = event.lane.coerceIn(0, LANE_COUNT - 1)
             val (offsetX, cardWidth) = if (singleLane) {
                 0.dp to totalWidth
             } else {
-                val lane = event.lane.coerceIn(0, LANE_COUNT - 1)
                 val leftFraction = LANE_WEIGHTS.take(lane).sum() / weightSum
                 val widthFraction = LANE_WEIGHTS[lane] / weightSum
                 (totalWidth * leftFraction) to (totalWidth * widthFraction - LANE_GAP)
             }
+            // 最窄的那栏（栏 LANE_COUNT-1）compact 卡片要让 EventCard 舍弃时间只留标题。
+            val narrow = !singleLane && lane == LANE_COUNT - 1
 
             EventCard(
                 event = event,
@@ -80,6 +82,7 @@ fun LaneCanvas(
                     .offset(x = offsetX, y = top.dp)
                     .width(cardWidth)
                     .height(heightDp),
+                narrow = narrow,
             )
         }
     }

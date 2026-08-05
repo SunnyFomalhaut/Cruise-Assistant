@@ -48,6 +48,8 @@ fun EventCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** 卡片所在栏是否是最窄的那栏（栏2），影响 compact 分支的排版取舍 */
+    narrow: Boolean = false,
 ) {
     val colorArgb = category?.colorArgb ?: 0xFF9E9E9E.toInt()
     val textColor = cardTextColorFor(colorArgb)
@@ -76,11 +78,11 @@ fun EventCard(
                 .padding(horizontal = if (compact) 2.dp else 6.dp, vertical = 3.dp),
         ) {
             if (compact) {
-                // 太矮：一行只塞标题 + 开始时间。不放类别 chip——左侧 4dp 色条已经
-                // 传达了类别，chip 是非必要元素；在窄栏（栏2 ≈18%宽）里 chip
-                // 若排在前面且不参与 weight 分配，会把标题挤到 0 宽度，导致标题和
-                // 时间都被 clip() 裁掉、什么都看不见。标题用 weight(1f, fill=true)
-                // 优先拿到剩余宽度，时间固定宽度保证始终可见；标题字号用 labelSmall
+                // 太矮：一行只塞标题（+ 非窄栏下还能塞开始时间）。不放类别 chip——
+                // 左侧 4dp 色条已经传达了类别，chip 是非必要元素；在窄栏（栏2
+                // ≈18%宽）里 chip 若排在前面且不参与 weight 分配，会把标题挤到
+                // 0 宽度，导致标题和时间都被 clip() 裁掉、什么都看不见。标题用
+                // weight(1f, fill=true) 优先拿到剩余宽度；标题字号用 labelSmall
                 // （比非 compact 分支的 bodySmall 小 1sp）进一步给窄栏腾空间。
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -92,13 +94,19 @@ fun EventCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        text = formatStart(event),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = textColor.copy(alpha = 0.75f),
-                        maxLines = 1,
-                        modifier = Modifier.padding(start = 2.dp),
-                    )
+                    // 栏2 太窄，标题 + 时间两个元素挤在一起时间会把标题压到只剩
+                    // 一两个字。时间在这里是冗余信息——卡片在时间轴上的竖直位置
+                    // 本身就对齐着起始时间的刻度线，栏2 里舍弃它，把宽度全部留给
+                    // 标题，换取"看得出是什么事"这个更重要的信息。
+                    if (!narrow) {
+                        Text(
+                            text = formatStart(event),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = textColor.copy(alpha = 0.75f),
+                            maxLines = 1,
+                            modifier = Modifier.padding(start = 2.dp),
+                        )
+                    }
                 }
             } else {
                 // 第1行
