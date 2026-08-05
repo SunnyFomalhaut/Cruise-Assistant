@@ -79,6 +79,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             voyageRepository.resetVoyage()
             settingsStore.setOnboardingCompleted(false)
+            reminderScheduler.rescheduleAll()
             onDone()
         }
     }

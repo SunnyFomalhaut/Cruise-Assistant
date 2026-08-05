@@ -7,8 +7,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 
@@ -36,6 +38,7 @@ class SettingsStore(private val context: Context) {
         val reminderMinutes = intPreferencesKey("default_reminder_minutes")
         val notificationsEnabled = booleanPreferencesKey("notifications_enabled")
         val onboardingCompleted = booleanPreferencesKey("onboarding_completed")
+        val armedEventIds = stringSetPreferencesKey("armed_event_ids")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -73,6 +76,22 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setOnboardingCompleted(completed: Boolean) =
         edit { it[Keys.onboardingCompleted] = completed }
+
+    /**
+     * 上一次 rescheduleAll() 实际排上闹钟的事件 id 集合，用于下次重排时精确取消——
+     * 不依赖"事件表当前还有哪些行"，因为删除会先于 rescheduleAll() 把行从数据库移除。
+     * 存在 DataStore 里而不是内存，是为了在进程被杀死/开机重启后依然可用
+     * （BootReceiver、App 启动都会调 rescheduleAll()）。
+     */
+    suspend fun getArmedEventIds(): Set<Long> =
+        context.dataStore.data.first()[Keys.armedEventIds]
+            ?.mapNotNull { it.toLongOrNull() }
+            ?.toSet()
+            ?: emptySet()
+
+    suspend fun setArmedEventIds(ids: Set<Long>) = edit {
+        it[Keys.armedEventIds] = ids.map { id -> id.toString() }.toSet()
+    }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         context.dataStore.edit(block)

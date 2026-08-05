@@ -46,18 +46,28 @@ class ReminderScheduler(
         val events = eventRepository.getAllEvents()
         val categories = categoryRepository.observeAll().first().associateBy { it.id }
 
-        // 先全部取消：只查已有的 PendingIntent（FLAG_NO_CREATE），不存在就跳过——
-        // 不落入"为了取消反而新建一个从未被排过程的 PendingIntent"的坑
-        // （brief 原代码的 cancelOnly 分支在 null 时兜底 FLAG_UPDATE_CURRENT，等于
-        // 创建了它本要取消的那个 intent；这里改成 null 就直接跳过，不调用 cancel）。
-        events.forEach { event ->
-            lookupExistingPendingIntent(event.id)?.let { manager.cancel(it) }
+        // 取消依据不能是"当前事件表还有哪些行"：删除会先于 rescheduleAll() 把行从数据库移除，
+        // 那样被删事件的 id 根本不在 events 里，闹钟永远不会被取消。
+        // 改成取消"上一次实际排上闹钟的 id 集合"（armed set，持久化在 SettingsStore/DataStore
+        // 里，能扛过进程死亡、开机重启），并与当前 events 的 id 取并集——
+        // 并集是为了把这次改动上线前就已经孤儿化的闹钟（旧版本没做这个记账）一并清掉。
+        // 只查已有的 PendingIntent（FLAG_NO_CREATE），不存在就跳过——不落入"为了取消反而
+        // 新建一个从未被排过程的 PendingIntent"的坑。
+        val previouslyArmed = settingsStore.getArmedEventIds()
+        val currentEventIds = events.map { it.id }.toSet()
+        val idsToCancel = previouslyArmed + currentEventIds
+        idsToCancel.forEach { eventId ->
+            lookupExistingPendingIntent(eventId)?.let { manager.cancel(it) }
         }
-        if (!settings.notificationsEnabled) return
+        if (!settings.notificationsEnabled) {
+            settingsStore.setArmedEventIds(emptySet())
+            return
+        }
 
         val zone = ZoneId.systemDefault()
         val nowMs = System.currentTimeMillis()
 
+        val armedIds = mutableSetOf<Long>()
         events.asSequence()
             .mapNotNull { event ->
                 val lead = event.reminderMinutesBefore ?: settings.defaultReminderMinutes
@@ -91,7 +101,9 @@ class ReminderScheduler(
                         AlarmManager.RTC_WAKEUP, triggerMs, 10 * 60_000L, pending,
                     )
                 }
+                armedIds += event.id
             }
+        settingsStore.setArmedEventIds(armedIds)
     }
 
     /**
