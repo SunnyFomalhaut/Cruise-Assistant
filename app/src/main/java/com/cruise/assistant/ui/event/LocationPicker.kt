@@ -37,6 +37,11 @@ import com.cruise.assistant.domain.ShipZone
 /**
  * 需求3：楼层下拉 + 船头/船中/船尾 + 地点名（可输入，也可从历史里选）。
  * 勾"不设地点"时整块禁用，对应 deck=null。
+ *
+ * [enabled]：整个控件（含"不设地点"勾选框本身）的外层开关，默认 true。这是 Fix round 2
+ * 补的 API：此前勾选框完全不受任何 enabled 计算影响 —— 内部的 `enabled = !noLocation` 只
+ * 用来灰化楼层/区域/地点名，勾选框自己永远可点。调用方若需要整块彻底不可交互（例如系统事件），
+ * 传 `enabled = false`；正常事件不传，用默认值，勾选框两个方向都能正常切换。
  */
 @Composable
 fun LocationPicker(
@@ -51,10 +56,11 @@ fun LocationPicker(
     onPlaceNameChange: (String) -> Unit,
     onNoLocationToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var deckMenuOpen by remember { mutableStateOf(false) }
     var presetMenuOpen by remember { mutableStateOf(false) }
-    val enabled = !noLocation
+    val fieldsEnabled = enabled && !noLocation
 
     // 同层同区的历史地点排前面
     val suggestions = remember(presets, deck, zone) {
@@ -72,7 +78,7 @@ fun LocationPicker(
             Box {
                 OutlinedButton(
                     onClick = { deckMenuOpen = true },
-                    enabled = enabled,
+                    enabled = fieldsEnabled,
                     modifier = Modifier.width(88.dp),
                 ) { Text(if (deck != null) "${deck}F" else stringResource(R.string.deck_label)) }
                 DropdownMenu(
@@ -98,7 +104,7 @@ fun LocationPicker(
                     FilterChip(
                         selected = zone == z,
                         onClick = { onZoneChange(z) },
-                        enabled = enabled,
+                        enabled = fieldsEnabled,
                         label = { Text(z.label) },
                     )
                 }
@@ -111,13 +117,13 @@ fun LocationPicker(
                 value = placeName,
                 onValueChange = onPlaceNameChange,
                 label = { Text(stringResource(R.string.place_name_hint)) },
-                enabled = enabled,
+                enabled = fieldsEnabled,
                 singleLine = true,
                 trailingIcon = {
                     if (suggestions.isNotEmpty()) {
                         IconButton(
                             onClick = { presetMenuOpen = true },
-                            enabled = enabled,
+                            enabled = fieldsEnabled,
                         ) {
                             Icon(
                                 Icons.Filled.ArrowDropDown,
@@ -149,7 +155,7 @@ fun LocationPicker(
 
         Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = noLocation, onCheckedChange = onNoLocationToggle)
+            Checkbox(checked = noLocation, onCheckedChange = onNoLocationToggle, enabled = enabled)
             Text(stringResource(R.string.no_location), style = MaterialTheme.typography.bodySmall)
         }
     }

@@ -131,8 +131,20 @@ class EventSheetViewModel(
     fun onPlaceNameChange(value: String) = _state.update { it.copy(placeName = value) }
     fun onRecurringToggle(value: Boolean) = _state.update { it.copy(recurring = value) }
 
+    /**
+     * Fix round 2 防线二：系统事件（上船/下船）没有地点，UI 已经不渲染 LocationPicker，
+     * 但如果日后有人重新接上这个回调（或测试直接调用 ViewModel），这里再挡一层——
+     * isSystemEvent 时忽略切换，强制保持 noLocation=true/deck=null，避免 save() 写出
+     * zone='MID' 的幽灵地点。
+     */
     fun onNoLocationToggle(value: Boolean) = _state.update {
-        if (value) it.copy(noLocation = true, deck = null) else it.copy(noLocation = false)
+        if (it.isSystemEvent) {
+            it.copy(noLocation = true, deck = null)
+        } else if (value) {
+            it.copy(noLocation = true, deck = null)
+        } else {
+            it.copy(noLocation = false)
+        }
     }
 
     fun onStartChange(value: LocalTime) = _state.update { current ->
