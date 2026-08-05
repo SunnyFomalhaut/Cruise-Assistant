@@ -22,6 +22,8 @@ import androidx.navigation.compose.rememberNavController
 import com.cruise.assistant.AppContainer
 import com.cruise.assistant.R
 import com.cruise.assistant.data.repo.RecurrenceScope
+import com.cruise.assistant.ui.category.CategorySheet
+import com.cruise.assistant.ui.category.CategoryViewModel
 import com.cruise.assistant.ui.common.viewModelFactory
 import com.cruise.assistant.ui.event.EventSheet
 import com.cruise.assistant.ui.event.EventSheetViewModel
@@ -184,7 +186,26 @@ fun CruiseNavHost(container: AppContainer) {
                         },
                     )
                 }
-                // Task 9 在这里挂 CategorySheet（showCategorySheet）
+                if (showCategorySheet) {
+                    val catVm: CategoryViewModel = viewModel(
+                        key = "category-sheet",
+                        factory = viewModelFactory { CategoryViewModel(container.categoryRepository) },
+                    )
+                    val catState by catVm.state.collectAsState()
+                    CategorySheet(
+                        state = catState,
+                        onNameChange = catVm::onNameChange,
+                        onColorSelect = catVm::onColorSelect,
+                        onIconSelect = catVm::onIconSelect,
+                        onSubCategoryToggle = catVm::onSubCategoryToggle,
+                        onParentSelect = catVm::onParentSelect,
+                        onArchiveToggle = catVm::onArchiveToggle,
+                        onEditExisting = catVm::startEdit,
+                        onSave = { catVm.save { showCategorySheet = false } },
+                        onDelete = { catVm.delete { showCategorySheet = false } },
+                        onDismiss = { showCategorySheet = false },
+                    )
+                }
             }
         }
         composable(Routes.SETTINGS) {
