@@ -94,6 +94,18 @@ fun EventCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
+                    // 需求8：矮卡片（<44dp，常见于 30~40min 的短事件）此前完全没有渲染
+                    // 冲突角标，导致"生成计划表"发现冲突后卡片上什么都看不出来。
+                    // 角标是定长的"!"，即使在窄栏也只占极小宽度，直接加在标题右侧。
+                    if (hasConflict) {
+                        Text(
+                            "!",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(start = 2.dp),
+                        )
+                    }
                     // 栏2 太窄，标题 + 时间两个元素挤在一起时间会把标题压到只剩
                     // 一两个字。时间在这里是冗余信息——卡片在时间轴上的竖直位置
                     // 本身就对齐着起始时间的刻度线，栏2 里舍弃它，把宽度全部留给

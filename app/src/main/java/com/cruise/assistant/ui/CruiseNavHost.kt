@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import com.cruise.assistant.AppContainer
 import com.cruise.assistant.R
 import com.cruise.assistant.data.repo.RecurrenceScope
+import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.ui.category.CategorySheet
 import com.cruise.assistant.ui.category.CategoryViewModel
 import com.cruise.assistant.ui.common.viewModelFactory
@@ -33,6 +34,7 @@ import com.cruise.assistant.ui.onboarding.OnboardingViewModel
 import com.cruise.assistant.ui.settings.DisplayRangePanel
 import com.cruise.assistant.ui.settings.SettingsScreen
 import com.cruise.assistant.ui.settings.SettingsViewModel
+import com.cruise.assistant.ui.timeline.ConflictDialog
 import com.cruise.assistant.ui.timeline.TimelineLoading
 import com.cruise.assistant.ui.timeline.TimelineScreen
 import com.cruise.assistant.ui.timeline.TimelineViewModel
@@ -112,12 +114,24 @@ fun CruiseNavHost(container: AppContainer) {
             var rangeErrorResId by remember { mutableStateOf<Int?>(null) }
             val coroutineScope = rememberCoroutineScope()
 
+            // ---- 需求8：定稿冲突检查。conflictCheck 控制弹窗显隐，highlightIds 在
+            // "去修改"关闭弹窗后仍要留着（这才是去修改的意义），只在定稿成功或切换日期时清空。----
+            var conflictCheck by remember {
+                mutableStateOf<List<Pair<CruiseEvent, CruiseEvent>>?>(null)
+            }
+            var highlightIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+            var conflictCheckDate by remember { mutableStateOf<LocalDate?>(null) }
+
             if (current == null) {
                 TimelineLoading()
             } else {
                 TimelineScreen(
                     state = current,
-                    onSelectDate = vm::selectDate,
+                    onSelectDate = { date ->
+                        highlightIds = emptySet()
+                        conflictCheck = null
+                        vm.selectDate(date)
+                    },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenDisplayRange = { showRangePanel = true },
                     onAddEvent = { startMinute ->
@@ -128,10 +142,31 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onMoveToLane = vm::moveToLane,
                     onDeleteEvent = vm::deleteEvent,
-                    onGeneratePlan = { /* Task 11：定稿流程与冲突弹窗 */ },
+                    onGeneratePlan = {
+                        val date = current.selectedDate
+                        coroutineScope.launch {
+                            val found = vm.conflictsOn(date)
+                            highlightIds = found.flatMap { listOf(it.first.id, it.second.id) }.toSet()
+                            conflictCheckDate = date
+                            conflictCheck = found
+                        }
+                    },
                     onUnlockDay = { vm.unlockDay(current.selectedDate) },
                     onToggleFullDay = vm::toggleFullDay,
-                    conflictIds = emptySet(),
+                    conflictIds = highlightIds,
+                )
+            }
+
+            conflictCheck?.let { conflicts ->
+                ConflictDialog(
+                    conflicts = conflicts,
+                    onGoFix = { conflictCheck = null }, // 弹窗关，highlightIds 保留 → 角标不消失
+                    onFinalize = {
+                        conflictCheckDate?.let { vm.finalizeDay(it) }
+                        highlightIds = emptySet()
+                        conflictCheck = null
+                    },
+                    onDismiss = { conflictCheck = null },
                 )
             }
 
