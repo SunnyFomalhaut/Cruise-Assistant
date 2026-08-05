@@ -71,30 +71,33 @@ fun EventCard(
         Column(
             Modifier
                 .weight(1f)
-                .padding(horizontal = 6.dp, vertical = 3.dp),
+                // compact 行挤在最窄的栏2（约18%宽）里，横向 padding 从 6dp 收紧到
+                // 2dp，把这几 dp 让给标题——非 compact 分支不受影响，padding 仍是 6dp。
+                .padding(horizontal = if (compact) 2.dp else 6.dp, vertical = 3.dp),
         ) {
             if (compact) {
-                // 太矮：一行塞下类别、内容、开始时间
+                // 太矮：一行只塞标题 + 开始时间。不放类别 chip——左侧 4dp 色条已经
+                // 传达了类别，chip 是非必要元素；在窄栏（栏2 ≈18%宽）里 chip
+                // 若排在前面且不参与 weight 分配，会把标题挤到 0 宽度，导致标题和
+                // 时间都被 clip() 裁掉、什么都看不见。标题用 weight(1f, fill=true)
+                // 优先拿到剩余宽度，时间固定宽度保证始终可见；标题字号用 labelSmall
+                // （比非 compact 分支的 bodySmall 小 1sp）进一步给窄栏腾空间。
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    category?.let {
-                        CategoryChip(it.name, colorArgb)
-                        Spacer(Modifier.width(4.dp))
-                    }
                     Text(
                         text = event.title,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = textColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
+                        modifier = Modifier.weight(1f),
                     )
-                    Spacer(Modifier.width(4.dp))
                     Text(
                         text = formatStart(event),
                         style = MaterialTheme.typography.labelSmall,
                         color = textColor.copy(alpha = 0.75f),
                         maxLines = 1,
+                        modifier = Modifier.padding(start = 2.dp),
                     )
                 }
             } else {

@@ -198,8 +198,8 @@ fun TimelineScreen(
                                 categories = state.categories,
                                 conflictIds = conflictIds,
                                 singleLane = state.isFinalized,
-                                onEventClick = onEditEvent,
-                                onEventLongClick = { menuEvent = it },
+                                onEventClick = { event -> if (!state.isFinalized) onEditEvent(event) },
+                                onEventLongClick = { event -> if (!state.isFinalized) menuEvent = event },
                                 modifier = Modifier.padding(end = 8.dp),
                             )
                             if (state.isToday) {
@@ -233,13 +233,15 @@ fun TimelineScreen(
                     )
                 }
             }
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.edit)) },
-                onClick = {
-                    onEditEvent(event)
-                    menuEvent = null
-                },
-            )
+            if (!state.isFinalized) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.edit)) },
+                    onClick = {
+                        onEditEvent(event)
+                        menuEvent = null
+                    },
+                )
+            }
             if (!event.isSystemGenerated && !state.isFinalized) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.delete)) },
