@@ -2,12 +2,14 @@ package com.cruise.assistant.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -34,6 +36,7 @@ import java.time.format.DateTimeFormatter
 private val DATE_FMT = DateTimeFormatter.ofPattern("yyyy年M月d日")
 private val REMINDER_PRESETS = listOf(5, 10, 15, 30, 60)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     state: SettingsUiState,
@@ -70,7 +73,10 @@ fun SettingsScreen(
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             listOf(
                 7 * 60 to 24 * 60,
                 8 * 60 to 23 * 60,
@@ -141,7 +147,10 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.reminder_lead_time), style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 REMINDER_PRESETS.forEach { minutes ->
                     FilterChip(
                         selected = state.settings.defaultReminderMinutes == minutes,
@@ -174,7 +183,7 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                "${voyage.dayCount} 天 · 最高 ${voyage.maxDeck}F",
+                stringResource(R.string.voyage_summary_format, voyage.dayCount, voyage.maxDeck),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
