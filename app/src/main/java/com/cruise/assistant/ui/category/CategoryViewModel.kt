@@ -44,6 +44,15 @@ class CategoryViewModel(
     private val _state = MutableStateFlow(CategorySheetState())
     val state: StateFlow<CategorySheetState> = _state.asStateFlow()
 
+    /**
+     * 单调递增的"编辑会话"号。startNew()/startEdit() 各开启一个新会话；save() 发起时
+     * 记下当时的会话号，写回结果前先核对会话没变——如果变了（说明保存还没落地时用户
+     * 已经切去编辑别的类别或点了新建），就只清 saving，不再把这次保存返回的 id 盖到
+     * 当前状态上，避免把这次保存误写成对另一条记录的编辑（旧 bug：editingId 被写歪，
+     * 下一次保存变成 UPDATE 到不相关的类别）。
+     */
+    private var editSession = 0L
+
     init {
         viewModelScope.launch {
             categoryRepository.observeAll().collect { list ->
@@ -52,19 +61,28 @@ class CategoryViewModel(
         }
     }
 
-    /** 新建：重置为默认色 + 默认图标 */
-    fun startNew() = _state.update {
-        CategorySheetState(
-            allCategories = it.allCategories,
-            colorArgb = CATEGORY_PALETTE.first(),
-            iconKey = ICON_REGISTRY.first().first,
-        )
+    /**
+     * 新建：重置为默认色 + 默认图标。
+     * 保存进行中（saving=true）时忽略调用——否则会把 saving 标志一起重置掉，
+     * 重新放开保存按钮，跟正在飞的那次保存并发插入/覆盖。
+     */
+    fun startNew() {
+        if (_state.value.saving) return
+        editSession++
+        _state.update {
+            CategorySheetState(
+                allCategories = it.allCategories,
+                colorArgb = CATEGORY_PALETTE.first(),
+                iconKey = ICON_REGISTRY.first().first,
+            )
+        }
     }
 
     fun startEdit(categoryId: Long) {
         viewModelScope.launch {
             val category = categoryRepository.getById(categoryId) ?: return@launch
             val count = categoryRepository.countEvents(categoryId)
+            editSession++
             _state.update {
                 it.copy(
                     editingId = category.id,
@@ -110,6 +128,7 @@ class CategoryViewModel(
             _state.update { it.copy(errorResId = R.string.error_title_required) }
             return
         }
+        val session = editSession
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
             val existing = if (s.isEditing) categoryRepository.getById(s.editingId) else null
@@ -126,8 +145,14 @@ class CategoryViewModel(
                 ),
             )
             // 插入后把返回的新 id 记进 editingId：否则立刻再点一次"保存修改"
-            // 会因 editingId 还是 0 而再插入一条重复行。
-            _state.update { it.copy(saving = false, editingId = savedId) }
+            // 会因 editingId 还是 0 而再插入一条重复行。但只在会话号没变时才写回——
+            // 如果保存进行期间用户已经切到编辑别的类别/新建（startEdit/startNew 会
+            // 把 editSession 往前推），这次保存的结果就跟当前表单无关，写回 editingId
+            // 会把这条不相关的 id 错误地"嫁接"到当前正在编辑的另一条记录上，
+            // 导致下一次保存变成误更新那条记录而不是插入新记录。
+            _state.update {
+                if (editSession == session) it.copy(saving = false, editingId = savedId) else it.copy(saving = false)
+            }
             onDone()
         }
     }

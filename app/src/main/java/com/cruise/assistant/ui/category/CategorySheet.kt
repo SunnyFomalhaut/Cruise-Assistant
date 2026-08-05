@@ -118,9 +118,12 @@ fun CategorySheet(
                         )
                     }
                     // 新建入口：编辑过一个已有类别后，用它切回空白的"新建"状态。
+                    // enabled = !state.saving：跟保存/删除按钮同样的道理——保存正在飞的时候
+                    // 点这个会把 saving 标志一起重置掉，放开保存按钮，跟正在飞的那次保存并发。
                     FilterChip(
                         selected = !state.isEditing,
                         onClick = onNewCategory,
+                        enabled = !state.saving,
                         label = {
                             Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.category_sheet_title_add))
                         },
