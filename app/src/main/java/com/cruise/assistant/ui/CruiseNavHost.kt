@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,9 +30,13 @@ import com.cruise.assistant.ui.event.EventSheet
 import com.cruise.assistant.ui.event.EventSheetViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
+import com.cruise.assistant.ui.settings.DisplayRangePanel
+import com.cruise.assistant.ui.settings.SettingsScreen
+import com.cruise.assistant.ui.settings.SettingsViewModel
 import com.cruise.assistant.ui.timeline.TimelineLoading
 import com.cruise.assistant.ui.timeline.TimelineScreen
 import com.cruise.assistant.ui.timeline.TimelineViewModel
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 object Routes {
@@ -39,6 +44,9 @@ object Routes {
     const val TIMELINE = "timeline"
     const val SETTINGS = "settings"
 }
+
+/** 显示范围最小跨度，和 domain 层（TimelineLayout.kt 的 MIN_RANGE_MINUTES）保持一致。 */
+private const val MIN_DISPLAY_RANGE_MINUTES = 120
 
 @Composable
 fun CruiseNavHost(container: AppContainer) {
@@ -100,6 +108,9 @@ fun CruiseNavHost(container: AppContainer) {
             val current = timelineState
 
             var sheetRequest by remember { mutableStateOf<EventSheetRequest?>(null) }
+            var showRangePanel by remember { mutableStateOf(false) }
+            var rangeErrorResId by remember { mutableStateOf<Int?>(null) }
+            val coroutineScope = rememberCoroutineScope()
 
             if (current == null) {
                 TimelineLoading()
@@ -108,7 +119,7 @@ fun CruiseNavHost(container: AppContainer) {
                     state = current,
                     onSelectDate = vm::selectDate,
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                    onOpenDisplayRange = { /* Task 10：显示范围面板 */ },
+                    onOpenDisplayRange = { showRangePanel = true },
                     onAddEvent = { startMinute ->
                         sheetRequest = EventSheetRequest(current.selectedDate, startMinute, 0L)
                     },
@@ -119,8 +130,43 @@ fun CruiseNavHost(container: AppContainer) {
                     onDeleteEvent = vm::deleteEvent,
                     onGeneratePlan = { /* Task 11：定稿流程与冲突弹窗 */ },
                     onUnlockDay = { vm.unlockDay(current.selectedDate) },
-                    onToggleFullDay = { /* Task 10：把临时展开范围传给 ViewModel */ },
+                    onToggleFullDay = vm::toggleFullDay,
                     conflictIds = emptySet(),
+                )
+            }
+
+            // ---- 显示范围面板（需求2）----
+            if (showRangePanel && current != null) {
+                DisplayRangePanel(
+                    startMinute = current.settings.displayStartMinute,
+                    endMinute = current.settings.displayEndMinute,
+                    hourHeightDp = current.settings.hourHeightDp,
+                    collapseEmptyGaps = current.settings.collapseEmptyGaps,
+                    errorResId = rangeErrorResId,
+                    onRangeChange = { start, end ->
+                        if (end - start < MIN_DISPLAY_RANGE_MINUTES) {
+                            rangeErrorResId = R.string.error_range_too_short
+                        } else {
+                            rangeErrorResId = null
+                            coroutineScope.launch {
+                                container.settingsStore.setDisplayRange(start, end)
+                            }
+                        }
+                    },
+                    onHourHeightChange = { dp ->
+                        coroutineScope.launch {
+                            container.settingsStore.setHourHeight(dp.coerceIn(36, 140))
+                        }
+                    },
+                    onCollapseToggle = { enabled ->
+                        coroutineScope.launch {
+                            container.settingsStore.setCollapseEmptyGaps(enabled)
+                        }
+                    },
+                    onDismiss = {
+                        showRangePanel = false
+                        rangeErrorResId = null
+                    },
                 )
             }
 
@@ -210,9 +256,56 @@ fun CruiseNavHost(container: AppContainer) {
             }
         }
         composable(Routes.SETTINGS) {
-            // Task 10 填入 SettingsScreen
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("设置（Task 10）")
+            val vm: SettingsViewModel = viewModel(
+                factory = viewModelFactory {
+                    SettingsViewModel(container.settingsStore, container.voyageRepository)
+                },
+            )
+            val settingsState by vm.state.collectAsState()
+            val current = settingsState
+            var showCategorySheet by remember { mutableStateOf(false) }
+
+            if (current != null) {
+                SettingsScreen(
+                    state = current,
+                    onRangeChange = vm::setRange,
+                    onHourHeightChange = vm::setHourHeight,
+                    onCollapseToggle = vm::setCollapse,
+                    onNotificationsToggle = vm::setNotifications,
+                    onReminderMinutesChange = vm::setReminderMinutes,
+                    onResetVoyage = {
+                        vm.resetVoyage {
+                            navController.navigate(Routes.ONBOARDING) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    },
+                    onManageCategories = { showCategorySheet = true },
+                    exactAlarmAvailable = true, // Task 12 接真实检测
+                )
+            }
+
+            // ---- 事项管理：复用 Task 9 的 CategorySheet，不重建第二套类别编辑器 ----
+            if (showCategorySheet) {
+                val catVm: CategoryViewModel = viewModel(
+                    key = "settings-category-sheet",
+                    factory = viewModelFactory { CategoryViewModel(container.categoryRepository) },
+                )
+                val catState by catVm.state.collectAsState()
+                CategorySheet(
+                    state = catState,
+                    onNameChange = catVm::onNameChange,
+                    onColorSelect = catVm::onColorSelect,
+                    onIconSelect = catVm::onIconSelect,
+                    onSubCategoryToggle = catVm::onSubCategoryToggle,
+                    onParentSelect = catVm::onParentSelect,
+                    onArchiveToggle = catVm::onArchiveToggle,
+                    onEditExisting = catVm::startEdit,
+                    onNewCategory = catVm::startNew,
+                    onSave = { catVm.save { showCategorySheet = false } },
+                    onDelete = { catVm.delete { showCategorySheet = false } },
+                    onDismiss = { showCategorySheet = false },
+                )
             }
         }
     }

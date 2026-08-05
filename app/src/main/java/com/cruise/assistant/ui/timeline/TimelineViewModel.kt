@@ -70,6 +70,9 @@ class TimelineViewModel(
     private val selectedDate = MutableStateFlow<LocalDate?>(null)
     private val nowMinute = MutableStateFlow(nowProvider().let { it.hour * 60 + it.minute })
 
+    /** 需求2的"看全天"临时展开——不写盘，只在当前选中日期内生效，换日期即重置。 */
+    private val fullDayOverride = MutableStateFlow(false)
+
     init {
         // 需求1：优先用上次退出时看的日期，探测不到用系统当日；再夹到航次范围内
         viewModelScope.launch {
@@ -99,6 +102,7 @@ class TimelineViewModel(
                     voyageRepository.observeDayPlans(),
                     settingsStore.settings,
                     nowMinute,
+                    fullDayOverride,
                 ) { values ->
                     @Suppress("UNCHECKED_CAST")
                     val voyage = values[0] as Voyage?
@@ -110,6 +114,7 @@ class TimelineViewModel(
                     val plans = values[3] as Map<LocalDate, DayPlan>
                     val settings = values[4] as AppSettings
                     val now = values[5] as Int
+                    val fullDay = values[6] as Boolean
 
                     TimelineUiState(
                         voyage = voyage,
@@ -118,8 +123,8 @@ class TimelineViewModel(
                         categories = categories.associateBy { it.id },
                         dayPlans = plans,
                         layout = buildTimelineLayout(
-                            rangeStartMinute = settings.displayStartMinute,
-                            rangeEndMinute = settings.displayEndMinute,
+                            rangeStartMinute = if (fullDay) 0 else settings.displayStartMinute,
+                            rangeEndMinute = if (fullDay) 1440 else settings.displayEndMinute,
                             hourHeightDp = settings.hourHeightDp,
                             events = events,
                             collapseEmptyGaps = settings.collapseEmptyGaps,
@@ -134,7 +139,13 @@ class TimelineViewModel(
 
     fun selectDate(date: LocalDate) {
         selectedDate.value = date
+        fullDayOverride.value = false
         viewModelScope.launch { settingsStore.setLastViewedDate(date) }
+    }
+
+    /** 需求2："看全天"临时把范围撑到 00:00–24:00，不写盘；换日期会自动重置（见 selectDate）。 */
+    fun toggleFullDay() {
+        fullDayOverride.value = !fullDayOverride.value
     }
 
     fun moveToLane(eventId: Long, lane: Int) {
