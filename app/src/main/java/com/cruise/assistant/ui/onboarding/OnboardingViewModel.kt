@@ -52,6 +52,9 @@ class OnboardingViewModel(
 
     fun submit(onDone: () -> Unit) {
         val current = _state.value
+        // 重入保护：Button 的 enabled = !state.saving 只反映上一次重组时的值，
+        // 两次快速点击可能都在下一次重组落地前发出，靠它单独拦不住重复提交。
+        if (current.saving) return
         if (current.disembarkDate.isBefore(current.boardDate)) {
             _state.update {
                 it.copy(errorResId = com.cruise.assistant.R.string.error_disembark_before_board)
