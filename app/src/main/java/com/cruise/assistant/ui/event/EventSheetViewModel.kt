@@ -12,6 +12,7 @@ import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.ShipZone
+import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +53,7 @@ class EventSheetViewModel(
     private val categoryRepository: CategoryRepository,
     private val locationPresetRepository: LocationPresetRepository,
     private val voyageRepository: VoyageRepository,
+    private val reminderScheduler: ReminderScheduler,
     date: LocalDate,
     defaultStartMinute: Int,
     private val editingEventId: Long,
@@ -210,6 +212,7 @@ class EventSheetViewModel(
             if (deck != null && zone != null && place != null) {
                 locationPresetRepository.remember(deck, zone, place, System.currentTimeMillis())
             }
+            reminderScheduler.rescheduleAll()
             _state.update { it.copy(saving = false) }
             onDone()
         }

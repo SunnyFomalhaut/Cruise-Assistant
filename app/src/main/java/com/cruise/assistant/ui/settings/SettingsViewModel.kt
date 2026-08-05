@@ -7,6 +7,7 @@ import com.cruise.assistant.data.prefs.AppSettings
 import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.domain.Voyage
+import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ private const val MIN_RANGE_MINUTES = 120
 class SettingsViewModel(
     private val settingsStore: SettingsStore,
     private val voyageRepository: VoyageRepository,
+    private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
     private val rangeError = MutableStateFlow<Int?>(null)
@@ -56,11 +58,17 @@ class SettingsViewModel(
     }
 
     fun setNotifications(enabled: Boolean) {
-        viewModelScope.launch { settingsStore.setNotificationsEnabled(enabled) }
+        viewModelScope.launch {
+            settingsStore.setNotificationsEnabled(enabled)
+            reminderScheduler.rescheduleAll()
+        }
     }
 
     fun setReminderMinutes(minutes: Int) {
-        viewModelScope.launch { settingsStore.setDefaultReminderMinutes(minutes.coerceIn(0, 240)) }
+        viewModelScope.launch {
+            settingsStore.setDefaultReminderMinutes(minutes.coerceIn(0, 240))
+            reminderScheduler.rescheduleAll()
+        }
     }
 
     fun updateVoyage(voyage: Voyage) {

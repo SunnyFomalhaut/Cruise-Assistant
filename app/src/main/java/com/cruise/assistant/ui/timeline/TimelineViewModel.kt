@@ -16,6 +16,7 @@ import com.cruise.assistant.domain.Voyage
 import com.cruise.assistant.domain.buildTimelineLayout
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.startMinute
+import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +64,7 @@ class TimelineViewModel(
     private val eventRepository: EventRepository,
     private val categoryRepository: CategoryRepository,
     private val settingsStore: SettingsStore,
+    private val reminderScheduler: ReminderScheduler,
     private val nowProvider: () -> LocalTime = { LocalTime.now() },
     private val todayProvider: () -> LocalDate = { LocalDate.now() },
 ) : ViewModel() {
@@ -153,7 +155,10 @@ class TimelineViewModel(
     }
 
     fun deleteEvent(event: CruiseEvent, scope: RecurrenceScope) {
-        viewModelScope.launch { eventRepository.deleteEvent(event, scope) }
+        viewModelScope.launch {
+            eventRepository.deleteEvent(event, scope)
+            reminderScheduler.rescheduleAll()
+        }
     }
 
     suspend fun conflictsOn(date: LocalDate): List<Pair<CruiseEvent, CruiseEvent>> =
@@ -162,10 +167,14 @@ class TimelineViewModel(
     fun finalizeDay(date: LocalDate) {
         viewModelScope.launch {
             voyageRepository.setFinalized(date, true, System.currentTimeMillis())
+            reminderScheduler.rescheduleAll()
         }
     }
 
     fun unlockDay(date: LocalDate) {
-        viewModelScope.launch { voyageRepository.setFinalized(date, false, 0L) }
+        viewModelScope.launch {
+            voyageRepository.setFinalized(date, false, 0L)
+            reminderScheduler.rescheduleAll()
+        }
     }
 }

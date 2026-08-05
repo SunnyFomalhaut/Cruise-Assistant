@@ -103,6 +103,7 @@ fun CruiseNavHost(container: AppContainer) {
                         container.eventRepository,
                         container.categoryRepository,
                         container.settingsStore,
+                        container.reminderScheduler,
                     )
                 },
             )
@@ -217,6 +218,7 @@ fun CruiseNavHost(container: AppContainer) {
                             container.categoryRepository,
                             container.locationPresetRepository,
                             container.voyageRepository,
+                            container.reminderScheduler,
                             request.date,
                             request.startMinute,
                             request.editingId,
@@ -293,7 +295,11 @@ fun CruiseNavHost(container: AppContainer) {
         composable(Routes.SETTINGS) {
             val vm: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    SettingsViewModel(container.settingsStore, container.voyageRepository)
+                    SettingsViewModel(
+                        container.settingsStore,
+                        container.voyageRepository,
+                        container.reminderScheduler,
+                    )
                 },
             )
             val settingsState by vm.state.collectAsState()
@@ -316,7 +322,7 @@ fun CruiseNavHost(container: AppContainer) {
                         }
                     },
                     onManageCategories = { showCategorySheet = true },
-                    exactAlarmAvailable = true, // Task 12 接真实检测
+                    exactAlarmAvailable = container.reminderScheduler.canScheduleExact(),
                 )
             }
 
