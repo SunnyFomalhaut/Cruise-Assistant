@@ -232,19 +232,32 @@ fun OnboardingScreen(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
-            OutlinedButton(
-                onClick = { onMaxDeckChange(state.maxDeck - 1) },
-                enabled = state.maxDeck > 1,
-            ) { Text("−") }
-            Text(
-                "${state.maxDeck}F",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-            OutlinedButton(
-                onClick = { onMaxDeckChange(state.maxDeck + 1) },
-                enabled = state.maxDeck < 30,
-            ) { Text("+") }
+            // 内置船带 maxDeck 时锁定（隐藏 +/- 调节器，仅显示数值），
+            // 自定义船或无 maxDeck 的内置船保留调节器。
+            val lockedDeck = state.isBuiltInShip &&
+                BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)?.maxDeck != null
+            if (lockedDeck) {
+                Text(
+                    "${state.maxDeck}F",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                OutlinedButton(
+                    onClick = { onMaxDeckChange(state.maxDeck - 1) },
+                    enabled = state.maxDeck > 1,
+                ) { Text("−") }
+                Text(
+                    "${state.maxDeck}F",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                OutlinedButton(
+                    onClick = { onMaxDeckChange(state.maxDeck + 1) },
+                    enabled = state.maxDeck < 30,
+                ) { Text("+") }
+            }
         }
 
         state.errorResId?.let { resId ->

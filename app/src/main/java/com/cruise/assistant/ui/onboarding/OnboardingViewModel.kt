@@ -50,6 +50,7 @@ class OnboardingViewModel(
                 selectedShipIndex = -1,
                 selectedScheduleIndex = -1,
                 shipName = "",
+                maxDeck = 20,
             )
         } else {
             val ship = BUILT_IN_SHIPS[index]
@@ -57,6 +58,7 @@ class OnboardingViewModel(
                 selectedShipIndex = index,
                 selectedScheduleIndex = -1,
                 shipName = ship.name,
+                maxDeck = ship.maxDeck ?: current.maxDeck,
             )
         }
     }

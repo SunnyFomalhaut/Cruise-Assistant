@@ -24,6 +24,8 @@ data class SchedulePreset(
 data class ShipPreset(
     val name: String,
     val schedules: List<SchedulePreset>,
+    /** 内置船可用的最高甲板层数；null 表示不锁定（自定义船期/船名时使用） */
+    val maxDeck: Int? = null,
 )
 
 /**
@@ -56,5 +58,6 @@ val BUILT_IN_SHIPS: List<ShipPreset> = listOf(
                 disembarkTime = LocalTime.of(7, 0),
             ),
         ),
+        maxDeck = 19,
     ),
 )
