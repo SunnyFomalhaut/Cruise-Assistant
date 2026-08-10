@@ -13,6 +13,7 @@ import com.cruise.assistant.domain.startMinute
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 
 /** 编辑/删除循环组内事件时的作用域 */
@@ -130,6 +131,18 @@ class EventRepository(
         } else {
             // 停用：保留原车道仅供显示
             eventDao.setActive(eventId, false)
+        }
+    }
+
+    /**
+     * 设置页切换晚餐时段：把所有 presetKey="dinner" 的事件 startTime 统一更新为 newTime。
+     * durationMinutes 保持不变（75 分钟），日期不变，lane 不变（晚餐时段通常独占
+     * 自己的时间窗）。被删除过的晚餐事件不会批量"复活"——只有当前仍在表里的会被更新。
+     */
+    suspend fun updateDinnerEventsTime(newTime: LocalTime) {
+        val dinners = eventDao.getByPresetKey("dinner")
+        dinners.forEach { entity ->
+            eventDao.update(entity.copy(startTime = newTime))
         }
     }
 

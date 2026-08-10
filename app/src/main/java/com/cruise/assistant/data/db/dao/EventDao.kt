@@ -26,6 +26,9 @@ interface EventDao {
     @Query("SELECT * FROM event WHERE recurrenceGroupId = :groupId ORDER BY date")
     suspend fun getByGroup(groupId: String): List<EventEntity>
 
+    @Query("SELECT * FROM event WHERE presetKey = :key")
+    suspend fun getByPresetKey(key: String): List<EventEntity>
+
     @Query("SELECT DISTINCT date FROM event ORDER BY date")
     fun observeDatesWithEvents(): Flow<List<LocalDate>>
 
