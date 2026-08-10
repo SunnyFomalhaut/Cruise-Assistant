@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.time.LocalTime
 
 data class AppSettings(
     val lastViewedDate: LocalDate? = null,
@@ -21,6 +22,7 @@ data class AppSettings(
     val hourHeightDp: Int = 60,
     val collapseEmptyGaps: Boolean = false,
     val defaultReminderMinutes: Int = 15,
+    val dinnerTime: LocalTime = LocalTime.of(17, 45),
     val notificationsEnabled: Boolean = true,
     val onboardingCompleted: Boolean = false,
 )
@@ -36,6 +38,7 @@ class SettingsStore(private val context: Context) {
         val hourHeight = intPreferencesKey("hour_height_dp")
         val collapseGaps = booleanPreferencesKey("collapse_empty_gaps")
         val reminderMinutes = intPreferencesKey("default_reminder_minutes")
+        val dinnerTime = stringPreferencesKey("dinner_time")
         val notificationsEnabled = booleanPreferencesKey("notifications_enabled")
         val onboardingCompleted = booleanPreferencesKey("onboarding_completed")
         val armedEventIds = stringSetPreferencesKey("armed_event_ids")
@@ -51,6 +54,9 @@ class SettingsStore(private val context: Context) {
             hourHeightDp = prefs[Keys.hourHeight] ?: defaults.hourHeightDp,
             collapseEmptyGaps = prefs[Keys.collapseGaps] ?: defaults.collapseEmptyGaps,
             defaultReminderMinutes = prefs[Keys.reminderMinutes] ?: defaults.defaultReminderMinutes,
+            dinnerTime = prefs[Keys.dinnerTime]
+                ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+                ?: defaults.dinnerTime,
             notificationsEnabled = prefs[Keys.notificationsEnabled] ?: defaults.notificationsEnabled,
             onboardingCompleted = prefs[Keys.onboardingCompleted] ?: defaults.onboardingCompleted,
         )
@@ -70,6 +76,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setDefaultReminderMinutes(minutes: Int) =
         edit { it[Keys.reminderMinutes] = minutes }
+
+    suspend fun setDinnerTime(time: LocalTime) =
+        edit { it[Keys.dinnerTime] = time.toString() }
 
     suspend fun setNotificationsEnabled(enabled: Boolean) =
         edit { it[Keys.notificationsEnabled] = enabled }
