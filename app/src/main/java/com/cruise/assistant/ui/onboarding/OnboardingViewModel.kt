@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.VoyageRepository
+import com.cruise.assistant.domain.BUILT_IN_SHIPS
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +15,9 @@ import java.time.LocalTime
 
 data class OnboardingState(
     val shipName: String = "",
+    val selectedShipIndex: Int = -1,
+    val selectedScheduleIndex: Int = -1,
+    val dinnerTime: LocalTime = LocalTime.of(17, 45),
     val boardDate: LocalDate,
     val boardTime: LocalTime = LocalTime.of(12, 0),
     val disembarkDate: LocalDate,
@@ -21,7 +25,10 @@ data class OnboardingState(
     val saving: Boolean = false,
     /** 已本地化的错误提示 resId，null 表示无错误 */
     val errorResId: Int? = null,
-)
+) {
+    /** 是否选中了内置船（selectedShipIndex >= 0） */
+    val isBuiltInShip: Boolean get() = selectedShipIndex >= 0
+}
 
 class OnboardingViewModel(
     private val voyageRepository: VoyageRepository,
@@ -35,6 +42,47 @@ class OnboardingViewModel(
     val state: StateFlow<OnboardingState> = _state.asStateFlow()
 
     fun onShipNameChange(value: String) = _state.update { it.copy(shipName = value) }
+
+    fun onShipSelected(index: Int) = _state.update { current ->
+        if (index < 0 || index >= BUILT_IN_SHIPS.size) {
+            // 自定义船名
+            current.copy(
+                selectedShipIndex = -1,
+                selectedScheduleIndex = -1,
+                shipName = "",
+            )
+        } else {
+            val ship = BUILT_IN_SHIPS[index]
+            current.copy(
+                selectedShipIndex = index,
+                selectedScheduleIndex = -1,
+                shipName = ship.name,
+            )
+        }
+    }
+
+    fun onScheduleSelected(scheduleIndex: Int) = _state.update { current ->
+        val shipIndex = current.selectedShipIndex
+        if (shipIndex < 0 || shipIndex >= BUILT_IN_SHIPS.size) return@update current
+        val ship = BUILT_IN_SHIPS[shipIndex]
+        if (scheduleIndex < 0 || scheduleIndex >= ship.schedules.size) {
+            // 自定义船期
+            current.copy(selectedScheduleIndex = -1)
+        } else {
+            val schedule = ship.schedules[scheduleIndex]
+            val today = current.boardDate
+            val boardDate = schedule.boardDateFrom(today)
+            val disembarkDate = schedule.disembarkDateFrom(today)
+            current.copy(
+                selectedScheduleIndex = scheduleIndex,
+                boardDate = boardDate,
+                disembarkDate = disembarkDate,
+                boardTime = schedule.boardTime,
+            )
+        }
+    }
+
+    fun onDinnerTimeChange(time: LocalTime) = _state.update { it.copy(dinnerTime = time) }
 
     fun onBoardDateChange(value: LocalDate) = _state.update { current ->
         // 上船日往后挪时，下船日至少跟着不早于它
@@ -63,12 +111,15 @@ class OnboardingViewModel(
         }
         _state.update { it.copy(saving = true, errorResId = null) }
         viewModelScope.launch {
+            val shipPresetName = if (current.isBuiltInShip) current.shipName else null
             voyageRepository.createVoyage(
                 shipName = current.shipName,
                 boardDate = current.boardDate,
                 boardTime = current.boardTime,
                 disembarkDate = current.disembarkDate,
                 maxDeck = current.maxDeck,
+                dinnerTime = current.dinnerTime,
+                shipPresetName = shipPresetName,
             )
             settingsStore.setLastViewedDate(current.boardDate)
             settingsStore.setOnboardingCompleted(true)
