@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,13 +53,15 @@ fun EventCard(
     narrow: Boolean = false,
 ) {
     val colorArgb = category?.colorArgb ?: 0xFF9E9E9E.toInt()
-    val textColor = cardTextColorFor(colorArgb)
+    val active = event.isActive
+    val textColor = if (active) cardTextColorFor(colorArgb) else MaterialTheme.colorScheme.onSurfaceVariant
     val compact = heightDp < COMPACT_THRESHOLD
     val location = formatLocation(event.deck, event.zone, event.placeName)
 
     Row(
         modifier
             .fillMaxWidth()
+            .then(if (active) Modifier else Modifier.alpha(0.45f))
             .clip(RoundedCornerShape(8.dp))
             .background(cardBackgroundFor(colorArgb))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
@@ -68,6 +71,7 @@ fun EventCard(
             Modifier
                 .width(4.dp)
                 .fillMaxHeight()
+                .then(if (active) Modifier else Modifier.alpha(0.45f))
                 .background(Color(colorArgb)),
         )
         Column(
