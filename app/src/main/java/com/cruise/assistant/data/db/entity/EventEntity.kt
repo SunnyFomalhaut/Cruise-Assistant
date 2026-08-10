@@ -25,4 +25,5 @@ data class EventEntity(
     val recurrenceGroupId: String?,
     val reminderMinutesBefore: Int?,
     val isSystemGenerated: Boolean,
+    val isActive: Boolean = true,
 )

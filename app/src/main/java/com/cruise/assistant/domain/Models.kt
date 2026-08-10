@@ -66,6 +66,7 @@ data class CruiseEvent(
     val recurrenceGroupId: String? = null,
     val reminderMinutesBefore: Int? = null,
     val isSystemGenerated: Boolean = false,
+    val isActive: Boolean = true,
 )
 
 val CruiseEvent.startMinute: Int get() = startTime.hour * 60 + startTime.minute
