@@ -22,6 +22,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -283,9 +284,28 @@ fun OnboardingScreen(
             PickerTarget.BOARD -> state.boardDate
             PickerTarget.DISEMBARK -> state.disembarkDate
         }
+        // 选船期后，上船日只能选船期的登船日（周一/周四），其余日期置灰不可选。
+        val lockedBoardDay = if (target == PickerTarget.BOARD && state.selectedScheduleIndex >= 0) {
+            BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)
+                ?.schedules?.getOrNull(state.selectedScheduleIndex)
+                ?.boardDayOfWeek
+        } else {
+            null
+        }
+        val selectableDates = remember(lockedBoardDay) {
+            object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    val dow = lockedBoardDay ?: return true
+                    val date = Instant.ofEpochMilli(utcTimeMillis)
+                        .atZone(ZoneId.systemDefault()).toLocalDate()
+                    return date.dayOfWeek == dow
+                }
+            }
+        }
         val pickerState = rememberDatePickerState(
             initialSelectedDateMillis = initial.atStartOfDay(ZoneId.systemDefault())
                 .toInstant().toEpochMilli(),
+            selectableDates = selectableDates,
         )
         DatePickerDialog(
             onDismissRequest = { pickerTarget = null },
@@ -307,7 +327,22 @@ fun OnboardingScreen(
                     Text(stringResource(R.string.cancel))
                 }
             },
-        ) { DatePicker(state = pickerState) }
+        ) {
+            if (lockedBoardDay != null) {
+                val dowLabel = when (lockedBoardDay) {
+                    java.time.DayOfWeek.MONDAY -> "周一"
+                    java.time.DayOfWeek.THURSDAY -> "周四"
+                    else -> lockedBoardDay.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.CHINA)
+                }
+                Text(
+                    "已按船期锁定，仅可选择 $dowLabel 登船",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+                )
+            }
+            DatePicker(state = pickerState)
+        }
     }
 }
 
