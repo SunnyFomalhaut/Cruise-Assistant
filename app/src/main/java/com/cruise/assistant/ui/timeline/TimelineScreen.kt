@@ -60,6 +60,7 @@ fun TimelineScreen(
     onAddEvent: (Int) -> Unit,
     onEditEvent: (CruiseEvent) -> Unit,
     onMoveToLane: (Long, Int) -> Unit,
+    onToggleActive: (Long, Boolean) -> Unit,
     onDeleteEvent: (CruiseEvent, RecurrenceScope) -> Unit,
     onGeneratePlan: () -> Unit,
     onUnlockDay: () -> Unit,
@@ -222,6 +223,21 @@ fun TimelineScreen(
     // ---- 长按菜单：换栏 / 编辑 / 删除 ----
     menuEvent?.let { event ->
         DropdownMenu(expanded = true, onDismissRequest = { menuEvent = null }) {
+            if (!state.isFinalized && !event.isSystemGenerated) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(
+                                if (event.isActive) R.string.set_inactive else R.string.set_active,
+                            ),
+                        )
+                    },
+                    onClick = {
+                        onToggleActive(event.id, !event.isActive)
+                        menuEvent = null
+                    },
+                )
+            }
             if (!state.isFinalized) {
                 (0 until LANE_COUNT).filter { it != event.lane }.forEach { lane ->
                     DropdownMenuItem(

@@ -142,6 +142,7 @@ fun CruiseNavHost(container: AppContainer) {
                         sheetRequest = EventSheetRequest(event.date, 0, event.id)
                     },
                     onMoveToLane = vm::moveToLane,
+                    onToggleActive = vm::toggleActive,
                     onDeleteEvent = vm::deleteEvent,
                     onGeneratePlan = {
                         val date = current.selectedDate
