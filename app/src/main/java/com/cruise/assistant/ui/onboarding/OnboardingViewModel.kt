@@ -85,8 +85,19 @@ class OnboardingViewModel(
     fun onDinnerTimeChange(time: LocalTime) = _state.update { it.copy(dinnerTime = time) }
 
     fun onBoardDateChange(value: LocalDate) = _state.update { current ->
-        // 上船日往后挪时，下船日至少跟着不早于它
-        val disembark = if (current.disembarkDate.isBefore(value)) value else current.disembarkDate
+        // 选了船期时按 nights 自动算下船日；否则只做不早于上船的保护。
+        val disembark = if (current.selectedScheduleIndex >= 0) {
+            val shipIndex = current.selectedShipIndex
+            if (shipIndex in BUILT_IN_SHIPS.indices) {
+                val nights = BUILT_IN_SHIPS[shipIndex].schedules[current.selectedScheduleIndex].nights
+                value.plusDays(nights.toLong())
+            } else {
+                // 船期索引有效但船索引异常，回退到下限保护
+                if (current.disembarkDate.isBefore(value)) value else current.disembarkDate
+            }
+        } else {
+            if (current.disembarkDate.isBefore(value)) value else current.disembarkDate
+        }
         current.copy(boardDate = value, disembarkDate = disembark, errorResId = null)
     }
 
