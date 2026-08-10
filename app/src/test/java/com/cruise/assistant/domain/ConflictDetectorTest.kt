@@ -84,4 +84,33 @@ class ConflictDetectorTest {
         val events = listOf(ev(1, 13, 0, 60), ev(2, 13, 30, 0))
         assertTrue(findConflicts(events).isEmpty())
     }
+
+    @Test
+    fun inactiveEvents_areExcludedFromConflicts() {
+        val events = listOf(
+            ev(1, 13, 0, 60).copy(isActive = false),
+            ev(2, 13, 20, 60).copy(isActive = false),
+        )
+        assertTrue(findConflicts(events).isEmpty())
+    }
+
+    @Test
+    fun inactiveEvent_doesNotConflictWithActiveEvent() {
+        val events = listOf(
+            ev(1, 13, 0, 60).copy(isActive = true),
+            ev(2, 13, 20, 60).copy(isActive = false),
+        )
+        assertTrue(findConflicts(events).isEmpty())
+    }
+
+    @Test
+    fun activeEvents_stillConflict_whenInactiveEventPresent() {
+        val events = listOf(
+            ev(1, 13, 0, 60).copy(isActive = true),
+            ev(2, 13, 20, 60).copy(isActive = true),
+            ev(3, 13, 10, 60).copy(isActive = false),
+        )
+        // 只有 1 和 2 都是 active 且重叠 → 1 对冲突
+        assertEquals(1, findConflicts(events).size)
+    }
 }

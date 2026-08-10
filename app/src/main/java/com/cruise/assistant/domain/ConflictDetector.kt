@@ -6,7 +6,8 @@ package com.cruise.assistant.domain
  * 相邻（前一个结束 == 后一个开始）不算冲突。
  */
 fun findConflicts(events: List<CruiseEvent>): List<Pair<CruiseEvent, CruiseEvent>> {
-    val sorted = events.sortedWith(compareBy({ it.startMinute }, { it.id }))
+    val activeEvents = events.filter { it.isActive }
+    val sorted = activeEvents.sortedWith(compareBy({ it.startMinute }, { it.id }))
     val result = mutableListOf<Pair<CruiseEvent, CruiseEvent>>()
     for (i in sorted.indices) {
         val a = sorted[i]
