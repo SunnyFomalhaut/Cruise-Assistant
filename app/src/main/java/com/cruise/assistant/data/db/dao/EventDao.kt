@@ -50,6 +50,9 @@ interface EventDao {
     @Query("UPDATE event SET categoryId = :toCategoryId WHERE categoryId = :fromCategoryId")
     suspend fun reassignCategory(fromCategoryId: Long, toCategoryId: Long)
 
+    @Query("UPDATE event SET isActive = :active WHERE id = :id")
+    suspend fun setActive(id: Long, active: Boolean)
+
     @Query("SELECT COUNT(*) FROM event WHERE categoryId = :categoryId")
     suspend fun countByCategory(categoryId: Long): Int
 

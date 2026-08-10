@@ -42,7 +42,7 @@ class EventRepository(
             listOf(event.copy(id = 0))
         }
         copies.forEach { copy ->
-            val sameDay = eventDao.getByDate(copy.date).map { it.toDomain() }
+            val sameDay = eventDao.getByDate(copy.date).map { it.toDomain() }.filter { it.isActive }
             val lane = assignLane(copy.startMinute, copy.endMinute, sameDay)
             eventDao.insert(copy.copy(lane = lane).toEntity())
         }
@@ -92,7 +92,7 @@ class EventRepository(
             val lane = if (timingUnchanged) {
                 target.lane
             } else {
-                val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }
+                val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }.filter { it.isActive }
                 assignLane(merged.startMinute, merged.endMinute, sameDay, excludeId = merged.id)
             }
             eventDao.update(merged.copy(lane = lane).toEntity())
@@ -114,6 +114,23 @@ class EventRepository(
     suspend fun moveToLane(eventId: Long, lane: Int) {
         val entity = eventDao.getById(eventId) ?: return
         eventDao.update(entity.copy(lane = lane))
+    }
+
+    /** 切换事件活动/非活动状态（仅本日，不影响循环组其他成员） */
+    suspend fun setActive(eventId: Long, active: Boolean) {
+        if (active) {
+            // 重新激活：重算车道，避免与激活期间新增的事件撞栏
+            val entity = eventDao.getById(eventId) ?: return
+            val sameDay = eventDao.getByDate(entity.date)
+                .map { it.toDomain() }
+                .filter { it.isActive && it.id != eventId }
+            val event = entity.toDomain()
+            val lane = assignLane(event.startMinute, event.endMinute, sameDay)
+            eventDao.update(entity.copy(isActive = true, lane = lane))
+        } else {
+            // 停用：保留原车道仅供显示
+            eventDao.setActive(eventId, false)
+        }
     }
 
     /** 需求8：定稿前的冲突检查 */
