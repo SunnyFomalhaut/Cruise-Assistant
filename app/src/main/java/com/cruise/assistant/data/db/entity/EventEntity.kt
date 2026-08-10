@@ -26,4 +26,5 @@ data class EventEntity(
     val reminderMinutesBefore: Int?,
     val isSystemGenerated: Boolean,
     val isActive: Boolean = true,
+    val presetKey: String? = null,
 )

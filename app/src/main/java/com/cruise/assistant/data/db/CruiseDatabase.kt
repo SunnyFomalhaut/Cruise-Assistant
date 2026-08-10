@@ -25,7 +25,7 @@ import com.cruise.assistant.data.db.entity.VoyageEntity
         DayPlanEntity::class,
         LocationPresetEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -44,13 +44,19 @@ abstract class CruiseDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE event ADD COLUMN presetKey TEXT")
+            }
+        }
+
         fun get(context: Context): CruiseDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     CruiseDatabase::class.java,
                     "cruise.db",
-                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
             }
     }
 }
