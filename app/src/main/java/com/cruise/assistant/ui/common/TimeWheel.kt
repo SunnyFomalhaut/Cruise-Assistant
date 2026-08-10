@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,23 +95,48 @@ private fun WheelColumn(
     format: (Int) -> String,
     modifier: Modifier = Modifier,
 ) {
-    val selectedIndex = items.indexOf(selected).coerceAtLeast(0)
-    val state = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
+    // 循环滚动：用大倍数假装无限列表，下标对 items.size 取模即可首尾相接。
+    // REPEAT 选 Int.MAX_VALUE 让用户怎么滚都摸不到边界；
+    // 初始 startPosition 居中落在一个远离边界的 chunk，避免滚动到 list 末端触底。
+    val realSize = items.size
+    val initialLogicalIndex = remember(selected, realSize) {
+        // 把初始位置定位到"中间附近且映射回 selected"的地方：
+        // 用一个固定的大偏移 (1_000_000 * realSize) + selected，确保物理下标远离 0/MaxValue 边界。
+        val base = 1_000_000L * realSize
+        (base + items.indexOf(selected).coerceAtLeast(0)).toInt()
+    }
+    val state = rememberLazyListState(initialFirstVisibleItemIndex = initialLogicalIndex)
     val density = LocalDensity.current
     val rowHeightPx = remember(density) { with(density) { ROW_HEIGHT.toPx() } }
 
-    // 外部值变化时同步滚动
+    // rememberUpdatedState 保证 LaunchedEffect(state) 长期协程里读到的
+    // selected / onSelect 始终是最新值，而非首次组合时的旧快照。
+    // 之前 onSelect 捕获了旧的 value(LocalTime)，导致先改小时再滚分钟时
+    // withMinute(it) 把小时回退成旧值（如无法选择 11:45）。
+    val currentSelected = rememberUpdatedState(selected)
+    val currentOnSelect = rememberUpdatedState(onSelect)
+
+    // 外部值变化时同步滚动到对齐该值的最近 logical index（保持在当前可视区附近，
+    // 不跳到 1_000_000 那个远端 chunk，避免视觉跳变）。
     LaunchedEffect(selected) {
-        val target = items.indexOf(selected).coerceAtLeast(0)
-        if (state.firstVisibleItemIndex != target) state.scrollToItem(target)
+        if (realSize == 0) return@LaunchedEffect
+        val targetRealIndex = items.indexOf(selected).coerceAtLeast(0)
+        // 计算当前可视区中心对应的目标 real index 与可视中心 raw 的差距，
+        // 选一个最近的等价 raw 去 scrollToItem。
+        val centeredRawApprox = state.firstVisibleItemIndex +
+            (state.firstVisibleItemScrollOffset / rowHeightPx).roundToInt()
+        val centeredRealApprox = ((centeredRawApprox % realSize) + realSize) % realSize
+        val diffToTarget = ((targetRealIndex - centeredRealApprox + realSize / 2 + realSize) % realSize) - realSize / 2
+        val targetRaw = centeredRawApprox + diffToTarget
+        if (state.firstVisibleItemIndex != targetRaw) state.scrollToItem(targetRaw)
     }
 
-    // 当前对准中间行的条目：由 firstVisibleItemIndex 加上滚动偏移的整行数修正得到，
-    // 静止吸附时 offset 恒为 0，此时 centeredIndex == firstVisibleItemIndex（居中行）。
+    // 当前对准中间行的条目：raw index 对 realSize 取模得到真实 item 下标。
     val centeredIndex by remember(items) {
         derivedStateOf {
-            val rounded = (state.firstVisibleItemScrollOffset / rowHeightPx).roundToInt()
-            (state.firstVisibleItemIndex + rounded).coerceIn(0, items.lastIndex)
+            val rawCentered = state.firstVisibleItemIndex +
+                (state.firstVisibleItemScrollOffset / rowHeightPx).roundToInt()
+            ((rawCentered % realSize) + realSize) % realSize
         }
     }
 
@@ -118,7 +144,7 @@ private fun WheelColumn(
     LaunchedEffect(state) {
         snapshotFlow { state.isScrollInProgress to centeredIndex }
             .collect { (scrolling, index) ->
-                if (!scrolling && items[index] != selected) onSelect(items[index])
+                if (!scrolling && items[index] != currentSelected.value) currentOnSelect.value(items[index])
             }
     }
 
@@ -128,7 +154,8 @@ private fun WheelColumn(
         flingBehavior = rememberSnapFlingBehavior(state),
         contentPadding = PaddingValues(vertical = ROW_HEIGHT),
     ) {
-        items(items.size) { index ->
+        items(Int.MAX_VALUE) { rawIndex ->
+            val index = ((rawIndex % realSize) + realSize) % realSize
             val isSelected = index == centeredIndex
             Box(
                 Modifier.fillMaxWidth().height(ROW_HEIGHT),
