@@ -232,13 +232,13 @@ fun OnboardingScreen(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
-            // 内置船带 maxDeck 时锁定（隐藏 +/- 调节器，仅显示数值），
+            // 内置船带 maxDeck 时锁定（隐藏 +/- 调节器，仅显示范围），
             // 自定义船或无 maxDeck 的内置船保留调节器。
             val lockedDeck = state.isBuiltInShip &&
                 BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)?.maxDeck != null
             if (lockedDeck) {
                 Text(
-                    "${state.maxDeck}F",
+                    "${state.minDeck}-${state.maxDeck}F",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

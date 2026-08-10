@@ -14,4 +14,6 @@ data class VoyageEntity(
     val disembarkDate: LocalDate,
     val disembarkTime: LocalTime,
     val maxDeck: Int,
+    /** 客用最低楼层，默认 1（无限制） */
+    val minDeck: Int = 1,
 )

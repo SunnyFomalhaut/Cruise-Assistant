@@ -36,6 +36,7 @@ data class EventSheetState(
     val recurring: Boolean = false,
     val presets: List<LocationPreset> = emptyList(),
     val maxDeck: Int = 20,
+    val minDeck: Int = 1,
     val disembarkDate: LocalDate? = null,
     val isSystemEvent: Boolean = false,
     val isRecurrenceMember: Boolean = false,
@@ -83,7 +84,7 @@ class EventSheetViewModel(
         viewModelScope.launch {
             val voyage = voyageRepository.getVoyage()
             _state.update {
-                it.copy(maxDeck = voyage?.maxDeck ?: 20, disembarkDate = voyage?.disembarkDate)
+                it.copy(maxDeck = voyage?.maxDeck ?: 20, minDeck = voyage?.minDeck ?: 1, disembarkDate = voyage?.disembarkDate)
             }
         }
         viewModelScope.launch {

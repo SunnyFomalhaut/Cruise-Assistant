@@ -179,6 +179,7 @@ fun EventSheet(
 
                 LocationPicker(
                     maxDeck = state.maxDeck,
+                    minDeck = state.minDeck,
                     deck = state.deck,
                     zone = state.zone,
                     placeName = state.placeName,

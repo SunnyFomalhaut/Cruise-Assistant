@@ -51,6 +51,7 @@ class VoyageRepository(
         boardTime: LocalTime,
         disembarkDate: LocalDate,
         maxDeck: Int,
+        minDeck: Int = 1,
         dinnerTime: LocalTime = LocalTime.of(17, 45),
         shipPresetName: String? = null,
     ): Voyage {
@@ -62,6 +63,7 @@ class VoyageRepository(
             disembarkDate = disembarkDate,
             disembarkTime = LocalTime.of(7, 0),
             maxDeck = maxDeck,
+            minDeck = minDeck,
         )
         voyageDao.upsertVoyage(voyage.toEntity())
         voyageDao.upsertDayPlans(

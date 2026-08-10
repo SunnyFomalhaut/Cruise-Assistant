@@ -13,11 +13,11 @@ import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.Voyage
 
 fun VoyageEntity.toDomain() = Voyage(
-    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck,
+    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck, minDeck,
 )
 
 fun Voyage.toEntity() = VoyageEntity(
-    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck,
+    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck, minDeck,
 )
 
 fun CategoryEntity.toDomain() = Category(

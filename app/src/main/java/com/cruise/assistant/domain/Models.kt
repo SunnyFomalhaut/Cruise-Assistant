@@ -18,6 +18,8 @@ data class Voyage(
     val disembarkDate: LocalDate,
     val disembarkTime: LocalTime = LocalTime.of(7, 0),
     val maxDeck: Int = 20,
+    /** 客用最低楼层（如迪士尼探险号 5-19F，minDeck=5） */
+    val minDeck: Int = 1,
 ) {
     /** 航次总天数，含上船日和下船日 */
     val dayCount: Int

@@ -46,6 +46,7 @@ import com.cruise.assistant.domain.ShipZone
 @Composable
 fun LocationPicker(
     maxDeck: Int,
+    minDeck: Int = 1,
     deck: Int?,
     zone: ShipZone?,
     placeName: String,
@@ -86,7 +87,7 @@ fun LocationPicker(
                     onDismissRequest = { deckMenuOpen = false },
                     modifier = Modifier.heightIn(max = 280.dp),
                 ) {
-                    (1..maxDeck).forEach { floor ->
+                    (minDeck..maxDeck).forEach { floor ->
                         DropdownMenuItem(
                             text = { Text("${floor}F") },
                             onClick = {

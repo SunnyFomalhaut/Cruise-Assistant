@@ -26,6 +26,8 @@ data class ShipPreset(
     val schedules: List<SchedulePreset>,
     /** 内置船可用的最高甲板层数；null 表示不锁定（自定义船期/船名时使用） */
     val maxDeck: Int? = null,
+    /** 内置船客用最低甲板层数（如迪士尼探险号 5-19F 的 5）；null 表示无下限（1F） */
+    val minDeck: Int? = null,
 )
 
 /**
@@ -59,5 +61,6 @@ val BUILT_IN_SHIPS: List<ShipPreset> = listOf(
             ),
         ),
         maxDeck = 19,
+        minDeck = 5,
     ),
 )

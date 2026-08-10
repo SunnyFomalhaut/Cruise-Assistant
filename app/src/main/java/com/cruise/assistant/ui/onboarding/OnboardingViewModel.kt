@@ -22,6 +22,7 @@ data class OnboardingState(
     val boardTime: LocalTime = LocalTime.of(12, 0),
     val disembarkDate: LocalDate,
     val maxDeck: Int = 20,
+    val minDeck: Int = 1,
     val saving: Boolean = false,
     /** 已本地化的错误提示 resId，null 表示无错误 */
     val errorResId: Int? = null,
@@ -51,6 +52,7 @@ class OnboardingViewModel(
                 selectedScheduleIndex = -1,
                 shipName = "",
                 maxDeck = 20,
+                minDeck = 1,
             )
         } else {
             val ship = BUILT_IN_SHIPS[index]
@@ -59,6 +61,7 @@ class OnboardingViewModel(
                 selectedScheduleIndex = -1,
                 shipName = ship.name,
                 maxDeck = ship.maxDeck ?: current.maxDeck,
+                minDeck = ship.minDeck ?: 1,
             )
         }
     }
@@ -131,6 +134,7 @@ class OnboardingViewModel(
                 boardTime = current.boardTime,
                 disembarkDate = current.disembarkDate,
                 maxDeck = current.maxDeck,
+                minDeck = current.minDeck,
                 dinnerTime = current.dinnerTime,
                 shipPresetName = shipPresetName,
             )
