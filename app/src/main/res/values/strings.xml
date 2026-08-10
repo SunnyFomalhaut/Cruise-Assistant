@@ -10,6 +10,12 @@
     <string name="board_time_label">上船时间</string>
     <string name="disembark_date_label">下船日期</string>
     <string name="disembark_time_hint">下船时间固定为当天 07:00</string>
+    <string name="custom_ship">自定义船名…</string>
+    <string name="custom_schedule">自定义船期…</string>
+    <string name="schedule_label">船期</string>
+    <string name="dinner_time_label">晚餐时段</string>
+    <string name="dinner_time_early">17:45</string>
+    <string name="dinner_time_late">20:00</string>
     <string name="max_deck_label">最高层数</string>
     <string name="generate_timeline">生成时间轴</string>
     <string name="error_disembark_before_board">下船日期不能早于上船日期</string>

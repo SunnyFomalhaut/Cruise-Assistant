@@ -82,10 +82,13 @@ fun CruiseNavHost(container: AppContainer) {
             OnboardingScreen(
                 state = state,
                 onShipNameChange = vm::onShipNameChange,
+                onShipSelected = vm::onShipSelected,
+                onScheduleSelected = vm::onScheduleSelected,
                 onBoardDateChange = vm::onBoardDateChange,
                 onBoardTimeChange = vm::onBoardTimeChange,
                 onDisembarkDateChange = vm::onDisembarkDateChange,
                 onMaxDeckChange = vm::onMaxDeckChange,
+                onDinnerTimeChange = vm::onDinnerTimeChange,
                 onSubmit = {
                     vm.submit {
                         navController.navigate(Routes.TIMELINE) {

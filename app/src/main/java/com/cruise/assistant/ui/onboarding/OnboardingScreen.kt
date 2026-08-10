@@ -15,6 +15,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
+import com.cruise.assistant.domain.BUILT_IN_SHIPS
 import com.cruise.assistant.ui.common.TimeWheel
 import java.time.Instant
 import java.time.LocalDate
@@ -43,10 +48,13 @@ private val DATE_FMT = DateTimeFormatter.ofPattern("yyyy年M月d日")
 fun OnboardingScreen(
     state: OnboardingState,
     onShipNameChange: (String) -> Unit,
+    onShipSelected: (Int) -> Unit,
+    onScheduleSelected: (Int) -> Unit,
     onBoardDateChange: (LocalDate) -> Unit,
     onBoardTimeChange: (java.time.LocalTime) -> Unit,
     onDisembarkDateChange: (LocalDate) -> Unit,
     onMaxDeckChange: (Int) -> Unit,
+    onDinnerTimeChange: (java.time.LocalTime) -> Unit,
     onSubmit: () -> Unit,
 ) {
     var pickerTarget by remember { mutableStateOf<PickerTarget?>(null) }
@@ -66,14 +74,126 @@ fun OnboardingScreen(
         )
         Spacer(Modifier.height(24.dp))
 
-        OutlinedTextField(
-            value = state.shipName,
-            onValueChange = onShipNameChange,
-            label = { Text(stringResource(R.string.ship_name_label)) },
-            singleLine = true,
+        // ---- 船名下拉 ----
+        Text(stringResource(R.string.ship_name_label), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        var shipMenuExpanded by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = shipMenuExpanded,
+            onExpandedChange = { shipMenuExpanded = it },
             modifier = Modifier.fillMaxWidth(),
-        )
+        ) {
+            OutlinedTextField(
+                value = if (state.isBuiltInShip) state.shipName
+                    else if (state.shipName.isEmpty()) stringResource(R.string.custom_ship)
+                    else state.shipName,
+                onValueChange = { },
+                label = { Text(stringResource(R.string.ship_name_label)) },
+                singleLine = true,
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shipMenuExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+            )
+            ExposedDropdownMenu(
+                expanded = shipMenuExpanded,
+                onDismissRequest = { shipMenuExpanded = false },
+            ) {
+                BUILT_IN_SHIPS.forEachIndexed { index, ship ->
+                    DropdownMenuItem(
+                        text = { Text(ship.name) },
+                        onClick = {
+                            onShipSelected(index)
+                            shipMenuExpanded = false
+                        },
+                    )
+                }
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.custom_ship)) },
+                    onClick = {
+                        onShipSelected(-1)
+                        shipMenuExpanded = false
+                    },
+                )
+            }
+        }
+        // 自定义船名时显示输入框
+        if (!state.isBuiltInShip) {
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = state.shipName,
+                onValueChange = onShipNameChange,
+                label = { Text(stringResource(R.string.ship_name_label)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         Spacer(Modifier.height(20.dp))
+
+        // ---- 船期下拉（仅内置船显示）----
+        if (state.isBuiltInShip) {
+            Text(stringResource(R.string.schedule_label), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            var scheduleMenuExpanded by remember { mutableStateOf(false) }
+            val ship = BUILT_IN_SHIPS[state.selectedShipIndex]
+            ExposedDropdownMenuBox(
+                expanded = scheduleMenuExpanded,
+                onExpandedChange = { scheduleMenuExpanded = it },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                OutlinedTextField(
+                    value = if (state.selectedScheduleIndex >= 0)
+                        ship.schedules[state.selectedScheduleIndex].label
+                    else stringResource(R.string.custom_schedule),
+                    onValueChange = { },
+                    label = { Text(stringResource(R.string.schedule_label)) },
+                    singleLine = true,
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = scheduleMenuExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                )
+                ExposedDropdownMenu(
+                    expanded = scheduleMenuExpanded,
+                    onDismissRequest = { scheduleMenuExpanded = false },
+                ) {
+                    ship.schedules.forEachIndexed { index, schedule ->
+                        DropdownMenuItem(
+                            text = { Text(schedule.label) },
+                            onClick = {
+                                onScheduleSelected(index)
+                                scheduleMenuExpanded = false
+                            },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.custom_schedule)) },
+                        onClick = {
+                            onScheduleSelected(-1)
+                            scheduleMenuExpanded = false
+                        },
+                    )
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+        }
+
+        // ---- 晚餐时段（仅内置船 + 选中了预置船期时显示）----
+        if (state.isBuiltInShip && state.selectedScheduleIndex >= 0) {
+            Text(stringResource(R.string.dinner_time_label), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    java.time.LocalTime.of(17, 45) to R.string.dinner_time_early,
+                    java.time.LocalTime.of(20, 0) to R.string.dinner_time_late,
+                ).forEach { (time, labelRes) ->
+                    FilterChip(
+                        selected = state.dinnerTime == time,
+                        onClick = { onDinnerTimeChange(time) },
+                        label = { Text(stringResource(labelRes)) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+        }
 
         Text(stringResource(R.string.board_date_label), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
