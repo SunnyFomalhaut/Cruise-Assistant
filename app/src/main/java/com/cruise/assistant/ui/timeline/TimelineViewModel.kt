@@ -47,14 +47,14 @@ data class TimelineUiState(
 
     /** 进行中的事件（仅当天） */
     val ongoing: CruiseEvent?
-        get() = if (!isToday) null else events.firstOrNull {
+        get() = if (!isToday) null else events.filter { it.isActive }.firstOrNull {
             nowMinute in it.startMinute until it.endMinute
         }
 
     /** 下一个事件（仅当天） */
     val next: CruiseEvent?
         get() = if (!isToday) null else events
-            .filter { it.startMinute > nowMinute }
+            .filter { it.isActive && it.startMinute > nowMinute }
             .minByOrNull { it.startMinute }
 }
 
@@ -152,6 +152,13 @@ class TimelineViewModel(
 
     fun moveToLane(eventId: Long, lane: Int) {
         viewModelScope.launch { eventRepository.moveToLane(eventId, lane) }
+    }
+
+    fun toggleActive(eventId: Long, active: Boolean) {
+        viewModelScope.launch {
+            eventRepository.setActive(eventId, active)
+            reminderScheduler.rescheduleAll()
+        }
     }
 
     fun deleteEvent(event: CruiseEvent, scope: RecurrenceScope) {
