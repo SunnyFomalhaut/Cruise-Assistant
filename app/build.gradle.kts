@@ -20,8 +20,8 @@ android {
         applicationId = "com.cruise.assistant"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
     }
 
     signingConfigs {
@@ -61,6 +61,13 @@ android {
     buildFeatures { compose = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     ksp { arg("room.schemaLocation", "$projectDir/schemas") }
+
+    applicationVariants.all {
+        outputs.all {
+            val output = this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output?.outputFileName = "CruiseAssistant-v${versionName}.apk"
+        }
+    }
 }
 
 dependencies {
