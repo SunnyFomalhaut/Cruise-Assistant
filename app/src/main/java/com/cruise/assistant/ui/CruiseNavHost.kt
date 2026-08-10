@@ -318,6 +318,7 @@ fun CruiseNavHost(container: AppContainer) {
                     onCollapseToggle = vm::setCollapse,
                     onNotificationsToggle = vm::setNotifications,
                     onReminderMinutesChange = vm::setReminderMinutes,
+                    onDinnerTimeChange = vm::setDinnerTime,
                     onResetVoyage = {
                         vm.resetVoyage {
                             navController.navigate(Routes.ONBOARDING) {

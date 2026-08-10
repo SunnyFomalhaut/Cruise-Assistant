@@ -89,6 +89,9 @@
     <!-- 设置 -->
     <string name="settings">设置</string>
     <string name="reminder_section">提醒</string>
+    <string name="dinner_time_section">晚餐时段</string>
+    <string name="dinner_time_1745">17:45</string>
+    <string name="dinner_time_2000">20:00</string>
     <string name="reminder_enabled">开启提醒</string>
     <string name="reminder_lead_time">提前提醒</string>
     <string name="minutes_format">%1$d 分钟</string>

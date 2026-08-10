@@ -45,6 +45,7 @@ fun SettingsScreen(
     onCollapseToggle: (Boolean) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
     onReminderMinutesChange: (Int) -> Unit,
+    onDinnerTimeChange: (java.time.LocalTime) -> Unit,
     onResetVoyage: () -> Unit,
     onManageCategories: () -> Unit,
     exactAlarmAvailable: Boolean,
@@ -165,6 +166,29 @@ fun SettingsScreen(
                     stringResource(R.string.exact_alarm_unavailable),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+        HorizontalDivider()
+        Spacer(Modifier.height(20.dp))
+
+        // ---- 晚餐时段 ----
+        Text(stringResource(R.string.dinner_time_section), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf(
+                java.time.LocalTime.of(17, 45) to R.string.dinner_time_1745,
+                java.time.LocalTime.of(20, 0) to R.string.dinner_time_2000,
+            ).forEach { (time, labelRes) ->
+                FilterChip(
+                    selected = state.settings.dinnerTime == time,
+                    onClick = { onDinnerTimeChange(time) },
+                    label = { Text(stringResource(labelRes)) },
                 )
             }
         }
