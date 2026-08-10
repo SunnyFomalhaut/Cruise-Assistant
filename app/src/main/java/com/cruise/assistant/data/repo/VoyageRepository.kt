@@ -9,6 +9,7 @@ import com.cruise.assistant.data.db.toDomain
 import com.cruise.assistant.data.db.toEntity
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.DayPlan
+import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.Voyage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,6 +19,9 @@ import java.time.LocalTime
 /** 上船事件固定时长 15 分钟（需求7） */
 private const val BOARDING_DURATION_MINUTES = 15
 private const val DISEMBARK_DURATION_MINUTES = 30
+private const val SAFETY_DRILL_DURATION_MINUTES = 35
+private const val DINNER_DURATION_MINUTES = 75
+private val SAFETY_DRILL_TIME = LocalTime.of(15, 45)
 
 class VoyageRepository(
     private val voyageDao: VoyageDao,
@@ -47,6 +51,8 @@ class VoyageRepository(
         boardTime: LocalTime,
         disembarkDate: LocalDate,
         maxDeck: Int,
+        dinnerTime: LocalTime = LocalTime.of(17, 45),
+        shipPresetName: String? = null,
     ): Voyage {
         val voyage = Voyage(
             id = 1,
@@ -70,26 +76,64 @@ class VoyageRepository(
         val importantId = categories.firstOrNull { it.iconKey == "important" }?.id
             ?: categories.first().id
 
-        eventDao.insertAll(
-            listOf(
-                CruiseEvent(
-                    date = boardDate,
-                    startTime = boardTime,
-                    durationMinutes = BOARDING_DURATION_MINUTES,
-                    categoryId = importantId,
-                    title = "上船",
-                    isSystemGenerated = true,
-                ).toEntity(),
-                CruiseEvent(
-                    date = disembarkDate,
-                    startTime = voyage.disembarkTime,
-                    durationMinutes = DISEMBARK_DURATION_MINUTES,
-                    categoryId = importantId,
-                    title = "下船",
-                    isSystemGenerated = true,
-                ).toEntity(),
-            ),
+        val systemEvents = listOf(
+            CruiseEvent(
+                date = boardDate,
+                startTime = boardTime,
+                durationMinutes = BOARDING_DURATION_MINUTES,
+                categoryId = importantId,
+                title = "上船",
+                isSystemGenerated = true,
+            ).toEntity(),
+            CruiseEvent(
+                date = disembarkDate,
+                startTime = voyage.disembarkTime,
+                durationMinutes = DISEMBARK_DURATION_MINUTES,
+                categoryId = importantId,
+                title = "下船",
+                isSystemGenerated = true,
+            ).toEntity(),
         )
+        eventDao.insertAll(systemEvents)
+
+        // 内置船只才生成预置活动（安全演习 + 晚餐）
+        if (shipPresetName != null) {
+            val mealId = categories.firstOrNull { it.iconKey == "meal" }?.id
+                ?: categories.first().id
+
+            val presetEvents = mutableListOf<CruiseEvent>()
+
+            // 安全演习：仅上船日（第一天），15:45–16:20，6F 船中
+            presetEvents += CruiseEvent(
+                date = boardDate,
+                startTime = SAFETY_DRILL_TIME,
+                durationMinutes = SAFETY_DRILL_DURATION_MINUTES,
+                categoryId = importantId,
+                title = "安全演习",
+                deck = 6,
+                zone = ShipZone.MID,
+                isSystemGenerated = false,
+                presetKey = "safety_drill",
+            )
+
+            // 晚餐：每个航程日除下船日，dinnerTime 起 75 分钟
+            voyage.datesInVoyage()
+                .filter { it != disembarkDate }
+                .forEach { day ->
+                    presetEvents += CruiseEvent(
+                        date = day,
+                        startTime = dinnerTime,
+                        durationMinutes = DINNER_DURATION_MINUTES,
+                        categoryId = mealId,
+                        title = "晚餐",
+                        isSystemGenerated = false,
+                        presetKey = "dinner",
+                    )
+                }
+
+            eventDao.insertAll(presetEvents.map { it.toEntity() })
+        }
+
         return voyage
     }
 
