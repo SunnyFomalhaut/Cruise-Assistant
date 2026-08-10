@@ -1,0 +1,60 @@
+package com.cruise.assistant.domain
+
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
+
+data class SchedulePreset(
+    val label: String,
+    val nights: Int,
+    val boardDayOfWeek: DayOfWeek,
+    val disembarkDayOfWeek: DayOfWeek,
+    val boardTime: LocalTime,
+    val disembarkTime: LocalTime,
+) {
+    /** Compute board date as the next occurrence of boardDayOfWeek from `today` (inclusive). */
+    fun boardDateFrom(today: LocalDate): LocalDate =
+        nextOccurrenceOfDayOfWeek(boardDayOfWeek, today)
+
+    /** Compute disembark date = board date + nights. */
+    fun disembarkDateFrom(today: LocalDate): LocalDate =
+        boardDateFrom(today).plusDays(nights.toLong())
+}
+
+data class ShipPreset(
+    val name: String,
+    val schedules: List<SchedulePreset>,
+)
+
+/**
+ * Returns the date of the next occurrence of `target` on or after `today`.
+ * If `today` itself is the target day-of-week, returns `today`.
+ */
+fun nextOccurrenceOfDayOfWeek(target: DayOfWeek, today: LocalDate): LocalDate {
+    val diff = (target.value - today.dayOfWeek.value + 7) % 7
+    return today.plusDays(diff.toLong())
+}
+
+val BUILT_IN_SHIPS: List<ShipPreset> = listOf(
+    ShipPreset(
+        name = "Disney Adventure",
+        schedules = listOf(
+            SchedulePreset(
+                label = "四天三夜",
+                nights = 3,
+                boardDayOfWeek = DayOfWeek.MONDAY,
+                disembarkDayOfWeek = DayOfWeek.THURSDAY,
+                boardTime = LocalTime.of(12, 0),
+                disembarkTime = LocalTime.of(7, 0),
+            ),
+            SchedulePreset(
+                label = "五天四夜",
+                nights = 4,
+                boardDayOfWeek = DayOfWeek.THURSDAY,
+                disembarkDayOfWeek = DayOfWeek.MONDAY,
+                boardTime = LocalTime.of(12, 0),
+                disembarkTime = LocalTime.of(7, 0),
+            ),
+        ),
+    ),
+)
