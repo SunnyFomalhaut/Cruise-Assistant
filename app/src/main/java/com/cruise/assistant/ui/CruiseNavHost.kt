@@ -301,6 +301,7 @@ fun CruiseNavHost(container: AppContainer) {
                     SettingsViewModel(
                         container.settingsStore,
                         container.voyageRepository,
+                        container.eventRepository,
                         container.reminderScheduler,
                     )
                 },

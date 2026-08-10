@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.cruise.assistant.R
 import com.cruise.assistant.data.prefs.AppSettings
 import com.cruise.assistant.data.prefs.SettingsStore
+import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.domain.Voyage
+import java.time.LocalTime
 import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +29,7 @@ private const val MIN_RANGE_MINUTES = 120
 class SettingsViewModel(
     private val settingsStore: SettingsStore,
     private val voyageRepository: VoyageRepository,
+    private val eventRepository: EventRepository,
     private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
@@ -67,6 +70,14 @@ class SettingsViewModel(
     fun setReminderMinutes(minutes: Int) {
         viewModelScope.launch {
             settingsStore.setDefaultReminderMinutes(minutes.coerceIn(0, 240))
+            reminderScheduler.rescheduleAll()
+        }
+    }
+
+    fun setDinnerTime(time: LocalTime) {
+        viewModelScope.launch {
+            settingsStore.setDinnerTime(time)
+            eventRepository.updateDinnerEventsTime(time)
             reminderScheduler.rescheduleAll()
         }
     }
