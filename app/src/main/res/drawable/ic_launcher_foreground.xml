@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Ship Funnel & Smoke -->
+    <path
+        android:fillColor="#FFFFD700"
+        android:pathData="M62,38 h6 v10 h-6 z" />
+    <path
+        android:fillColor="#E0FFFFFF"
+        android:pathData="M64,32 a3,3 0 1,0 0,-0.1 z M68,26 a2,2 0 1,0 0,-0.1 z" />
+
+    <!-- Ship Superstructure / Decks -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38,50 h32 v4 h-32 z M42,46 h24 v4 h-24 z M46,42 h16 v4 h-16 z" />
+    
+    <!-- Portholes / Deck details -->
+    <path
+        android:fillColor="#FF0F2027"
+        android:pathData="M42,51 h2 v2 h-2 z M48,51 h2 v2 h-2 z M54,51 h2 v2 h-2 z M60,51 h2 v2 h-2 z M66,51 h2 v2 h-2 z" />
+
+    <!-- Ship Hull -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M26,54 L32,68 C34,71 38,72 42,72 L72,72 C78,72 82,68 84,62 L88,54 Z" />
+    
+    <!-- Hull Gold Stripe -->
+    <path
+        android:fillColor="#FFFFD700"
+        android:pathData="M28,57 L30,60 H85 L86.5,57 Z" />
+
+    <!-- Front & Rear Waves -->
+    <path
+        android:fillColor="#8000E5FF"
+        android:pathData="M18,70 Q30,64 45,70 T75,70 T100,68 L98,73 Q80,75 60,72 T30,75 Z" />
+    <path
+        android:fillColor="#B300E5FF"
+        android:pathData="M14,75 Q32,70 50,76 T85,73 T102,74 L100,78 Q82,78 60,80 T20,78 Z" />
+</vector>
