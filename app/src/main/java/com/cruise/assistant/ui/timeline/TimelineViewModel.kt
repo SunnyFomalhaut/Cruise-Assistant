@@ -118,17 +118,25 @@ class TimelineViewModel(
                     val now = values[5] as Int
                     val fullDay = values[6] as Boolean
 
+                    // 定稿（生成计划表）后隐藏所有非活动事件：
+                    // 既不渲染也不参与空档折叠布局，避免它们叠在活动事件底下
+                    // 或在 lane2/满宽单栏模式下占住活动事件的时段。
+                    // 规划态保留非活动事件可见（灰色），用于用户随时重新激活。
+                    val isFinalizedFlag = plans[date]?.finalized == true
+                    val visibleEvents =
+                        if (isFinalizedFlag) events.filter { it.isActive } else events
+
                     TimelineUiState(
                         voyage = voyage,
                         selectedDate = date,
-                        events = events,
+                        events = visibleEvents,
                         categories = categories.associateBy { it.id },
                         dayPlans = plans,
                         layout = buildTimelineLayout(
                             rangeStartMinute = if (fullDay) 0 else settings.displayStartMinute,
                             rangeEndMinute = if (fullDay) 1440 else settings.displayEndMinute,
                             hourHeightDp = settings.hourHeightDp,
-                            events = events,
+                            events = visibleEvents,
                             collapseEmptyGaps = settings.collapseEmptyGaps,
                         ),
                         settings = settings,
