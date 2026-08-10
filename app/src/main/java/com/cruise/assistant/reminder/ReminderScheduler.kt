@@ -69,6 +69,7 @@ class ReminderScheduler(
 
         val armedIds = mutableSetOf<Long>()
         events.asSequence()
+            .filter { it.isActive }
             .mapNotNull { event ->
                 val lead = event.reminderMinutesBefore ?: settings.defaultReminderMinutes
                 val triggerMs = event.date.atTime(event.startTime)
