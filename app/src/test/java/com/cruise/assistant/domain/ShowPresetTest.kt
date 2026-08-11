@@ -246,4 +246,24 @@ class ShowPresetTest {
         )
         assertEquals((9 * 60) to (9 * 60 + 30), showEffectiveRange(event, isShow = false))
     }
+
+    @Test
+    fun showRangeOf_matchesByCategoryId_notEventId() {
+        // C1 回归测试：判定必须按 categoryId，不能按 eventId（事件 id 与类别 id 各自自增会撞值）
+        val showCategoryIds = setOf(1L)          // show 类别的 id = 1
+        val showEvent = CruiseEvent(
+            id = 5, date = LocalDate.of(2026, 8, 10),   // 事件 id = 5（故意不同）
+            startTime = LocalTime.of(20, 0), durationMinutes = 60,
+            categoryId = 1, title = "演出",
+        )
+        val ordinaryEvent = CruiseEvent(
+            id = 1, date = LocalDate.of(2026, 8, 10),   // 事件 id = 1（撞类别 id！）
+            startTime = LocalTime.of(19, 40), durationMinutes = 30,
+            categoryId = 2, title = "普通事件",
+        )
+        val rangeOf = showRangeOf(showCategoryIds)
+        // showEvent 按扩展区间（19:30 起），ordinaryEvent 原始区间——两者重叠 → 冲突
+        val conflicts = findConflicts(listOf(showEvent, ordinaryEvent), rangeOf)
+        assertEquals(1, conflicts.size)
+    }
 }

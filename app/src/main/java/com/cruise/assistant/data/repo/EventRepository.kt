@@ -13,6 +13,7 @@ import com.cruise.assistant.domain.expandRecurrence
 import com.cruise.assistant.domain.findConflicts
 import com.cruise.assistant.domain.pickDinnerLinkedTime
 import com.cruise.assistant.domain.showEffectiveRange
+import com.cruise.assistant.domain.showRangeOf
 import com.cruise.assistant.domain.startMinute
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -50,9 +51,9 @@ class EventRepository(
         val showIds = showCategoryIds()
         copies.forEach { copy ->
             val sameDay = eventDao.getByDate(copy.date).map { it.toDomain() }.filter { it.isActive }
-            val lane = assignLane(copy.startMinute, copy.endMinute, sameDay) { e ->
-                showEffectiveRange(e, isShow = e.id in showIds)
-            }
+            // 放置区间也用扩展区间（show 类别）：否则演出与普通事件等待段重叠时会叠进同一栏
+            val range = showEffectiveRange(copy, isShow = copy.categoryId in showIds)
+            val lane = assignLane(range.first, range.second, sameDay, rangeOf = showRangeOf(showIds))
             eventDao.insert(copy.copy(lane = lane).toEntity())
         }
         return copies.size
@@ -103,9 +104,14 @@ class EventRepository(
             } else {
                 val showIds = showCategoryIds()
                 val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }.filter { it.isActive }
-                assignLane(merged.startMinute, merged.endMinute, sameDay, excludeId = merged.id) { e ->
-                    showEffectiveRange(e, isShow = e.id in showIds)
-                }
+                val range = showEffectiveRange(merged, isShow = merged.categoryId in showIds)
+                assignLane(
+                    range.first,
+                    range.second,
+                    sameDay,
+                    excludeId = merged.id,
+                    rangeOf = showRangeOf(showIds),
+                )
             }
             eventDao.update(merged.copy(lane = lane).toEntity())
         }
@@ -138,9 +144,8 @@ class EventRepository(
                 .filter { it.isActive && it.id != eventId }
             val event = entity.toDomain()
             val showIds = showCategoryIds()
-            val lane = assignLane(event.startMinute, event.endMinute, sameDay) { e ->
-                showEffectiveRange(e, isShow = e.id in showIds)
-            }
+            val range = showEffectiveRange(event, isShow = event.categoryId in showIds)
+            val lane = assignLane(range.first, range.second, sameDay, rangeOf = showRangeOf(showIds))
             eventDao.update(entity.copy(isActive = true, lane = lane))
         } else {
             // 停用：保留原车道仅供显示
@@ -182,12 +187,10 @@ class EventRepository(
     suspend fun conflictsOn(date: LocalDate): List<Pair<CruiseEvent, CruiseEvent>> {
         val showIds = showCategoryIds()
         val events = eventDao.getByDate(date).map { it.toDomain() }
-        return findConflicts(events) { e ->
-            showEffectiveRange(e, isShow = e.id in showIds)
-        }
+        return findConflicts(events, rangeOf = showRangeOf(showIds))
     }
 
-    /** 当前"演出"类别（iconKey == "show"）的事件 id 集合 */
+    /** 当前"演出"类别的 id 集合（iconKey == "show" 的类别） */
     private suspend fun showCategoryIds(): Set<Long> =
         categoryDao.observeAllOnce()
             .filter { it.iconKey == "show" }

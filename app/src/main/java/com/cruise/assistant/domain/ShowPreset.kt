@@ -132,3 +132,11 @@ const val SHOW_WAIT_MINUTES = 30
 fun showEffectiveRange(event: CruiseEvent, isShow: Boolean): Pair<Int, Int> =
     if (isShow) (event.startMinute - SHOW_WAIT_MINUTES) to event.endMinute
     else event.startMinute to event.endMinute
+
+/**
+ * 构造 rangeOf 闭包：show 类别事件（categoryId ∈ showCategoryIds）按扩展区间参与，
+ * 其他事件用原始区间。EventRepository/TimelineLayout/TimelineViewModel 共用。
+ */
+fun showRangeOf(showCategoryIds: Set<Long>): (CruiseEvent) -> Pair<Int, Int> = { e ->
+    showEffectiveRange(e, isShow = e.categoryId in showCategoryIds)
+}

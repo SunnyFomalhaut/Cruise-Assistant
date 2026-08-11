@@ -51,14 +51,12 @@ fun buildTimelineLayout(
     hourHeightDp: Int,
     events: List<CruiseEvent>,
     collapseEmptyGaps: Boolean,
-    showEventIds: Set<Long> = emptySet(),
+    showCategoryIds: Set<Long> = emptySet(),
 ): TimelineLayout {
     val start = rangeStartMinute.coerceIn(0, 1440 - MIN_RANGE_MINUTES)
     val end = rangeEndMinute.coerceIn(start + MIN_RANGE_MINUTES, 1440)
 
-    val rangeOf: (CruiseEvent) -> Pair<Int, Int> = { e ->
-        showEffectiveRange(e, isShow = e.id in showEventIds)
-    }
+    val rangeOf = showRangeOf(showCategoryIds)
     val hiddenBefore = events.count { rangeOf(it).second <= start }
     val hiddenAfter = events.count { rangeOf(it).first >= end }
 

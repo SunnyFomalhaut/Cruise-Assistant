@@ -40,7 +40,7 @@ object NotificationHelper {
 
     /**
      * @param titleLine 形如 "演出 · 扬帆起航"
-     * @param bodyLine  形如 "13:15 · 9F船尾剧场"
+     * @param bodyLine  形如 "13:15 · Deck 9 船尾 剧场"
      */
     fun notifyEvent(context: Context, eventId: Long, titleLine: String, bodyLine: String) {
         ensureChannel(context)

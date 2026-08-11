@@ -111,7 +111,7 @@
     <string name="reminder_at_start">开始时</string>
     <string name="minutes_format">%1$d 分钟</string>
     <string name="voyage_section">航次</string>
-    <string name="voyage_summary_format">%1$d 天 · 最高 %2$dF</string>
+    <string name="voyage_summary_format">%1$d 天 · 最高 Deck %2$d</string>
     <string name="edit_voyage">修改航次</string>
     <string name="reset_voyage">重建航次</string>
     <string name="reset_voyage_warning">会清空所有事件和计划，无法恢复。确定吗？</string>
