@@ -20,12 +20,13 @@ fun assignLane(
     endMinute: Int,
     existing: List<CruiseEvent>,
     excludeId: Long? = null,
+    rangeOf: (CruiseEvent) -> Pair<Int, Int> = { it.startMinute to it.endMinute },
 ): Int {
     val candidates = existing.filter { it.id != excludeId }
     for (lane in 0 until LANE_COUNT) {
         val busy = candidates.any { other ->
-            other.lane == lane &&
-                overlaps(startMinute, endMinute, other.startMinute, other.endMinute)
+            val (oStart, oEnd) = rangeOf(other)
+            other.lane == lane && overlaps(startMinute, endMinute, oStart, oEnd)
         }
         if (!busy) return lane
     }

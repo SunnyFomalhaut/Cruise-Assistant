@@ -51,15 +51,19 @@ fun buildTimelineLayout(
     hourHeightDp: Int,
     events: List<CruiseEvent>,
     collapseEmptyGaps: Boolean,
+    showEventIds: Set<Long> = emptySet(),
 ): TimelineLayout {
     val start = rangeStartMinute.coerceIn(0, 1440 - MIN_RANGE_MINUTES)
     val end = rangeEndMinute.coerceIn(start + MIN_RANGE_MINUTES, 1440)
 
-    val hiddenBefore = events.count { it.endMinute <= start }
-    val hiddenAfter = events.count { it.startMinute >= end }
+    val rangeOf: (CruiseEvent) -> Pair<Int, Int> = { e ->
+        showEffectiveRange(e, isShow = e.id in showEventIds)
+    }
+    val hiddenBefore = events.count { rangeOf(it).second <= start }
+    val hiddenAfter = events.count { rangeOf(it).first >= end }
 
     val rawSegments = if (collapseEmptyGaps) {
-        buildCollapsedSpans(start, end, events)
+        buildCollapsedSpans(start, end, events, rangeOf)
     } else {
         listOf(start to end to false)
     }
@@ -88,19 +92,22 @@ fun buildTimelineLayout(
 
 /**
  * 把 [start, end) 切成"保留段 / 折叠段"交替的序列。
- * 保留段 = 事件占用区间（前后各留 EVENT_PADDING_MINUTES 缓冲）的并集。
+ * 保留段 = 事件占用区间（前后各留 EVENT_PADDING_MINUTES 缓冲）的并集；
+ * show 事件按 [rangeOf] 的扩展区间（含 30 分钟等待段）参与。
  * 两个保留段之间超过 MIN_COLLAPSIBLE_GAP_MINUTES 的空档才折叠。
  */
 private fun buildCollapsedSpans(
     start: Int,
     end: Int,
     events: List<CruiseEvent>,
+    rangeOf: (CruiseEvent) -> Pair<Int, Int>,
 ): List<Pair<Pair<Int, Int>, Boolean>> {
     val keepRanges = events
-        .filter { it.endMinute > start && it.startMinute < end && it.durationMinutes > 0 }
+        .filter { rangeOf(it).second > start && rangeOf(it).first < end && it.durationMinutes > 0 }
         .map {
-            (it.startMinute - EVENT_PADDING_MINUTES).coerceAtLeast(start) to
-                (it.endMinute + EVENT_PADDING_MINUTES).coerceAtMost(end)
+            val (eStart, eEnd) = rangeOf(it)
+            (eStart - EVENT_PADDING_MINUTES).coerceAtLeast(start) to
+                (eEnd + EVENT_PADDING_MINUTES).coerceAtMost(end)
         }
         .sortedBy { it.first }
         .fold(mutableListOf<Pair<Int, Int>>()) { acc, range ->

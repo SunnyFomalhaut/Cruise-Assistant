@@ -222,4 +222,28 @@ class ShowPresetTest {
             }
         }
     }
+
+    @Test
+    fun showEffectiveRange_showEvent_extendsStartBy30() {
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(20, 30),
+            durationMinutes = 60,
+            categoryId = 1,
+            title = "演出",
+        )
+        assertEquals((20 * 60 + 30 - 30) to (20 * 60 + 30 + 60), showEffectiveRange(event, isShow = true))
+    }
+
+    @Test
+    fun showEffectiveRange_nonShowEvent_keepsOriginalRange() {
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(9, 0),
+            durationMinutes = 30,
+            categoryId = 1,
+            title = "早餐",
+        )
+        assertEquals((9 * 60) to (9 * 60 + 30), showEffectiveRange(event, isShow = false))
+    }
 }

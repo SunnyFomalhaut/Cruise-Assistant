@@ -120,3 +120,15 @@ fun presetShowsSummary(): String = DISNEY_ADVENTURE_SHOWS.joinToString("\n") { s
     val countLabel = if (show.dinnerLinked) "1场（按晚餐时段）" else "${show.startTimes.size}场"
     "· ${show.title}（$dayLabel $countLabel）"
 }
+
+/** 演出等待入场的延伸分钟数（提前占位） */
+const val SHOW_WAIT_MINUTES = 30
+
+/**
+ * 事件在时间轴上的有效区间（分钟对 [start, end)）。
+ * show 类别事件向前延伸 SHOW_WAIT_MINUTES（等待入场占位），其他事件返回原始区间。
+ * 返回值可能为负起点（深夜演出跨午夜），区间比较纯算术、调用方自行处理。
+ */
+fun showEffectiveRange(event: CruiseEvent, isShow: Boolean): Pair<Int, Int> =
+    if (isShow) (event.startMinute - SHOW_WAIT_MINUTES) to event.endMinute
+    else event.startMinute to event.endMinute

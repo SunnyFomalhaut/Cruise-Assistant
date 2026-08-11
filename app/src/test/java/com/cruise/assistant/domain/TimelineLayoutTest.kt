@@ -189,4 +189,24 @@ class TimelineLayoutTest {
         val l = buildTimelineLayout(600, 600, 60, emptyList(), false)
         assertTrue(l.rangeEndMinute - l.rangeStartMinute >= 120)
     }
+
+    @Test
+    fun showEvent_extendsOccupiedRangeBy30Minutes() {
+        // 构造一个 20:00 开始的 60 分钟 show 事件与一个 19:40 的普通事件：
+        // 普通事件结束(20:10) 在 show 扩展区间(19:30 起)内 → 应算冲突
+        val show = CruiseEvent(
+            id = 1, date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(20, 0), durationMinutes = 60,
+            categoryId = 1, title = "演出",
+        )
+        val ordinary = CruiseEvent(
+            id = 2, date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(19, 40), durationMinutes = 30,
+            categoryId = 1, title = "普通事件",
+        )
+        val conflicts = findConflicts(listOf(show, ordinary)) { e ->
+            showEffectiveRange(e, isShow = e.id == 1L)
+        }
+        assertEquals(1, conflicts.size)
+    }
 }
