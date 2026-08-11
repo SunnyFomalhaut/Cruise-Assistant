@@ -5,7 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.cruise.assistant.MainActivity
@@ -50,11 +51,16 @@ object NotificationHelper {
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        // 大图标：从 app 图标取 bitmap，让横幅更醒目
-        // getApplicationIcon 返回 Drawable，需转成 Bitmap 才能喂给 setLargeIcon
+        // 大图标：把 app 图标（可能是 AdaptiveIconDrawable）栅格化成 Bitmap，让横幅更醒目
         val largeIcon = runCatching {
             val drawable = context.packageManager.getApplicationIcon(context.packageName)
-            (drawable as? BitmapDrawable)?.bitmap
+            val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 96
+            val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 96
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, width, height)
+            drawable.draw(canvas)
+            bitmap
         }.getOrNull()
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
