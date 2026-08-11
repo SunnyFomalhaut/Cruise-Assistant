@@ -29,8 +29,11 @@ data class ShowPreset(
 
 /** 演出在航次中的全部日期。固定天只取 dayOffsets；范围天截断到 dayCount-1（下船日无演出）。 */
 fun ShowPreset.resolveDates(boardDate: LocalDate, dayCount: Int): List<LocalDate> {
+    if (dailyRangeTo == null) {
+        return dayOffsets.map { boardDate.plusDays((it - 1).toLong()) }
+    }
     val firstDay = dayOffsets.first()
-    val lastDay = dailyRangeTo?.let { minOf(it, dayCount - 1) } ?: dayOffsets.last()
+    val lastDay = minOf(dailyRangeTo, dayCount - 1)
     return (firstDay..lastDay).map { boardDate.plusDays((it - 1).toLong()) }
 }
 
