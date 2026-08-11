@@ -14,15 +14,15 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 data class OnboardingState(
-    val shipName: String = "",
-    val selectedShipIndex: Int = -1,
+    val shipName: String = BUILT_IN_SHIPS[0].name,
+    val selectedShipIndex: Int = 0,
     val selectedScheduleIndex: Int = -1,
     val dinnerTime: LocalTime = LocalTime.of(17, 45),
     val boardDate: LocalDate,
     val boardTime: LocalTime = LocalTime.of(12, 0),
     val disembarkDate: LocalDate,
-    val maxDeck: Int = 20,
-    val minDeck: Int = 1,
+    val maxDeck: Int = BUILT_IN_SHIPS[0].maxDeck ?: 20,
+    val minDeck: Int = BUILT_IN_SHIPS[0].minDeck ?: 1,
     val saving: Boolean = false,
     /** 已本地化的错误提示 resId，null 表示无错误 */
     val errorResId: Int? = null,
