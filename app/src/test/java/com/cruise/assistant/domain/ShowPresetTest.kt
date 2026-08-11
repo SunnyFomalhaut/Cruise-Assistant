@@ -258,11 +258,14 @@ class ShowPresetTest {
         )
         val ordinaryEvent = CruiseEvent(
             id = 1, date = LocalDate.of(2026, 8, 10),   // 事件 id = 1（撞类别 id！）
-            startTime = LocalTime.of(19, 40), durationMinutes = 30,
+            startTime = LocalTime.of(19, 45), durationMinutes = 10,
             categoryId = 2, title = "普通事件",
         )
         val rangeOf = showRangeOf(showCategoryIds)
-        // showEvent 按扩展区间（19:30 起），ordinaryEvent 原始区间——两者重叠 → 冲突
+        // showEvent 按扩展区间（19:30 起），ordinaryEvent 原始区间——两者重叠 → 冲突。
+        // 19:45–19:55 落在 showEvent 的扩展区间（19:30 起）内、但落在其原始区间（20:00 起）外，
+        // 因此 buggy 逻辑（按事件 id 判定：showEvent id=5 ∉ {1} 不扩展、ordinaryEvent id=1 ∈ {1}
+        // 被误扩展为 19:15–19:55）下两者不重叠 → 冲突数为 0，测试失败。能区分正确/错误实现。
         val conflicts = findConflicts(listOf(showEvent, ordinaryEvent), rangeOf)
         assertEquals(1, conflicts.size)
     }
