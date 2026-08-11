@@ -9,6 +9,7 @@ import com.cruise.assistant.domain.assignLane
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.expandRecurrence
 import com.cruise.assistant.domain.findConflicts
+import com.cruise.assistant.domain.pickDinnerLinkedTime
 import com.cruise.assistant.domain.startMinute
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -143,6 +144,24 @@ class EventRepository(
         val dinners = eventDao.getByPresetKey("dinner")
         dinners.forEach { entity ->
             eventDao.update(entity.copy(startTime = newTime))
+        }
+    }
+
+    /**
+     * 设置页切换晚餐时段：把晚餐联动演出（海洋奇遇/回忆）按新晚餐时间换场。
+     * 仅当事件当前时间仍是 18:00/20:30 之一才更新——用户手动改过时间的演出不被覆盖。
+     * 被删除过的演出不会"复活"（只有当前仍在表里的会被更新，与 updateDinnerEventsTime 一致）。
+     */
+    suspend fun resyncShowTimes(dinnerTime: LocalTime) {
+        val target = pickDinnerLinkedTime(dinnerTime)
+        listOf("show_seas_adventure", "show_remember").forEach { key ->
+            eventDao.getByPresetKey(key).forEach { entity ->
+                val isKnownShowTime = entity.startTime == LocalTime.of(18, 0) ||
+                    entity.startTime == LocalTime.of(20, 30)
+                if (isKnownShowTime) {
+                    eventDao.update(entity.copy(startTime = target))
+                }
+            }
         }
     }
 

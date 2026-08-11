@@ -78,6 +78,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsStore.setDinnerTime(time)
             eventRepository.updateDinnerEventsTime(time)
+            eventRepository.resyncShowTimes(time)
             reminderScheduler.rescheduleAll()
         }
     }
