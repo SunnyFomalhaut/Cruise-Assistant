@@ -55,6 +55,9 @@ fun CruiseNavHost(container: AppContainer) {
     val navController = rememberNavController()
     val settings by container.settingsStore.settings.collectAsState(initial = null)
 
+    // 选完内置船（探险号）进入后的一次性演出提示
+    var showPresetShowsDialog by remember { mutableStateOf(false) }
+
     // 设置还没读出来，先转圈，避免闪一下引导页
     val loaded = settings
     if (loaded == null) {
@@ -90,6 +93,7 @@ fun CruiseNavHost(container: AppContainer) {
                 onMaxDeckChange = vm::onMaxDeckChange,
                 onDinnerTimeChange = vm::onDinnerTimeChange,
                 onSubmit = {
+                    if (state.isBuiltInShip) showPresetShowsDialog = true
                     vm.submit {
                         navController.navigate(Routes.TIMELINE) {
                             popUpTo(Routes.ONBOARDING) { inclusive = true }
@@ -159,6 +163,19 @@ fun CruiseNavHost(container: AppContainer) {
                     onUnlockDay = { vm.unlockDay(current.selectedDate) },
                     onToggleFullDay = vm::toggleFullDay,
                     conflictIds = highlightIds,
+                )
+            }
+
+            if (showPresetShowsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showPresetShowsDialog = false },
+                    title = { Text(stringResource(R.string.preset_shows_dialog_title)) },
+                    text = { Text(stringResource(R.string.preset_shows_dialog_message)) },
+                    confirmButton = {
+                        TextButton(onClick = { showPresetShowsDialog = false }) {
+                            Text(stringResource(R.string.preset_shows_dialog_ok))
+                        }
+                    },
                 )
             }
 
