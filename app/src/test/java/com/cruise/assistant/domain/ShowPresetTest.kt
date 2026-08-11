@@ -153,4 +153,73 @@ class ShowPresetTest {
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_lion_king" }.dinnerLinked)
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_moana" }.dinnerLinked)
     }
+
+    @Test
+    fun dinnerLinked_at1900_returns1800Show() {
+        assertEquals(LocalTime.of(18, 0), pickDinnerLinkedTime(LocalTime.of(19, 0)))
+    }
+
+    @Test
+    fun dinnerLinked_1859_returns2030Show() {
+        assertEquals(LocalTime.of(20, 30), pickDinnerLinkedTime(LocalTime.of(18, 59)))
+    }
+
+    @Test
+    fun presetShowsSummary_listsAllShowsWithDayAndCount() {
+        val summary = presetShowsSummary()
+        val lines = summary.split("\n")
+        assertEquals(5, lines.size)
+        assertTrue("line0=$lines", lines[0].contains("扬帆起航 Let's Set Sail"))
+        assertTrue(lines[0].contains("第1天"))
+        assertTrue(lines[0].contains("3场"))
+        assertTrue(lines[1].contains("狮子王烟花"))
+        assertTrue(lines[1].contains("第2天"))
+        assertTrue(lines[1].contains("1场"))
+        assertTrue(lines[2].contains("海洋奇遇") && lines[2].contains("按晚餐时段"))
+        assertTrue(lines[3].contains("回忆") && lines[3].contains("按晚餐时段"))
+        assertTrue(lines[4].contains("海洋奇缘"))
+        assertTrue(lines[4].contains("第2天起每天"))
+        assertTrue(lines[4].contains("3场"))
+    }
+
+    @Test
+    fun catalog_hasNoTimeOverlapOnSharedDays() {
+        // 规格 §1/§3f：每个出现演出的天，场次区间两两不重叠（不同天的演出允许同时段——
+        // 海洋奇遇与回忆场次相同但分别在第 1/第 2 天，不能做全局两两比较）。
+        // 固定天取 dayOffsets；范围天取 dayOffsets.first()..dailyRangeTo。
+        // dinner-linked 的两个候选场次都参与检查（候选间本身不重叠，不会误报）。
+        val daysPresent = DISNEY_ADVENTURE_SHOWS.flatMap { show ->
+            if (show.dailyRangeTo != null) {
+                show.dayOffsets.first()..show.dailyRangeTo
+            } else {
+                show.dayOffsets
+            }
+        }.distinct()
+
+        daysPresent.forEach { day ->
+            val intervals = DISNEY_ADVENTURE_SHOWS.filter { show ->
+                val days = if (show.dailyRangeTo != null) {
+                    show.dayOffsets.first()..show.dailyRangeTo
+                } else {
+                    show.dayOffsets
+                }
+                day in days
+            }.flatMap { show ->
+                show.startTimes.map { time ->
+                    val start = time.hour * 60 + time.minute
+                    start to (start + show.durationMinutes)
+                }
+            }
+            for (i in intervals.indices) {
+                for (j in i + 1 until intervals.size) {
+                    val (aStart, aEnd) = intervals[i]
+                    val (bStart, bEnd) = intervals[j]
+                    assertTrue(
+                        "day $day: [$aStart,$aEnd) overlaps [$bStart,$bEnd)",
+                        aStart >= bEnd || bStart >= aEnd,
+                    )
+                }
+            }
+        }
+    }
 }

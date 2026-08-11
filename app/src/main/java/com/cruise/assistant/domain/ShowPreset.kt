@@ -112,3 +112,11 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         ),
     ),
 )
+
+/** 弹窗消息中的演出列表摘要：每行 "· {title}（{天数} {场次数}）"，行间 \n 连接 */
+fun presetShowsSummary(): String = DISNEY_ADVENTURE_SHOWS.joinToString("\n") { show ->
+    val dayLabel = show.dailyRangeTo?.let { "第${show.dayOffsets.first()}天起每天" }
+        ?: "第${show.dayOffsets.joinToString("、")}天"
+    val countLabel = if (show.dinnerLinked) "1场（按晚餐时段）" else "${show.startTimes.size}场"
+    "· ${show.title}（$dayLabel $countLabel）"
+}
