@@ -5,6 +5,7 @@ import com.cruise.assistant.data.db.dao.VoyageDao
 import com.cruise.assistant.data.db.toDomain
 import com.cruise.assistant.data.db.toEntity
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
 import com.cruise.assistant.domain.assignLane
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.expandRecurrence
@@ -154,11 +155,11 @@ class EventRepository(
      */
     suspend fun resyncShowTimes(dinnerTime: LocalTime) {
         val target = pickDinnerLinkedTime(dinnerTime)
-        listOf("show_seas_adventure", "show_remember").forEach { key ->
+        val dinnerLinkedShows = DISNEY_ADVENTURE_SHOWS.filter { it.dinnerLinked }
+        val knownShowTimes = dinnerLinkedShows.flatMap { it.startTimes }.toSet()
+        dinnerLinkedShows.map { it.key }.forEach { key ->
             eventDao.getByPresetKey(key).forEach { entity ->
-                val isKnownShowTime = entity.startTime == LocalTime.of(18, 0) ||
-                    entity.startTime == LocalTime.of(20, 30)
-                if (isKnownShowTime) {
+                if (entity.startTime in knownShowTimes) {
                     eventDao.update(entity.copy(startTime = target))
                 }
             }

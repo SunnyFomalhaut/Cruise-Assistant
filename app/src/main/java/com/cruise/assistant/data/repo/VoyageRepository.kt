@@ -139,7 +139,6 @@ class VoyageRepository(
             // 预置演出：迪士尼探险号演出目录，全部放进第二栏（lane=1），与晚餐/安全演习一样可编辑删除
             val showId = categories.firstOrNull { it.iconKey == "show" }?.id
                 ?: categories.first().id
-            val showEvents = mutableListOf<CruiseEvent>()
             DISNEY_ADVENTURE_SHOWS.forEach { show ->
                 show.resolveDates(boardDate, voyage.dayCount).forEach { date ->
                     val times = if (show.dinnerLinked) {
@@ -148,7 +147,7 @@ class VoyageRepository(
                         show.startTimes
                     }
                     times.forEach { startTime ->
-                        showEvents += CruiseEvent(
+                        presetEvents += CruiseEvent(
                             date = date,
                             startTime = startTime,
                             durationMinutes = show.durationMinutes,
@@ -164,7 +163,6 @@ class VoyageRepository(
                     }
                 }
             }
-            eventDao.insertAll(showEvents.map { it.toEntity() })
 
             eventDao.insertAll(presetEvents.map { it.toEntity() })
         }
