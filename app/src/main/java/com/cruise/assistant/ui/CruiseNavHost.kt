@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import com.cruise.assistant.AppContainer
 import com.cruise.assistant.R
 import com.cruise.assistant.data.repo.RecurrenceScope
+import com.cruise.assistant.domain.presetShowsSummary
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.ui.category.CategorySheet
 import com.cruise.assistant.ui.category.CategoryViewModel
@@ -164,19 +165,25 @@ fun CruiseNavHost(container: AppContainer) {
                     onToggleFullDay = vm::toggleFullDay,
                     conflictIds = highlightIds,
                 )
-            }
 
-            if (showPresetShowsDialog) {
-                AlertDialog(
-                    onDismissRequest = { showPresetShowsDialog = false },
-                    title = { Text(stringResource(R.string.preset_shows_dialog_title)) },
-                    text = { Text(stringResource(R.string.preset_shows_dialog_message)) },
-                    confirmButton = {
-                        TextButton(onClick = { showPresetShowsDialog = false }) {
-                            Text(stringResource(R.string.preset_shows_dialog_ok))
-                        }
-                    },
-                )
+                if (showPresetShowsDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showPresetShowsDialog = false },
+                        title = { Text(stringResource(R.string.preset_shows_dialog_title)) },
+                        text = {
+                            Text(
+                                stringResource(R.string.preset_shows_dialog_header) + "\n\n" +
+                                    presetShowsSummary() + "\n\n" +
+                                    stringResource(R.string.preset_shows_dialog_footer),
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showPresetShowsDialog = false }) {
+                                Text(stringResource(R.string.preset_shows_dialog_ok))
+                            }
+                        },
+                    )
+                }
             }
 
             conflictCheck?.let { conflicts ->

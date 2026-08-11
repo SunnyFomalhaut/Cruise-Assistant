@@ -20,7 +20,8 @@
     <string name="generate_timeline">生成时间轴</string>
     <string name="error_disembark_before_board">下船日期不能早于上船日期</string>
     <string name="preset_shows_dialog_title">已添加预置演出</string>
-    <string name="preset_shows_dialog_message">已按迪士尼探险号的演出安排，将以下演出加入日程表第二栏：\n\n· 扬帆起航 Let\'s Set Sail（第1天 3场）\n· 狮子王烟花 The Lion King: Celebration in the Sky（第2天 1场）\n· 海洋奇遇 Disney Seas The Adventure（第1天 1场）\n· 回忆：瓦力与伊芙 Remember（第2天 1场）\n· 海洋奇缘 Moana: Call of the Sea（第2天起每天 3场）\n\n长按演出卡片可编辑或删除。</string>
+    <string name="preset_shows_dialog_header">已按迪士尼探险号的演出安排，将以下演出加入日程表第二栏：</string>
+    <string name="preset_shows_dialog_footer">长按演出卡片可编辑或删除。</string>
     <string name="preset_shows_dialog_ok">知道了</string>
 
     <!-- 时间轴 -->
