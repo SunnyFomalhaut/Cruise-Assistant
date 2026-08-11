@@ -8,9 +8,12 @@ import com.cruise.assistant.data.db.dao.VoyageDao
 import com.cruise.assistant.data.db.toDomain
 import com.cruise.assistant.data.db.toEntity
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
 import com.cruise.assistant.domain.DayPlan
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.Voyage
+import com.cruise.assistant.domain.pickDinnerLinkedTime
+import com.cruise.assistant.domain.resolveDates
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -132,6 +135,36 @@ class VoyageRepository(
                         presetKey = "dinner",
                     )
                 }
+
+            // 预置演出：迪士尼探险号演出目录，全部放进第二栏（lane=1），与晚餐/安全演习一样可编辑删除
+            val showId = categories.firstOrNull { it.iconKey == "show" }?.id
+                ?: categories.first().id
+            val showEvents = mutableListOf<CruiseEvent>()
+            DISNEY_ADVENTURE_SHOWS.forEach { show ->
+                show.resolveDates(boardDate, voyage.dayCount).forEach { date ->
+                    val times = if (show.dinnerLinked) {
+                        listOf(pickDinnerLinkedTime(dinnerTime))
+                    } else {
+                        show.startTimes
+                    }
+                    times.forEach { startTime ->
+                        showEvents += CruiseEvent(
+                            date = date,
+                            startTime = startTime,
+                            durationMinutes = show.durationMinutes,
+                            categoryId = showId,
+                            title = show.title,
+                            deck = show.deck,
+                            zone = show.zone,
+                            placeName = show.placeName,
+                            lane = 1,
+                            isSystemGenerated = false,
+                            presetKey = show.key,
+                        )
+                    }
+                }
+            }
+            eventDao.insertAll(showEvents.map { it.toEntity() })
 
             eventDao.insertAll(presetEvents.map { it.toEntity() })
         }
