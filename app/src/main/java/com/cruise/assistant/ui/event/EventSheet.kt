@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.ShipZone
+import com.cruise.assistant.domain.locationPresetOptions
 import com.cruise.assistant.ui.common.TimeWheel
 import com.cruise.assistant.ui.common.iconFor
 import java.time.LocalTime
@@ -58,6 +59,8 @@ fun EventSheet(
     onZoneChange: (ShipZone) -> Unit,
     onPlaceNameChange: (String) -> Unit,
     onNoLocationToggle: (Boolean) -> Unit,
+    onSelectPresetLocation: (com.cruise.assistant.domain.LocationCatalogEntry) -> Unit,
+    onCustomLocationSelected: () -> Unit,
     onStartChange: (LocalTime) -> Unit,
     onEndChange: (LocalTime) -> Unit,
     onRecurringToggle: (Boolean) -> Unit,
@@ -189,6 +192,10 @@ fun EventSheet(
                     onZoneChange = onZoneChange,
                     onPlaceNameChange = onPlaceNameChange,
                     onNoLocationToggle = onNoLocationToggle,
+                    presetOptions = locationPresetOptions(state.categoryIconKey ?: ""),
+                    presetMode = state.locationPresetMode,
+                    onSelectPreset = onSelectPresetLocation,
+                    onCustomLocation = onCustomLocationSelected,
                 )
             }
 

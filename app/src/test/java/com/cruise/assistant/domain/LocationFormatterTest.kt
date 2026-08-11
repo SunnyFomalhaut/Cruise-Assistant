@@ -8,21 +8,21 @@ class LocationFormatterTest {
 
     @Test
     fun fullLocation_isDeckZonePlace() {
-        assertEquals("7F船中花园", formatLocation(7, ShipZone.MID, "花园"))
-        assertEquals("9F船尾剧场", formatLocation(9, ShipZone.STERN, "剧场"))
-        assertEquals("3F船头健身房", formatLocation(3, ShipZone.BOW, "健身房"))
+        assertEquals("Deck 7 船中 花园", formatLocation(7, ShipZone.MID, "花园"))
+        assertEquals("Deck 9 船尾 剧场", formatLocation(9, ShipZone.STERN, "剧场"))
+        assertEquals("Deck 3 船头 健身房", formatLocation(3, ShipZone.BOW, "健身房"))
     }
 
     @Test
     fun blankPlaceName_isOmitted() {
-        assertEquals("7F船中", formatLocation(7, ShipZone.MID, null))
-        assertEquals("7F船中", formatLocation(7, ShipZone.MID, ""))
-        assertEquals("7F船中", formatLocation(7, ShipZone.MID, "   "))
+        assertEquals("Deck 7 船中", formatLocation(7, ShipZone.MID, null))
+        assertEquals("Deck 7 船中", formatLocation(7, ShipZone.MID, ""))
+        assertEquals("Deck 7 船中", formatLocation(7, ShipZone.MID, "   "))
     }
 
     @Test
     fun placeNameIsTrimmed() {
-        assertEquals("7F船中花园", formatLocation(7, ShipZone.MID, "  花园  "))
+        assertEquals("Deck 7 船中 花园", formatLocation(7, ShipZone.MID, "  花园  "))
     }
 
     @Test
@@ -34,12 +34,12 @@ class LocationFormatterTest {
 
     @Test
     fun deckWithoutZone_showsDeckAndPlace() {
-        assertEquals("7F花园", formatLocation(7, null, "花园"))
-        assertEquals("7F", formatLocation(7, null, null))
+        assertEquals("Deck 7 花园", formatLocation(7, null, "花园"))
+        assertEquals("Deck 7", formatLocation(7, null, null))
     }
 
     @Test
     fun twoDigitDeck_works() {
-        assertEquals("11F船中泳池", formatLocation(11, ShipZone.MID, "泳池"))
+        assertEquals("Deck 11 船中 泳池", formatLocation(11, ShipZone.MID, "泳池"))
     }
 }

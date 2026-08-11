@@ -240,7 +240,7 @@ fun OnboardingScreen(
                 BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)?.maxDeck != null
             if (lockedDeck) {
                 Text(
-                    "${state.minDeck}-${state.maxDeck}F",
+                    "Deck ${state.minDeck}-${state.maxDeck}",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -251,7 +251,7 @@ fun OnboardingScreen(
                     enabled = state.maxDeck > 1,
                 ) { Text("−") }
                 Text(
-                    "${state.maxDeck}F",
+                    "Deck ${state.maxDeck}",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )

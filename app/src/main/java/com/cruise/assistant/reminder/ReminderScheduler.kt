@@ -9,6 +9,7 @@ import com.cruise.assistant.R
 import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.CategoryRepository
 import com.cruise.assistant.data.repo.EventRepository
+import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.formatLocation
 import kotlinx.coroutines.flow.first
 import java.time.ZoneId
@@ -17,8 +18,19 @@ const val EXTRA_EVENT_ID = "event_id"
 const val EXTRA_TITLE_LINE = "title_line"
 const val EXTRA_BODY_LINE = "body_line"
 
-/** 一次最多排这么多个闹钟，其余等 App 下次启动时补 */
-private const val MAX_SCHEDULED = 100
+/** 一次最多排这么多个闹钟，其余等 App 下次启动时补（每事件最多 3 个） */
+private const val MAX_SCHEDULED = 300
+
+/** 提醒槽位：slot 0 = 提前 15 分钟（action null 兼容旧版本）、1 = 5 分钟、2 = 开始时 */
+private val SLOT_LEAD_MINUTES = intArrayOf(15, 5, 0)
+
+/** 槽位对应的 intent action；slot 0 用 null 与旧版本一致（旧闹钟被自然覆盖） */
+private fun actionForSlot(slot: Int): String? = when (slot) {
+    0 -> null
+    1 -> "lead_5"
+    2 -> "lead_0"
+    else -> null
+}
 
 class ReminderScheduler(
     private val context: Context,
@@ -57,7 +69,9 @@ class ReminderScheduler(
         val currentEventIds = events.map { it.id }.toSet()
         val idsToCancel = previouslyArmed + currentEventIds
         idsToCancel.forEach { eventId ->
-            lookupExistingPendingIntent(eventId)?.let { manager.cancel(it) }
+            (0..2).forEach { slot ->
+                lookupExistingPendingIntent(eventId, slot)?.let { manager.cancel(it) }
+            }
         }
         if (!settings.notificationsEnabled) {
             settingsStore.setArmedEventIds(emptySet())
@@ -68,42 +82,54 @@ class ReminderScheduler(
         val nowMs = System.currentTimeMillis()
 
         val armedIds = mutableSetOf<Long>()
+        // 按三个开关生成槽位列表：slot 0/1/2 是否启用
+        val enabledSlots = buildList {
+            if (settings.remindBefore15) add(0)
+            if (settings.remindBefore5) add(1)
+            if (settings.remindAtStart) add(2)
+        }
+        // (event, triggerMs, slot) —— 槽位在生成时确定，后续排程直接使用
+        val pendingAlarms = mutableListOf<Triple<CruiseEvent, Long, Int>>()
         events.asSequence()
             .filter { it.isActive }
-            .mapNotNull { event ->
-                val lead = event.reminderMinutesBefore ?: settings.defaultReminderMinutes
-                val triggerMs = event.date.atTime(event.startTime)
-                    .minusMinutes(lead.toLong())
-                    .atZone(zone).toInstant().toEpochMilli()
-                if (triggerMs <= nowMs) null else event to triggerMs
+            .forEach { event ->
+                val baseMs = event.date.atTime(event.startTime).atZone(zone).toInstant().toEpochMilli()
+                enabledSlots.forEach { slot ->
+                    val triggerMs = baseMs - SLOT_LEAD_MINUTES[slot] * 60_000L
+                    if (triggerMs > nowMs) pendingAlarms += Triple(event, triggerMs, slot)
+                }
             }
-            .sortedBy { it.second }
-            .take(MAX_SCHEDULED)
-            .forEach { (event, triggerMs) ->
-                val categoryName = categories[event.categoryId]?.name.orEmpty()
-                val titleLine = if (categoryName.isEmpty()) {
-                    event.title
-                } else {
-                    context.getString(R.string.notification_title_format, categoryName, event.title)
-                }
-                val location = formatLocation(event.deck, event.zone, event.placeName)
-                val bodyLine = buildString {
-                    append("%02d:%02d".format(event.startTime.hour, event.startTime.minute))
-                    location?.let { append(" · ").append(it) }
-                }
-                val pending = schedulingPendingIntentFor(event.id, titleLine, bodyLine)
-                if (canScheduleExact()) {
-                    manager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP, triggerMs, pending,
-                    )
-                } else {
-                    // 降级：允许系统在 10 分钟窗口内择机触发
-                    manager.setWindow(
-                        AlarmManager.RTC_WAKEUP, triggerMs, 10 * 60_000L, pending,
-                    )
-                }
-                armedIds += event.id
+        pendingAlarms.sortedBy { it.second }.take(MAX_SCHEDULED).forEach { (event, triggerMs, slot) ->
+            val categoryName = categories[event.categoryId]?.name.orEmpty()
+            val titleLine = if (categoryName.isEmpty()) {
+                event.title
+            } else {
+                context.getString(R.string.notification_title_format, categoryName, event.title)
             }
+            val location = formatLocation(event.deck, event.zone, event.placeName)
+            val lead = SLOT_LEAD_MINUTES[slot]
+            val bodyLine = buildString {
+                append("%02d:%02d".format(event.startTime.hour, event.startTime.minute))
+                location?.let { append(" · ").append(it) }
+                if (lead > 0) {
+                    append(" · 还有 ").append(lead).append(" 分钟开始")
+                } else {
+                    append(" · 现在开始")
+                }
+            }
+            val pending = schedulingPendingIntentFor(event.id, titleLine, bodyLine, slot)
+            if (canScheduleExact()) {
+                manager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, triggerMs, pending,
+                )
+            } else {
+                // 降级：允许系统在 10 分钟窗口内择机触发
+                manager.setWindow(
+                    AlarmManager.RTC_WAKEUP, triggerMs, 10 * 60_000L, pending,
+                )
+            }
+            armedIds += event.id
+        }
         settingsStore.setArmedEventIds(armedIds)
     }
 
@@ -115,8 +141,10 @@ class ReminderScheduler(
     private fun requestCodeFor(eventId: Long): Int = eventId.toInt()
 
     /** 只查已存在的 PendingIntent，不创建新的；找不到就返回 null（不落盘、不生成对象）。 */
-    private fun lookupExistingPendingIntent(eventId: Long): PendingIntent? {
-        val intent = Intent(context, ReminderReceiver::class.java)
+    private fun lookupExistingPendingIntent(eventId: Long, slot: Int): PendingIntent? {
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            action = actionForSlot(slot)
+        }
         return PendingIntent.getBroadcast(
             context,
             requestCodeFor(eventId),
@@ -125,13 +153,15 @@ class ReminderScheduler(
         )
     }
 
-    /** 排新闹钟时才真正创建/覆盖 PendingIntent，带上要展示的文案。 */
+    /** 排新闹钟时才真正创建/覆盖 PendingIntent，带上要展示的文案与槽位 action。 */
     private fun schedulingPendingIntentFor(
         eventId: Long,
         titleLine: String,
         bodyLine: String,
+        slot: Int,
     ): PendingIntent {
         val intent = Intent(context, ReminderReceiver::class.java).apply {
+            action = actionForSlot(slot)
             putExtra(EXTRA_EVENT_ID, eventId)
             putExtra(EXTRA_TITLE_LINE, titleLine)
             putExtra(EXTRA_BODY_LINE, bodyLine)

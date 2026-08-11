@@ -8,8 +8,11 @@ import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.data.repo.LocationPresetRepository
 import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.data.repo.VoyageRepository
+import com.cruise.assistant.domain.BUILT_IN_LOCATION_CATALOG
+import com.cruise.assistant.domain.BUILT_IN_SHIPS
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.LocationCatalogEntry
 import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.reminder.ReminderScheduler
@@ -47,6 +50,12 @@ data class EventSheetState(
     val recurrenceGroupId: String? = null,
     val errorResId: Int? = null,
     val saving: Boolean = false,
+    /** 当前选中类别的 iconKey（决定是否有预置地点下拉） */
+    val categoryIconKey: String? = null,
+    /** 是否内置船（探险号），内置才有预置地点 */
+    val builtInShip: Boolean = false,
+    /** 是否处于预置地点下拉模式；false = 自由输入 */
+    val locationPresetMode: Boolean = false,
 ) {
     val isEditing: Boolean get() = editingId != 0L
 
@@ -83,17 +92,34 @@ class EventSheetViewModel(
     init {
         viewModelScope.launch {
             val voyage = voyageRepository.getVoyage()
+            val builtIn = voyage?.shipName in com.cruise.assistant.domain.BUILT_IN_SHIPS.map { s -> s.name }
             _state.update {
-                it.copy(maxDeck = voyage?.maxDeck ?: 20, minDeck = voyage?.minDeck ?: 1, disembarkDate = voyage?.disembarkDate)
+                it.copy(
+                    maxDeck = voyage?.maxDeck ?: 20,
+                    minDeck = voyage?.minDeck ?: 1,
+                    disembarkDate = voyage?.disembarkDate,
+                    builtInShip = builtIn,
+                )
             }
         }
         viewModelScope.launch {
             categoryRepository.observeActive().collect { list ->
                 _state.update { current ->
+                    val iconKey = list.firstOrNull { it.id == current.selectedCategoryId }?.iconKey
                     current.copy(
                         categories = list,
+                        categoryIconKey = iconKey,
                         selectedCategoryId = current.selectedCategoryId
                             ?: list.firstOrNull()?.id,
+                        locationPresetMode = resolvePresetMode(
+                            isEditing = current.isEditing,
+                            builtInShip = current.builtInShip,
+                            iconKey = iconKey,
+                            currentMode = current.locationPresetMode,
+                            deck = current.deck,
+                            zone = current.zone,
+                            placeName = current.placeName,
+                        ),
                     )
                 }
             }
@@ -128,17 +154,56 @@ class EventSheetViewModel(
                             recurrenceGroupId = event.recurrenceGroupId,
                         )
                     }
+                    _state.update { current ->
+                        val iconKey = current.categories
+                            .firstOrNull { it.id == current.selectedCategoryId }?.iconKey
+                        current.copy(
+                            locationPresetMode = resolvePresetMode(
+                                isEditing = true,
+                                builtInShip = current.builtInShip,
+                                iconKey = iconKey,
+                                currentMode = current.locationPresetMode,
+                                deck = current.deck,
+                                zone = current.zone,
+                                placeName = current.placeName,
+                            ),
+                        )
+                    }
                 }
             }
         }
     }
 
-    fun onCategorySelect(id: Long) = _state.update { it.copy(selectedCategoryId = id, errorResId = null) }
+    fun onCategorySelect(id: Long) = _state.update {
+        val iconKey = it.categories.firstOrNull { c -> c.id == id }?.iconKey
+        val presetAvailable = it.builtInShip && iconKey in BUILT_IN_LOCATION_CATALOG.keys
+        it.copy(
+            selectedCategoryId = id,
+            categoryIconKey = iconKey,
+            // 切到演出/餐饮时默认进下拉模式；其他类别退回自由输入
+            locationPresetMode = presetAvailable,
+            errorResId = null,
+        )
+    }
     fun onTitleChange(value: String) = _state.update { it.copy(title = value, errorResId = null) }
     fun onDeckChange(value: Int) = _state.update { it.copy(deck = value, noLocation = false) }
     fun onZoneChange(value: ShipZone) = _state.update { it.copy(zone = value, noLocation = false) }
-    fun onPlaceNameChange(value: String) = _state.update { it.copy(placeName = value) }
+    fun onPlaceNameChange(value: String) = _state.update {
+        it.copy(placeName = value, locationPresetMode = false)
+    }
     fun onRecurringToggle(value: Boolean) = _state.update { it.copy(recurring = value) }
+
+    fun onSelectPresetLocation(entry: com.cruise.assistant.domain.LocationCatalogEntry) = _state.update {
+        it.copy(
+            deck = entry.deck,
+            zone = entry.zone,
+            placeName = entry.placeName,
+            noLocation = false,
+            locationPresetMode = true,
+        )
+    }
+
+    fun onCustomLocationSelected() = _state.update { it.copy(locationPresetMode = false) }
 
     /**
      * Fix round 2 防线二：系统事件（上船/下船）没有地点，UI 已经不渲染 LocationPicker，
@@ -226,5 +291,28 @@ class EventSheetViewModel(
             _state.update { it.copy(saving = false) }
             onDone()
         }
+    }
+
+    /**
+     * 幂等收敛：是否处于预置地点下拉模式。
+     * 非内置船或类别无目录 → false；新建事件（演出/餐饮）→ true（默认下拉）；
+     * 编辑事件 → 地点与目录某项匹配、或已在下拉模式时为 true，否则 false（自定义）。
+     */
+    private fun resolvePresetMode(
+        isEditing: Boolean,
+        builtInShip: Boolean,
+        iconKey: String?,
+        currentMode: Boolean,
+        deck: Int?,
+        zone: ShipZone?,
+        placeName: String?,
+    ): Boolean {
+        if (!builtInShip || iconKey !in BUILT_IN_LOCATION_CATALOG.keys) return false
+        if (!isEditing) return true
+        val key = iconKey ?: return false
+        val matched = BUILT_IN_LOCATION_CATALOG.getValue(key).any { entry ->
+            entry.deck == deck && entry.zone == zone && entry.placeName == placeName
+        }
+        return matched || currentMode
     }
 }

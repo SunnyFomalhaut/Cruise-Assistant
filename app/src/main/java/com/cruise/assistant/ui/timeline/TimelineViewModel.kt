@@ -138,6 +138,9 @@ class TimelineViewModel(
                             hourHeightDp = settings.hourHeightDp,
                             events = visibleEvents,
                             collapseEmptyGaps = settings.collapseEmptyGaps,
+                            showCategoryIds = categories
+                                .filter { it.iconKey == "show" }
+                                .mapTo(mutableSetOf()) { it.id },
                         ),
                         settings = settings,
                         nowMinute = now,

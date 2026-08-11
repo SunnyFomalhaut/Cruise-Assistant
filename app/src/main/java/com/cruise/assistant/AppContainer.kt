@@ -26,6 +26,7 @@ class AppContainer(context: Context) {
     val eventRepository = EventRepository(
         eventDao = db.eventDao(),
         voyageDao = db.voyageDao(),
+        categoryDao = db.categoryDao(),
     )
 
     val categoryRepository = CategoryRepository(

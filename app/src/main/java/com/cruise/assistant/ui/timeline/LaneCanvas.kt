@@ -13,16 +13,22 @@ import androidx.compose.ui.unit.dp
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LANE_COUNT
+import com.cruise.assistant.domain.SHOW_WAIT_MINUTES
 import com.cruise.assistant.domain.TimelineLayout
-import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.minuteToDp
-import com.cruise.assistant.domain.startMinute
+import com.cruise.assistant.domain.showEffectiveRange
 import com.cruise.assistant.ui.theme.NowRed
 
 /** 需求4：栏0/栏1 等宽偏左，栏2 更窄贴最右 */
 private val LANE_WEIGHTS = floatArrayOf(1f, 1f, 0.45f)
 private val LANE_GAP = 3.dp
 private val MIN_CARD_HEIGHT = 22.dp
+
+/** 卡片内给标题保留的最小高度（单行 labelSmall 约 16dp + 上下 3dp padding × 2） */
+private val TITLE_RESERVE_DP = 26.dp
+
+/** 等待段与标题区之间的间隔（与 EventCard 的 Spacer 一致） */
+private val SPACER_DP = 2.dp
 
 /** 3 栏竖分隔线的位置（占总宽的比例），供 TimelineGrid 画线 */
 fun laneBoundaryFractions(): List<Float> {
@@ -53,12 +59,22 @@ fun LaneCanvas(
         val weightSum = LANE_WEIGHTS.sum()
 
         events.forEach { event ->
-            val top = layout.minuteToDp(event.startMinute)
-            val bottom = layout.minuteToDp(event.endMinute)
+            val isShow = categories[event.categoryId]?.iconKey == "show"
+            val (effStart, effEnd) = showEffectiveRange(event, isShow)
+            val top = layout.minuteToDp(effStart)
+            val bottom = layout.minuteToDp(effEnd)
             // 范围外的事件不画（顶部提示条负责告知）
             if (bottom <= 0f || top >= layout.totalHeightDp) return@forEach
 
             val heightDp = (bottom - top).dp.coerceAtLeast(MIN_CARD_HEIGHT)
+            // 等待段高度（仅 show 事件，按 30 分钟换算；钳制到给标题留出空间，
+            // 否则 15/10 分钟短演出的标题会被 30 分钟等待段挤出卡片裁剪区）
+            val waitHeightDp = if (isShow) {
+                val band = (layout.minuteToDp(effStart + SHOW_WAIT_MINUTES) - top).dp
+                band.coerceAtMost(heightDp - TITLE_RESERVE_DP - SPACER_DP).coerceAtLeast(0.dp)
+            } else {
+                0.dp
+            }
 
             val lane = event.lane.coerceIn(0, LANE_COUNT - 1)
             val (offsetX, cardWidth) = if (singleLane) {
@@ -75,6 +91,7 @@ fun LaneCanvas(
                 event = event,
                 category = categories[event.categoryId],
                 heightDp = heightDp,
+                waitSegmentHeightDp = waitHeightDp,
                 hasConflict = event.id in conflictIds,
                 onClick = { onEventClick(event) },
                 onLongClick = { onEventLongClick(event) },

@@ -54,7 +54,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         key = "show_set_sail",
         title = "扬帆起航 Let's Set Sail",
         deck = 10,
-        zone = ShipZone.MID,
+        zone = ShipZone.STERN,
         placeName = "花园舞台",
         durationMinutes = 30,
         dayOffsets = listOf(1),
@@ -79,7 +79,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         title = "海洋奇遇 Disney Seas The Adventure",
         deck = 6,
         zone = ShipZone.BOW,
-        placeName = "迪士尼剧院",
+        placeName = "华特迪士尼剧院 Walt Disney Theatre",
         durationMinutes = 60,
         dayOffsets = listOf(1),
         startTimes = listOf(LocalTime.of(18, 0), LocalTime.of(20, 30)),
@@ -90,7 +90,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         title = "回忆：瓦力与伊芙 Remember",
         deck = 6,
         zone = ShipZone.BOW,
-        placeName = "迪士尼剧院",
+        placeName = "华特迪士尼剧院 Walt Disney Theatre",
         durationMinutes = 60,
         dayOffsets = listOf(2),
         startTimes = listOf(LocalTime.of(18, 0), LocalTime.of(20, 30)),
@@ -119,4 +119,24 @@ fun presetShowsSummary(): String = DISNEY_ADVENTURE_SHOWS.joinToString("\n") { s
         ?: "第${show.dayOffsets.joinToString("、")}天"
     val countLabel = if (show.dinnerLinked) "1场（按晚餐时段）" else "${show.startTimes.size}场"
     "· ${show.title}（$dayLabel $countLabel）"
+}
+
+/** 演出等待入场的延伸分钟数（提前占位） */
+const val SHOW_WAIT_MINUTES = 30
+
+/**
+ * 事件在时间轴上的有效区间（分钟对 [start, end)）。
+ * show 类别事件向前延伸 SHOW_WAIT_MINUTES（等待入场占位），其他事件返回原始区间。
+ * 返回值可能为负起点（深夜演出跨午夜），区间比较纯算术、调用方自行处理。
+ */
+fun showEffectiveRange(event: CruiseEvent, isShow: Boolean): Pair<Int, Int> =
+    if (isShow) (event.startMinute - SHOW_WAIT_MINUTES) to event.endMinute
+    else event.startMinute to event.endMinute
+
+/**
+ * 构造 rangeOf 闭包：show 类别事件（categoryId ∈ showCategoryIds）按扩展区间参与，
+ * 其他事件用原始区间。EventRepository/TimelineLayout/TimelineViewModel 共用。
+ */
+fun showRangeOf(showCategoryIds: Set<Long>): (CruiseEvent) -> Pair<Int, Int> = { e ->
+    showEffectiveRange(e, isShow = e.categoryId in showCategoryIds)
 }

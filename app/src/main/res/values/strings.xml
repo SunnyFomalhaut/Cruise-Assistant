@@ -56,6 +56,8 @@
     <string name="deck_label">楼层</string>
     <string name="place_name_hint">地点名（可选）</string>
     <string name="no_location">不设地点</string>
+    <string name="custom_location">自定义地点…</string>
+    <string name="select_location_hint">选择地点</string>
     <string name="start_time">开始时间</string>
     <string name="end_time">结束时间</string>
     <string name="recur_daily">每日同一时间循环</string>
@@ -104,9 +106,12 @@
     <string name="dinner_time_2000">20:00</string>
     <string name="reminder_enabled">开启提醒</string>
     <string name="reminder_lead_time">提前提醒</string>
+    <string name="reminder_before_15">15 分钟前</string>
+    <string name="reminder_before_5">5 分钟前</string>
+    <string name="reminder_at_start">开始时</string>
     <string name="minutes_format">%1$d 分钟</string>
     <string name="voyage_section">航次</string>
-    <string name="voyage_summary_format">%1$d 天 · 最高 %2$dF</string>
+    <string name="voyage_summary_format">%1$d 天 · 最高 Deck %2$d</string>
     <string name="edit_voyage">修改航次</string>
     <string name="reset_voyage">重建航次</string>
     <string name="reset_voyage_warning">会清空所有事件和计划，无法恢复。确定吗？</string>

@@ -34,7 +34,6 @@ import com.cruise.assistant.R
 import java.time.format.DateTimeFormatter
 
 private val DATE_FMT = DateTimeFormatter.ofPattern("yyyy年M月d日")
-private val REMINDER_PRESETS = listOf(5, 10, 15, 30, 60)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -44,7 +43,9 @@ fun SettingsScreen(
     onHourHeightChange: (Int) -> Unit,
     onCollapseToggle: (Boolean) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
-    onReminderMinutesChange: (Int) -> Unit,
+    onRemindBefore15Change: (Boolean) -> Unit,
+    onRemindBefore5Change: (Boolean) -> Unit,
+    onRemindAtStartChange: (Boolean) -> Unit,
     onDinnerTimeChange: (java.time.LocalTime) -> Unit,
     onResetVoyage: () -> Unit,
     onManageCategories: () -> Unit,
@@ -147,18 +148,39 @@ fun SettingsScreen(
         if (state.settings.notificationsEnabled) {
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.reminder_lead_time), style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(6.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                REMINDER_PRESETS.forEach { minutes ->
-                    FilterChip(
-                        selected = state.settings.defaultReminderMinutes == minutes,
-                        onClick = { onReminderMinutesChange(minutes) },
-                        label = { Text(stringResource(R.string.minutes_format, minutes)) },
-                    )
-                }
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.reminder_before_15),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = state.settings.remindBefore15,
+                    onCheckedChange = onRemindBefore15Change,
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.reminder_before_5),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = state.settings.remindBefore5,
+                    onCheckedChange = onRemindBefore5Change,
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.reminder_at_start),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = state.settings.remindAtStart,
+                    onCheckedChange = onRemindAtStartChange,
+                )
             }
             if (!exactAlarmAvailable) {
                 Spacer(Modifier.height(8.dp))

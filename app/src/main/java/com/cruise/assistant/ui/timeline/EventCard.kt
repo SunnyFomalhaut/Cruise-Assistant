@@ -2,12 +2,14 @@ package com.cruise.assistant.ui.timeline
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,7 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -45,6 +50,7 @@ fun EventCard(
     event: CruiseEvent,
     category: Category?,
     heightDp: Dp,
+    waitSegmentHeightDp: Dp = 0.dp,
     hasConflict: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -56,6 +62,7 @@ fun EventCard(
     val active = event.isActive
     val textColor = if (active) cardTextColorFor(colorArgb) else MaterialTheme.colorScheme.onSurfaceVariant
     val compact = heightDp < COMPACT_THRESHOLD
+    val hasWaitSegment = waitSegmentHeightDp > 0.dp
     val location = formatLocation(event.deck, event.zone, event.placeName)
 
     Row(
@@ -81,6 +88,33 @@ fun EventCard(
                 // 2dp，把这几 dp 让给标题——非 compact 分支不受影响，padding 仍是 6dp。
                 .padding(horizontal = if (compact) 2.dp else 6.dp, vertical = 3.dp),
         ) {
+            // 等待段：淡色斜纹 + 单行"演出等待入场 · 地点 · 开始时间"（任意缩放下不裁剪）
+            if (hasWaitSegment) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(waitSegmentHeightDp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(waitSegmentBrush(colorArgb))
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = buildString {
+                            append("演出等待入场")
+                            location?.let { append(" · ").append(it) }
+                            append(" · ").append(formatStart(event))
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        fontStyle = FontStyle.Italic,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor.copy(alpha = 0.9f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Spacer(Modifier.height(2.dp))
+            }
             if (compact) {
                 // 太矮：一行只塞标题（+ 非窄栏下还能塞开始时间）。不放类别 chip——
                 // 左侧 4dp 色条已经传达了类别，chip 是非必要元素；在窄栏（栏2
@@ -149,23 +183,26 @@ fun EventCard(
                         )
                     }
                 }
-                // 第2行：地点。deck 为 null 时整行不显示（上船/下船）
-                location?.let {
+                // 第2/3行：地点与时间。等待段已显示过它们（show 事件），此处省略避免重复。
+                if (!hasWaitSegment) {
+                    // 第2行：地点。deck 为 null 时整行不显示（上船/下船）
+                    location?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = textColor.copy(alpha = 0.85f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    // 第3行：时间 + 时长
                     Text(
-                        text = it,
+                        text = formatTimeRange(event),
                         style = MaterialTheme.typography.labelSmall,
-                        color = textColor.copy(alpha = 0.85f),
+                        color = textColor.copy(alpha = 0.7f),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                     )
                 }
-                // 第3行：时间 + 时长
-                Text(
-                    text = formatTimeRange(event),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = textColor.copy(alpha = 0.7f),
-                    maxLines = 1,
-                )
             }
         }
     }
@@ -185,4 +222,15 @@ fun formatDuration(minutes: Int): String = when {
     minutes < 60 -> "${minutes}m"
     minutes % 60 == 0 -> "${minutes / 60}h"
     else -> "${minutes / 60}h ${minutes % 60}m"
+}
+
+/** 等待段斜纹背景：类别色淡化的 45° 条纹 */
+private fun waitSegmentBrush(colorArgb: Int): Brush {
+    val base = Color(colorArgb).copy(alpha = 0.22f)
+    val stripe = Color(colorArgb).copy(alpha = 0.10f)
+    return Brush.linearGradient(
+        colors = listOf(base, stripe, base, stripe, base),
+        start = Offset.Zero,
+        end = Offset.Infinite,
+    )
 }

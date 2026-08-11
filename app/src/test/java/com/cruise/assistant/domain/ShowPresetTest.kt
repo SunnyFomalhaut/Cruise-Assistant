@@ -74,7 +74,7 @@ class ShowPresetTest {
                 key = "show_set_sail",
                 title = "扬帆起航 Let's Set Sail",
                 deck = 10,
-                zone = ShipZone.MID,
+                zone = ShipZone.STERN,
                 placeName = "花园舞台",
                 durationMinutes = 30,
                 dayOffsets = listOf(1),
@@ -99,7 +99,7 @@ class ShowPresetTest {
                 title = "海洋奇遇 Disney Seas The Adventure",
                 deck = 6,
                 zone = ShipZone.BOW,
-                placeName = "迪士尼剧院",
+                placeName = "华特迪士尼剧院 Walt Disney Theatre",
                 durationMinutes = 60,
                 dayOffsets = listOf(1),
                 dailyRangeTo = null,
@@ -111,7 +111,7 @@ class ShowPresetTest {
                 title = "回忆：瓦力与伊芙 Remember",
                 deck = 6,
                 zone = ShipZone.BOW,
-                placeName = "迪士尼剧院",
+                placeName = "华特迪士尼剧院 Walt Disney Theatre",
                 durationMinutes = 60,
                 dayOffsets = listOf(2),
                 dailyRangeTo = null,
@@ -221,5 +221,52 @@ class ShowPresetTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun showEffectiveRange_showEvent_extendsStartBy30() {
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(20, 30),
+            durationMinutes = 60,
+            categoryId = 1,
+            title = "演出",
+        )
+        assertEquals((20 * 60 + 30 - 30) to (20 * 60 + 30 + 60), showEffectiveRange(event, isShow = true))
+    }
+
+    @Test
+    fun showEffectiveRange_nonShowEvent_keepsOriginalRange() {
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(9, 0),
+            durationMinutes = 30,
+            categoryId = 1,
+            title = "早餐",
+        )
+        assertEquals((9 * 60) to (9 * 60 + 30), showEffectiveRange(event, isShow = false))
+    }
+
+    @Test
+    fun showRangeOf_matchesByCategoryId_notEventId() {
+        // C1 回归测试：判定必须按 categoryId，不能按 eventId（事件 id 与类别 id 各自自增会撞值）
+        val showCategoryIds = setOf(1L)          // show 类别的 id = 1
+        val showEvent = CruiseEvent(
+            id = 5, date = LocalDate.of(2026, 8, 10),   // 事件 id = 5（故意不同）
+            startTime = LocalTime.of(20, 0), durationMinutes = 60,
+            categoryId = 1, title = "演出",
+        )
+        val ordinaryEvent = CruiseEvent(
+            id = 1, date = LocalDate.of(2026, 8, 10),   // 事件 id = 1（撞类别 id！）
+            startTime = LocalTime.of(19, 45), durationMinutes = 10,
+            categoryId = 2, title = "普通事件",
+        )
+        val rangeOf = showRangeOf(showCategoryIds)
+        // showEvent 按扩展区间（19:30 起），ordinaryEvent 原始区间——两者重叠 → 冲突。
+        // 19:45–19:55 落在 showEvent 的扩展区间（19:30 起）内、但落在其原始区间（20:00 起）外，
+        // 因此 buggy 逻辑（按事件 id 判定：showEvent id=5 ∉ {1} 不扩展、ordinaryEvent id=1 ∈ {1}
+        // 被误扩展为 19:15–19:55）下两者不重叠 → 冲突数为 0，测试失败。能区分正确/错误实现。
+        val conflicts = findConflicts(listOf(showEvent, ordinaryEvent), rangeOf)
+        assertEquals(1, conflicts.size)
     }
 }
