@@ -40,3 +40,28 @@ val BUILT_IN_LOCATION_CATALOG: Map<String, List<LocationCatalogEntry>> = mapOf(
         LocationCatalogEntry(10, ShipZone.BOW, "塔拉奶奶的厨房 Gramma Talas Kitchen", DiningGroup.QUICK),
     ),
 )
+
+/** 地点下拉的选项：分组标题（餐饮四组）/ 预置条目 / 自定义入口 */
+sealed interface LocationPresetOption {
+    data class Group(val label: String) : LocationPresetOption
+    data class Entry(val entry: LocationCatalogEntry) : LocationPresetOption
+    data object Custom : LocationPresetOption
+}
+
+/** 按类别 iconKey 展开成下拉选项（meal 按四组分组，组标题不可选） */
+fun locationPresetOptions(iconKey: String): List<LocationPresetOption> {
+    val entries = BUILT_IN_LOCATION_CATALOG[iconKey] ?: return emptyList()
+    if (iconKey != "meal") {
+        return entries.map { LocationPresetOption.Entry(it) } + LocationPresetOption.Custom
+    }
+    return buildList {
+        DiningGroup.entries.forEach { group ->
+            val groupEntries = entries.filter { it.diningGroup == group }
+            if (groupEntries.isNotEmpty()) {
+                add(LocationPresetOption.Group(group.label))
+                groupEntries.forEach { add(LocationPresetOption.Entry(it)) }
+            }
+        }
+        add(LocationPresetOption.Custom)
+    }
+}
