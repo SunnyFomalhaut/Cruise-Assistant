@@ -81,7 +81,7 @@ fun LocationPicker(
                     onClick = { deckMenuOpen = true },
                     enabled = fieldsEnabled,
                     modifier = Modifier.width(88.dp),
-                ) { Text(if (deck != null) "${deck}F" else stringResource(R.string.deck_label)) }
+                ) { Text(if (deck != null) "Deck $deck" else stringResource(R.string.deck_label)) }
                 DropdownMenu(
                     expanded = deckMenuOpen,
                     onDismissRequest = { deckMenuOpen = false },
@@ -89,7 +89,7 @@ fun LocationPicker(
                 ) {
                     (minDeck..maxDeck).forEach { floor ->
                         DropdownMenuItem(
-                            text = { Text("${floor}F") },
+                            text = { Text("Deck $floor") },
                             onClick = {
                                 onDeckChange(floor)
                                 deckMenuOpen = false
@@ -142,7 +142,7 @@ fun LocationPicker(
             ) {
                 suggestions.forEach { preset ->
                     DropdownMenuItem(
-                        text = { Text("${preset.deck}F${preset.zone.label}${preset.placeName}") },
+                        text = { Text("Deck ${preset.deck} ${preset.zone.label} ${preset.placeName}") },
                         onClick = {
                             onDeckChange(preset.deck)
                             onZoneChange(preset.zone)
