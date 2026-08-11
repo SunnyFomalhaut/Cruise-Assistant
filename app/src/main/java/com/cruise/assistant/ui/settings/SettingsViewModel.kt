@@ -67,9 +67,23 @@ class SettingsViewModel(
         }
     }
 
-    fun setReminderMinutes(minutes: Int) {
+    fun setRemindBefore15(enabled: Boolean) {
         viewModelScope.launch {
-            settingsStore.setDefaultReminderMinutes(minutes.coerceIn(0, 240))
+            settingsStore.setRemindBefore15(enabled)
+            reminderScheduler.rescheduleAll()
+        }
+    }
+
+    fun setRemindBefore5(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsStore.setRemindBefore5(enabled)
+            reminderScheduler.rescheduleAll()
+        }
+    }
+
+    fun setRemindAtStart(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsStore.setRemindAtStart(enabled)
             reminderScheduler.rescheduleAll()
         }
     }

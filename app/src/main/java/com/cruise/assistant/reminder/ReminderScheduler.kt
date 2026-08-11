@@ -71,7 +71,7 @@ class ReminderScheduler(
         events.asSequence()
             .filter { it.isActive }
             .mapNotNull { event ->
-                val lead = event.reminderMinutesBefore ?: settings.defaultReminderMinutes
+                val lead = event.reminderMinutesBefore ?: if (settings.remindBefore15) 15 else 0
                 val triggerMs = event.date.atTime(event.startTime)
                     .minusMinutes(lead.toLong())
                     .atZone(zone).toInstant().toEpochMilli()

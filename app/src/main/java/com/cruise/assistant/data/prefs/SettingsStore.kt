@@ -21,7 +21,9 @@ data class AppSettings(
     val displayEndMinute: Int = 24 * 60,
     val hourHeightDp: Int = 60,
     val collapseEmptyGaps: Boolean = false,
-    val defaultReminderMinutes: Int = 15,
+    val remindBefore15: Boolean = true,
+    val remindBefore5: Boolean = true,
+    val remindAtStart: Boolean = true,
     val dinnerTime: LocalTime = LocalTime.of(17, 45),
     val notificationsEnabled: Boolean = true,
     val onboardingCompleted: Boolean = false,
@@ -37,7 +39,9 @@ class SettingsStore(private val context: Context) {
         val displayEnd = intPreferencesKey("display_end_minute")
         val hourHeight = intPreferencesKey("hour_height_dp")
         val collapseGaps = booleanPreferencesKey("collapse_empty_gaps")
-        val reminderMinutes = intPreferencesKey("default_reminder_minutes")
+        val remindBefore15 = booleanPreferencesKey("remind_before_15")
+        val remindBefore5 = booleanPreferencesKey("remind_before_5")
+        val remindAtStart = booleanPreferencesKey("remind_at_start")
         val dinnerTime = stringPreferencesKey("dinner_time")
         val notificationsEnabled = booleanPreferencesKey("notifications_enabled")
         val onboardingCompleted = booleanPreferencesKey("onboarding_completed")
@@ -53,7 +57,9 @@ class SettingsStore(private val context: Context) {
             displayEndMinute = prefs[Keys.displayEnd] ?: defaults.displayEndMinute,
             hourHeightDp = prefs[Keys.hourHeight] ?: defaults.hourHeightDp,
             collapseEmptyGaps = prefs[Keys.collapseGaps] ?: defaults.collapseEmptyGaps,
-            defaultReminderMinutes = prefs[Keys.reminderMinutes] ?: defaults.defaultReminderMinutes,
+            remindBefore15 = prefs[Keys.remindBefore15] ?: defaults.remindBefore15,
+            remindBefore5 = prefs[Keys.remindBefore5] ?: defaults.remindBefore5,
+            remindAtStart = prefs[Keys.remindAtStart] ?: defaults.remindAtStart,
             dinnerTime = prefs[Keys.dinnerTime]
                 ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
                 ?: defaults.dinnerTime,
@@ -74,8 +80,14 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setCollapseEmptyGaps(enabled: Boolean) = edit { it[Keys.collapseGaps] = enabled }
 
-    suspend fun setDefaultReminderMinutes(minutes: Int) =
-        edit { it[Keys.reminderMinutes] = minutes }
+    suspend fun setRemindBefore15(enabled: Boolean) =
+        edit { it[Keys.remindBefore15] = enabled }
+
+    suspend fun setRemindBefore5(enabled: Boolean) =
+        edit { it[Keys.remindBefore5] = enabled }
+
+    suspend fun setRemindAtStart(enabled: Boolean) =
+        edit { it[Keys.remindAtStart] = enabled }
 
     suspend fun setDinnerTime(time: LocalTime) =
         edit { it[Keys.dinnerTime] = time.toString() }

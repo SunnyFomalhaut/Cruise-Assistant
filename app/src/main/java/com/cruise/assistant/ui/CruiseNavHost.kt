@@ -344,7 +344,9 @@ fun CruiseNavHost(container: AppContainer) {
                     onHourHeightChange = vm::setHourHeight,
                     onCollapseToggle = vm::setCollapse,
                     onNotificationsToggle = vm::setNotifications,
-                    onReminderMinutesChange = vm::setReminderMinutes,
+                    onRemindBefore15Change = vm::setRemindBefore15,
+                    onRemindBefore5Change = vm::setRemindBefore5,
+                    onRemindAtStartChange = vm::setRemindAtStart,
                     onDinnerTimeChange = vm::setDinnerTime,
                     onResetVoyage = {
                         vm.resetVoyage {

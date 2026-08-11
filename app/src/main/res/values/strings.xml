@@ -104,6 +104,9 @@
     <string name="dinner_time_2000">20:00</string>
     <string name="reminder_enabled">开启提醒</string>
     <string name="reminder_lead_time">提前提醒</string>
+    <string name="reminder_before_15">15 分钟前</string>
+    <string name="reminder_before_5">5 分钟前</string>
+    <string name="reminder_at_start">开始时</string>
     <string name="minutes_format">%1$d 分钟</string>
     <string name="voyage_section">航次</string>
     <string name="voyage_summary_format">%1$d 天 · 最高 %2$dF</string>
