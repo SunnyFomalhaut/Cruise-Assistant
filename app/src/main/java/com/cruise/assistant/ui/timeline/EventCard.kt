@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,8 +46,6 @@ private val TWO_LINE_MIN_DP = 42.dp
 private val THREE_LINE_MIN_DP = 58.dp
 /** 候场段低于此高度时只显示"候场"，避免单行文本被裁剪 */
 private val WAIT_TEXT_MIN_DP = 20.dp
-/** 候场区能显示两行内容的最小高度（两行 labelSmall 16dp + 4dp 纵向 padding） */
-private val WAIT_TWO_LINE_MIN_DP = 36.dp
 
 /**
  * 需求3：事件卡片。
@@ -74,8 +73,12 @@ fun EventCard(
     val location = formatLocation(event.deck, event.zone, event.placeName, compact = true)
     // 贪心分级：本体剩余高度决定信息分配（tier 0 = 无候场段，走原有逻辑）
     val bodyHeightDp = heightDp - waitSegmentHeightDp - 2.dp
+    // 候场区两行阈值从 typography 派生（fontScale 自适应）：两行 labelSmall 行高 + 4dp padding
+    val waitTwoLineMinDp = with(LocalDensity.current) {
+        (MaterialTheme.typography.labelSmall.lineHeight * 2).toDp() + 4.dp
+    }
     // 候场区是否够显示两行（tier 4 用）
-    val waitTwoLines = waitSegmentHeightDp >= WAIT_TWO_LINE_MIN_DP
+    val waitTwoLines = waitSegmentHeightDp >= waitTwoLineMinDp
     val showTier = when {
         !hasWaitSegment -> 0
         bodyHeightDp >= THREE_LINE_MIN_DP -> 3
