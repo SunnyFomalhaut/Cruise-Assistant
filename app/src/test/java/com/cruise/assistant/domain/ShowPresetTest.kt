@@ -139,7 +139,7 @@ class ShowPresetTest {
         assertEquals(5, DISNEY_ADVENTURE_SHOWS.size)
         val keys = DISNEY_ADVENTURE_SHOWS.map { it.key }
         assertEquals(keys.size, keys.distinct().size)
-        // 迪士尼探险号客用甲板 5-19F
+        // 迪士尼探险号客用甲板 Deck 5-19
         DISNEY_ADVENTURE_SHOWS.forEach { show ->
             assertTrue("${show.key} deck ${show.deck} out of 5..19", show.deck in 5..19)
         }
