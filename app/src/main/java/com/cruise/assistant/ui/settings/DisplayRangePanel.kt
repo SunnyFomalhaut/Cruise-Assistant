@@ -98,8 +98,8 @@ fun DisplayRangePanel(
             Slider(
                 value = hourHeightDp.toFloat(),
                 onValueChange = { onHourHeightChange(it.toInt()) },
-                valueRange = 36f..140f,
-                steps = 12,
+                valueRange = 60f..180f,
+                steps = 19,
             )
 
             Spacer(Modifier.height(8.dp))

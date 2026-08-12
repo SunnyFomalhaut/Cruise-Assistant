@@ -19,7 +19,7 @@ data class AppSettings(
     val lastViewedDate: LocalDate? = null,
     val displayStartMinute: Int = 7 * 60,
     val displayEndMinute: Int = 24 * 60,
-    val hourHeightDp: Int = 60,
+    val hourHeightDp: Int = 120,
     val collapseEmptyGaps: Boolean = false,
     val remindBefore15: Boolean = true,
     val remindBefore5: Boolean = true,

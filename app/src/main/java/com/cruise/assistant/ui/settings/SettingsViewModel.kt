@@ -53,7 +53,7 @@ class SettingsViewModel(
     }
 
     fun setHourHeight(dp: Int) {
-        viewModelScope.launch { settingsStore.setHourHeight(dp.coerceIn(36, 140)) }
+        viewModelScope.launch { settingsStore.setHourHeight(dp.coerceIn(60, 180)) }
     }
 
     fun setCollapse(enabled: Boolean) {
