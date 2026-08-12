@@ -46,7 +46,7 @@ fun NowBanner(
 
 @Composable
 private fun BannerRow(label: String, event: CruiseEvent, categories: Map<Long, Category>) {
-    val location = formatLocation(event.deck, event.zone, event.placeName)
+    val location = formatLocation(event.deck, event.zone, event.placeName, compact = true)
     Row(Modifier.fillMaxWidth()) {
         Text(
             label,
