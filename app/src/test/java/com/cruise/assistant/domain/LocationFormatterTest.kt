@@ -42,4 +42,17 @@ class LocationFormatterTest {
     fun twoDigitDeck_works() {
         assertEquals("Deck 11 船中 泳池", formatLocation(11, ShipZone.MID, "泳池"))
     }
+
+    @Test
+    fun compactFormat_usesDPrefix() {
+        assertEquals("D6 船中 花园舞台", formatLocation(6, ShipZone.MID, "花园舞台", compact = true))
+        assertEquals("D7 花园", formatLocation(7, null, "花园", compact = true))
+        assertNull(formatLocation(null, null, null, compact = true))
+    }
+
+    @Test
+    fun defaultFormat_keepsDeck() {
+        // 通知正文/编辑界面等不传 compact → 保持 "Deck N"
+        assertEquals("Deck 6 船中 花园舞台", formatLocation(6, ShipZone.MID, "花园舞台"))
+    }
 }
