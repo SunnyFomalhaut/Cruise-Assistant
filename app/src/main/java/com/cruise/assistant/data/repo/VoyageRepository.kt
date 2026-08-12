@@ -12,6 +12,8 @@ import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
 import com.cruise.assistant.domain.DayPlan
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.Voyage
+import com.cruise.assistant.domain.SHOW_WAIT_MINUTES
+import com.cruise.assistant.domain.assignShowLane
 import com.cruise.assistant.domain.pickDinnerLinkedTime
 import com.cruise.assistant.domain.resolveDates
 import kotlinx.coroutines.flow.Flow
@@ -136,9 +138,12 @@ class VoyageRepository(
                     )
                 }
 
-            // 预置演出：迪士尼探险号演出目录，全部放进第二栏（lane=1），与晚餐/安全演习一样可编辑删除
+            // 预置演出：迪士尼探险号演出目录，默认第二栏；加 30 分钟等待段后同栏冲突的
+            // 场次自动岔开第三栏（assignShowLane），与晚餐/安全演习一样可编辑删除
             val showId = categories.firstOrNull { it.iconKey == "show" }?.id
                 ?: categories.first().id
+            // 按天记录已分配演出的 (lane, 扩展起点, 扩展终点)，供后续场次避让
+            val showLanesByDay = mutableMapOf<LocalDate, MutableList<Triple<Int, Int, Int>>>()
             DISNEY_ADVENTURE_SHOWS.forEach { show ->
                 show.resolveDates(boardDate, voyage.dayCount).forEach { date ->
                     val times = if (show.dinnerLinked) {
@@ -147,6 +152,15 @@ class VoyageRepository(
                         show.startTimes
                     }
                     times.forEach { startTime ->
+                        val startMin = startTime.hour * 60 + startTime.minute
+                        val effStart = startMin - SHOW_WAIT_MINUTES
+                        val effEnd = startMin + show.durationMinutes
+                        val lane = assignShowLane(
+                            effStart,
+                            effEnd,
+                            showLanesByDay.getOrPut(date) { mutableListOf() },
+                        )
+                        showLanesByDay.getValue(date) += Triple(lane, effStart, effEnd)
                         presetEvents += CruiseEvent(
                             date = date,
                             startTime = startTime,
@@ -156,7 +170,7 @@ class VoyageRepository(
                             deck = show.deck,
                             zone = show.zone,
                             placeName = show.placeName,
-                            lane = 1,
+                            lane = lane,
                             isSystemGenerated = false,
                             presetKey = show.key,
                         )
