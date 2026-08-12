@@ -103,12 +103,14 @@ class EventSheetViewModel(
         viewModelScope.launch {
             categoryRepository.observeActive().collect { list ->
                 _state.update { current ->
-                    val iconKey = list.firstOrNull { it.id == current.selectedCategoryId }?.iconKey
+                    // 新建事件初始 selectedCategoryId 为 null：用 fallback 到第一个类别的 id
+                    // 计算 iconKey，否则默认类别（餐食）永远拿不到下拉模式
+                    val resolvedId = current.selectedCategoryId ?: list.firstOrNull()?.id
+                    val iconKey = list.firstOrNull { it.id == resolvedId }?.iconKey
                     current.copy(
                         categories = list,
                         categoryIconKey = iconKey,
-                        selectedCategoryId = current.selectedCategoryId
-                            ?: list.firstOrNull()?.id,
+                        selectedCategoryId = resolvedId,
                         locationPresetMode = resolvePresetMode(
                             isEditing = current.isEditing,
                             builtInShip = current.builtInShip,
