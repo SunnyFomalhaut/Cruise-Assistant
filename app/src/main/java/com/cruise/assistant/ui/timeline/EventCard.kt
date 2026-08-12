@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
@@ -74,8 +75,13 @@ fun EventCard(
     // 贪心分级：本体剩余高度决定信息分配（tier 0 = 无候场段，走原有逻辑）
     val bodyHeightDp = heightDp - waitSegmentHeightDp - 2.dp
     // 候场区两行阈值从 typography 派生（fontScale 自适应）：两行 labelSmall 行高 + 4dp padding
+    // 注意：自定义主题的 labelSmall 未设 lineHeight（TextUnit.Unspecified），
+    // 对 Unspecified 做算术会抛 "Cannot perform operation for Unspecified type"——回退到 fontSize。
+    val labelSmall = MaterialTheme.typography.labelSmall
+    val labelLineHeight = labelSmall.lineHeight.takeIf { it != TextUnit.Unspecified }
+        ?: labelSmall.fontSize
     val waitTwoLineMinDp = with(LocalDensity.current) {
-        (MaterialTheme.typography.labelSmall.lineHeight * 2).toDp() + 4.dp
+        (labelLineHeight * 2).toDp() + 4.dp
     }
     // 候场区是否够显示两行（tier 4 用）
     val waitTwoLines = waitSegmentHeightDp >= waitTwoLineMinDp
