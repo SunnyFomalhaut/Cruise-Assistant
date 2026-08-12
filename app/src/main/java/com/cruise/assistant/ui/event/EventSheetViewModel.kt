@@ -9,10 +9,8 @@ import com.cruise.assistant.data.repo.LocationPresetRepository
 import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.domain.BUILT_IN_LOCATION_CATALOG
-import com.cruise.assistant.domain.BUILT_IN_SHIPS
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
-import com.cruise.assistant.domain.LocationCatalogEntry
 import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.reminder.ReminderScheduler

@@ -66,7 +66,6 @@ fun LocationPicker(
     onCustomLocation: () -> Unit = {},
 ) {
     var deckMenuOpen by remember { mutableStateOf(false) }
-    var presetMenuOpen by remember { mutableStateOf(false) }
     val fieldsEnabled = enabled && !noLocation
 
     // 同层同区的历史地点排前面
@@ -157,7 +156,6 @@ fun LocationPicker(
                     OutlinedButton(
                         onClick = { deckMenuOpen = true },
                         enabled = fieldsEnabled,
-                        modifier = Modifier.width(88.dp),
                     ) { Text(if (deck != null) "Deck $deck" else stringResource(R.string.deck_label)) }
                     DropdownMenu(
                         expanded = deckMenuOpen,

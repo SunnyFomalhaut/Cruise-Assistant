@@ -108,7 +108,7 @@ class VoyageRepository(
 
             val presetEvents = mutableListOf<CruiseEvent>()
 
-            // 安全演习：仅上船日（第一天），15:45–16:20，6F 船中
+            // 安全演习：仅上船日（第一天），15:45–16:20，Deck 6 船中
             presetEvents += CruiseEvent(
                 date = boardDate,
                 startTime = SAFETY_DRILL_TIME,

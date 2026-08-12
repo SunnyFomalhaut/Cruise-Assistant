@@ -41,9 +41,9 @@ class LocationCatalogTest {
     @Test
     fun stageCatalog_matchesSpecData() {
         val stages = BUILT_IN_LOCATION_CATALOG.getValue("show")
-        assertTrue(stages.any { it.placeName.startsWith("华特迪士尼剧院") && it.deck == 6 && it.zone == ShipZone.BOW })
-        assertTrue(stages.any { it.placeName.startsWith("寻路者湾") && it.deck == 10 && it.zone == ShipZone.STERN })
-        assertTrue(stages.any { it.placeName.startsWith("花园舞台") && it.deck == 10 && it.zone == ShipZone.STERN })
+        assertTrue(stages.any { it.placeName == "华特迪士尼剧院 Walt Disney Theatre" && it.deck == 6 && it.zone == ShipZone.BOW })
+        assertTrue(stages.any { it.placeName == "寻路者湾 Wayfinder Bay" && it.deck == 10 && it.zone == ShipZone.STERN })
+        assertTrue(stages.any { it.placeName == "花园舞台 Garden Stage" && it.deck == 10 && it.zone == ShipZone.STERN })
         assertTrue(stages.any { it.placeName == "露天泳池" && it.deck == 17 && it.zone == ShipZone.MID })
         assertTrue(stages.any { it.placeName == "泳池舞台" && it.deck == 10 && it.zone == ShipZone.STERN })
     }
