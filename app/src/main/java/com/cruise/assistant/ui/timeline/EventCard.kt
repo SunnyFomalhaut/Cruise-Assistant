@@ -45,6 +45,8 @@ private val TWO_LINE_MIN_DP = 42.dp
 private val THREE_LINE_MIN_DP = 58.dp
 /** 候场段低于此高度时只显示"候场"，避免单行文本被裁剪 */
 private val WAIT_TEXT_MIN_DP = 20.dp
+/** 候场区能显示两行内容的最小高度（两行 labelSmall 16dp + 4dp 纵向 padding） */
+private val WAIT_TWO_LINE_MIN_DP = 36.dp
 
 /**
  * 需求3：事件卡片。
@@ -72,10 +74,13 @@ fun EventCard(
     val location = formatLocation(event.deck, event.zone, event.placeName, compact = true)
     // 贪心分级：本体剩余高度决定信息分配（tier 0 = 无候场段，走原有逻辑）
     val bodyHeightDp = heightDp - waitSegmentHeightDp - 2.dp
+    // 候场区是否够显示两行（tier 4 用）
+    val waitTwoLines = waitSegmentHeightDp >= WAIT_TWO_LINE_MIN_DP
     val showTier = when {
         !hasWaitSegment -> 0
         bodyHeightDp >= THREE_LINE_MIN_DP -> 3
         bodyHeightDp >= TWO_LINE_MIN_DP -> 2
+        waitTwoLines -> 4
         else -> 1
     }
     // 候场段右侧文案随 tier 与段高自适应
@@ -124,15 +129,38 @@ fun EventCard(
                         .padding(horizontal = 4.dp, vertical = 2.dp),
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text(
-                        text = waitText,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontStyle = FontStyle.Italic,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor.copy(alpha = 0.9f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    if (showTier == 4) {
+                        // 候场区两行：第 1 行"候场 · 开始时间"，第 2 行地点（充分利用空间）
+                        Text(
+                            text = "候场 · ${formatStart(event)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontStyle = FontStyle.Italic,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor.copy(alpha = 0.9f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        location?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontStyle = FontStyle.Italic,
+                                color = textColor.copy(alpha = 0.75f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = waitText,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontStyle = FontStyle.Italic,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor.copy(alpha = 0.9f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 Spacer(Modifier.height(2.dp))
             }
@@ -227,7 +255,7 @@ fun EventCard(
                         )
                     }
                 }
-            } else if (showTier == 1) {
+            } else if (showTier == 1 || showTier == 4) {
                 // 本体只够 1 行：演出名（labelSmall），地点/时间都在候场段
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
