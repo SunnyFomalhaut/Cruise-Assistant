@@ -40,9 +40,9 @@ import com.cruise.assistant.ui.theme.cardTextColorFor
 /** 低于这个高度就压缩成单行显示 */
 private val COMPACT_THRESHOLD = 44.dp
 
-/** 贪心分级阈值：本体（演出段）能显示 2 行 / 3 行内容的最小高度（labelSmall 16dp 行高 + 6dp padding） */
-private val TWO_LINE_MIN_DP = 38.dp
-private val THREE_LINE_MIN_DP = 54.dp
+/** 贪心分级阈值：本体（演出段）能显示 2 行 / 3 行内容的最小高度（第 1 行按 bodySmall 20dp 行高计，+4dp 修正边界裁剪） */
+private val TWO_LINE_MIN_DP = 42.dp
+private val THREE_LINE_MIN_DP = 58.dp
 /** 候场段低于此高度时只显示"候场"，避免单行文本被裁剪 */
 private val WAIT_TEXT_MIN_DP = 20.dp
 
@@ -113,7 +113,7 @@ fun EventCard(
                 // 2dp，把这几 dp 让给标题——非 compact 分支不受影响，padding 仍是 6dp。
                 .padding(horizontal = if (compact) 2.dp else 6.dp, vertical = 3.dp),
         ) {
-            // 等待段：淡色斜纹 + 单行"演出等待入场 · 地点 · 开始时间"（任意缩放下不裁剪）
+            // 等待段：淡色斜纹 + 随分级自适应的 waitText（"候场" / "候场 · 时间" / "候场 · 地点 · 时间"）
             if (hasWaitSegment) {
                 Column(
                     Modifier

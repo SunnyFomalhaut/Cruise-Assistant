@@ -114,8 +114,8 @@ fun SettingsScreen(
         Slider(
             value = state.settings.hourHeightDp.toFloat(),
             onValueChange = { onHourHeightChange(it.toInt()) },
-            valueRange = 36f..140f,
-            steps = 12,
+            valueRange = 60f..180f,
+            steps = 19,
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {

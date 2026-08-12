@@ -219,7 +219,7 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onHourHeightChange = { dp ->
                         coroutineScope.launch {
-                            container.settingsStore.setHourHeight(dp.coerceIn(36, 140))
+                            container.settingsStore.setHourHeight(dp.coerceIn(60, 180))
                         }
                     },
                     onCollapseToggle = { enabled ->
