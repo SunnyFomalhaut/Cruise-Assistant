@@ -32,3 +32,21 @@ fun assignLane(
     }
     return LANE_COUNT - 1
 }
+
+/**
+ * 预置演出生成时的栏位分配：优先第二栏（1），冲突则第三栏（2），再冲突回退第一栏（0）。
+ * occupied 为已分配演出（按扩展区间）的 (lane, effStart, effEnd) 列表。
+ */
+fun assignShowLane(
+    startMinute: Int,
+    endMinute: Int,
+    occupied: List<Triple<Int, Int, Int>>,
+): Int {
+    for (lane in listOf(1, 2, 0)) {
+        val busy = occupied.any { (l, s, e) ->
+            l == lane && overlaps(startMinute, endMinute, s, e)
+        }
+        if (!busy) return lane
+    }
+    return 0
+}

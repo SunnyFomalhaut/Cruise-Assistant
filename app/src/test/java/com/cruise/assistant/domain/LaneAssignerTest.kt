@@ -85,4 +85,29 @@ class LaneAssignerTest {
         val existing = listOf(ev(1, 13, 0, 60, lane = 2))
         assertEquals(0, assignLane(780, 840, existing))
     }
+
+    @Test
+    fun showLane_free_returnsLane1() {
+        assertEquals(1, assignShowLane(540, 585, emptyList()))
+    }
+
+    @Test
+    fun showLane_overlappingInLane1_movesToLane2() {
+        // 海洋奇缘场景：9:00-9:45 已占栏 1，9:30-10:15 与它重叠 → 栏 2
+        val occupied = listOf(Triple(1, 540, 585))
+        assertEquals(2, assignShowLane(570, 615, occupied))
+    }
+
+    @Test
+    fun showLane_thirdShow_returnsToLane1_whenLane1FreeAgain() {
+        // 10:00-10:45 与 9:00-9:45（栏1）不重叠、与 9:30-10:15（栏2）重叠 → 回栏 1
+        val occupied = listOf(Triple(1, 540, 585), Triple(2, 570, 615))
+        assertEquals(1, assignShowLane(600, 645, occupied))
+    }
+
+    @Test
+    fun showLane_bothLanesBusy_fallsBackToLane0() {
+        val occupied = listOf(Triple(1, 540, 700), Triple(2, 540, 700))
+        assertEquals(0, assignShowLane(600, 645, occupied))
+    }
 }
