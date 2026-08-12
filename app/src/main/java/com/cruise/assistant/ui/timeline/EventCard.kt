@@ -229,14 +229,26 @@ fun EventCard(
                 }
             } else if (showTier == 1) {
                 // 本体只够 1 行：演出名（labelSmall），地点/时间都在候场段
-                Text(
-                    text = event.title,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = textColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = event.title,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (hasConflict) {
+                        Text(
+                            "!",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(start = 2.dp),
+                        )
+                    }
+                }
             } else {
                 // 第 1 行：类别 chip + 演出名
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -253,6 +265,14 @@ fun EventCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
+                    if (hasConflict) {
+                        Text(
+                            "!",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
                 // 第 2 行：地点（tier >= 2 都有）
                 location?.let {
