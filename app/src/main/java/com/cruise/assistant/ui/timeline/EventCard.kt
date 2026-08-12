@@ -40,6 +40,12 @@ import com.cruise.assistant.ui.theme.cardTextColorFor
 /** 低于这个高度就压缩成单行显示 */
 private val COMPACT_THRESHOLD = 44.dp
 
+/** 贪心分级阈值：本体（演出段）能显示 2 行 / 3 行内容的最小高度（labelSmall 16dp 行高 + 6dp padding） */
+private val TWO_LINE_MIN_DP = 38.dp
+private val THREE_LINE_MIN_DP = 54.dp
+/** 候场段低于此高度时只显示"候场"，避免单行文本被裁剪 */
+private val WAIT_TEXT_MIN_DP = 20.dp
+
 /**
  * 需求3：事件卡片。
  * 第1行 [类别chip] 事件内容 / 第2行 地点 / 第3行 时间+时长。
@@ -63,7 +69,26 @@ fun EventCard(
     val textColor = if (active) cardTextColorFor(colorArgb) else MaterialTheme.colorScheme.onSurfaceVariant
     val compact = heightDp < COMPACT_THRESHOLD
     val hasWaitSegment = waitSegmentHeightDp > 0.dp
-    val location = formatLocation(event.deck, event.zone, event.placeName)
+    val location = formatLocation(event.deck, event.zone, event.placeName, compact = true)
+    // 贪心分级：本体剩余高度决定信息分配（tier 0 = 无候场段，走原有逻辑）
+    val bodyHeightDp = heightDp - waitSegmentHeightDp - 2.dp
+    val showTier = when {
+        !hasWaitSegment -> 0
+        bodyHeightDp >= THREE_LINE_MIN_DP -> 3
+        bodyHeightDp >= TWO_LINE_MIN_DP -> 2
+        else -> 1
+    }
+    // 候场段右侧文案随 tier 与段高自适应
+    val waitText = when {
+        showTier == 0 || waitSegmentHeightDp < WAIT_TEXT_MIN_DP -> "候场"
+        showTier == 3 -> "候场"
+        showTier == 2 -> "候场 · ${formatStart(event)}"
+        else -> buildString {
+            append("候场")
+            location?.let { append(" · ").append(it) }
+            append(" · ").append(formatStart(event))
+        }
+    }
 
     Row(
         modifier
@@ -100,11 +125,7 @@ fun EventCard(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
-                        text = buildString {
-                            append("演出等待入场")
-                            location?.let { append(" · ").append(it) }
-                            append(" · ").append(formatStart(event))
-                        },
+                        text = waitText,
                         style = MaterialTheme.typography.labelSmall,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Bold,
@@ -115,51 +136,109 @@ fun EventCard(
                 }
                 Spacer(Modifier.height(2.dp))
             }
-            if (compact) {
-                // 太矮：一行只塞标题（+ 非窄栏下还能塞开始时间）。不放类别 chip——
-                // 左侧 4dp 色条已经传达了类别，chip 是非必要元素；在窄栏（栏2
-                // ≈18%宽）里 chip 若排在前面且不参与 weight 分配，会把标题挤到
-                // 0 宽度，导致标题和时间都被 clip() 裁掉、什么都看不见。标题用
-                // weight(1f, fill=true) 优先拿到剩余宽度；标题字号用 labelSmall
-                // （比非 compact 分支的 bodySmall 小 1sp）进一步给窄栏腾空间。
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = event.title,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = textColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    // 需求8：矮卡片（<44dp，常见于 30~40min 的短事件）此前完全没有渲染
-                    // 冲突角标，导致"生成计划表"发现冲突后卡片上什么都看不出来。
-                    // 角标是定长的"!"，即使在窄栏也只占极小宽度，直接加在标题右侧。
-                    if (hasConflict) {
+            if (showTier == 0) {
+                // —— 原有 compact / 非 compact 逻辑保持不变 ——
+                if (compact) {
+                    // 太矮：一行只塞标题（+ 非窄栏下还能塞开始时间）。不放类别 chip——
+                    // 左侧 4dp 色条已经传达了类别，chip 是非必要元素；在窄栏（栏2
+                    // ≈18%宽）里 chip 若排在前面且不参与 weight 分配，会把标题挤到
+                    // 0 宽度，导致标题和时间都被 clip() 裁掉、什么都看不见。标题用
+                    // weight(1f, fill=true) 优先拿到剩余宽度；标题字号用 labelSmall
+                    // （比非 compact 分支的 bodySmall 小 1sp）进一步给窄栏腾空间。
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            "!",
+                            text = event.title,
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(start = 2.dp),
-                        )
-                    }
-                    // 栏2 太窄，标题 + 时间两个元素挤在一起时间会把标题压到只剩
-                    // 一两个字。时间在这里是冗余信息——卡片在时间轴上的竖直位置
-                    // 本身就对齐着起始时间的刻度线，栏2 里舍弃它，把宽度全部留给
-                    // 标题，换取"看得出是什么事"这个更重要的信息。
-                    if (!narrow) {
-                        Text(
-                            text = formatStart(event),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = textColor.copy(alpha = 0.75f),
+                            fontWeight = FontWeight.Medium,
+                            color = textColor,
                             maxLines = 1,
-                            modifier = Modifier.padding(start = 2.dp),
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        // 需求8：矮卡片（<44dp，常见于 30~40min 的短事件）此前完全没有渲染
+                        // 冲突角标，导致"生成计划表"发现冲突后卡片上什么都看不出来。
+                        // 角标是定长的"!"，即使在窄栏也只占极小宽度，直接加在标题右侧。
+                        if (hasConflict) {
+                            Text(
+                                "!",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(start = 2.dp),
+                            )
+                        }
+                        // 栏2 太窄，标题 + 时间两个元素挤在一起时间会把标题压到只剩
+                        // 一两个字。时间在这里是冗余信息——卡片在时间轴上的竖直位置
+                        // 本身就对齐着起始时间的刻度线，栏2 里舍弃它，把宽度全部留给
+                        // 标题，换取"看得出是什么事"这个更重要的信息。
+                        if (!narrow) {
+                            Text(
+                                text = formatStart(event),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = textColor.copy(alpha = 0.75f),
+                                maxLines = 1,
+                                modifier = Modifier.padding(start = 2.dp),
+                            )
+                        }
+                    }
+                } else {
+                    // 第1行
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        category?.let {
+                            CategoryChip(it.name, colorArgb)
+                            Spacer(Modifier.width(4.dp))
+                        }
+                        Text(
+                            text = event.title,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (hasConflict) {
+                            Text(
+                                "!",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                    // 第2/3行：地点与时间。等待段已显示过它们（show 事件），此处省略避免重复。
+                    if (!hasWaitSegment) {
+                        // 第2行：地点。deck 为 null 时整行不显示（上船/下船）
+                        location?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = textColor.copy(alpha = 0.85f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        // 第3行：时间 + 时长
+                        Text(
+                            text = formatTimeRange(event),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = textColor.copy(alpha = 0.7f),
+                            maxLines = 1,
                         )
                     }
                 }
+            } else if (showTier == 1) {
+                // 本体只够 1 行：演出名（labelSmall），地点/时间都在候场段
+                Text(
+                    text = event.title,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = textColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             } else {
-                // 第1行
+                // 第 1 行：类别 chip + 演出名
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     category?.let {
                         CategoryChip(it.name, colorArgb)
@@ -174,28 +253,19 @@ fun EventCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    if (hasConflict) {
-                        Text(
-                            "!",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
                 }
-                // 第2/3行：地点与时间。等待段已显示过它们（show 事件），此处省略避免重复。
-                if (!hasWaitSegment) {
-                    // 第2行：地点。deck 为 null 时整行不显示（上船/下船）
-                    location?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = textColor.copy(alpha = 0.85f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    // 第3行：时间 + 时长
+                // 第 2 行：地点（tier >= 2 都有）
+                location?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textColor.copy(alpha = 0.85f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                // 第 3 行：时间范围（仅 tier 3）
+                if (showTier == 3) {
                     Text(
                         text = formatTimeRange(event),
                         style = MaterialTheme.typography.labelSmall,
