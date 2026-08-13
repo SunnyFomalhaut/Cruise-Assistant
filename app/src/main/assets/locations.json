@@ -1,7 +1,7 @@
 {
   "venues": [
     {
-      "name": "Concierge Fitness Center",
+      "name": "礼宾健身中心 Concierge Fitness Center",
       "deck": 18,
       "zone": "bow",
       "category": "chore",
@@ -13,7 +13,7 @@
       ]
     },
     {
-      "name": "Concierge Lounge",
+      "name": "礼宾休息室 Concierge Lounge",
       "deck": 17,
       "zone": "bow",
       "category": "chore",
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "name": "Concierge Lounge Outdoor",
+      "name": "礼宾户外休息室 Concierge Lounge Outdoor",
       "deck": 17,
       "zone": "bow",
       "category": "chore",
@@ -37,7 +37,7 @@
       ]
     },
     {
-      "name": "Concierge Sundeck",
+      "name": "礼宾阳光甲板 Concierge Sundeck",
       "deck": 19,
       "zone": "bow",
       "category": "chore",
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "name": "Fairytale Fresh Laundry",
+      "name": "童话洗衣房 Fairytale Fresh Laundry",
       "deck": 16,
       "zone": "mid",
       "category": "chore",
@@ -61,7 +61,7 @@
       ]
     },
     {
-      "name": "Fitness Center",
+      "name": "健身中心 Fitness Center",
       "deck": 10,
       "zone": "mid",
       "category": "chore",
@@ -73,7 +73,7 @@
       ]
     },
     {
-      "name": "Guest Services",
+      "name": "宾客服务台 Guest Services",
       "deck": 6,
       "zone": "mid",
       "category": "chore",
@@ -85,7 +85,7 @@
       ]
     },
     {
-      "name": "Infinite Bliss Spa - Elemis at Sea",
+      "name": "无限幸福水疗 Infinite Bliss Spa - Elemis at Sea",
       "deck": 10,
       "zone": "mid",
       "category": "chore",
@@ -97,7 +97,7 @@
       ]
     },
     {
-      "name": "Medical Health Center",
+      "name": "医疗中心 Medical Health Center",
       "deck": 9,
       "zone": "bow",
       "category": "chore",
@@ -113,7 +113,7 @@
       ]
     },
     {
-      "name": "Opulence Spa - Elemis at Sea (Concierge)",
+      "name": "奢华水疗（礼宾） Opulence Spa - Elemis at Sea",
       "deck": 18,
       "zone": "bow",
       "category": "chore",
@@ -125,7 +125,7 @@
       ]
     },
     {
-      "name": "Concierge Pool",
+      "name": "礼宾泳池 Concierge Pool",
       "deck": 19,
       "zone": "bow",
       "category": "pool",
@@ -137,7 +137,7 @@
       ]
     },
     {
-      "name": "Flying Saucer Splash Zone",
+      "name": "飞碟戏水区 Flying Saucer Splash Zone",
       "deck": 17,
       "zone": "mid",
       "category": "pool",
@@ -149,7 +149,7 @@
       ]
     },
     {
-      "name": "Groot Galaxy Spin",
+      "name": "格鲁特银河旋转 Groot Galaxy Spin",
       "deck": 18,
       "zone": "stern",
       "category": "pool",
@@ -161,7 +161,7 @@
       ]
     },
     {
-      "name": "Infinity Pool",
+      "name": "无边际泳池 Infinity Pool",
       "deck": 18,
       "zone": "stern",
       "category": "pool",
@@ -173,7 +173,7 @@
       ]
     },
     {
-      "name": "Pym Quantum Racers",
+      "name": "皮姆量子赛车 Pym Quantum Racers",
       "deck": 18,
       "zone": "stern",
       "category": "pool",
@@ -185,7 +185,7 @@
       ]
     },
     {
-      "name": "San Fransokyo Street",
+      "name": "旧京山街道 San Fransokyo Street",
       "deck": 7,
       "zone": "stern",
       "category": "pool",
@@ -197,7 +197,7 @@
       ]
     },
     {
-      "name": "Sunnyside Pool",
+      "name": "阳光泳池 Sunnyside Pool",
       "deck": 17,
       "zone": "mid",
       "category": "pool",
@@ -209,7 +209,7 @@
       ]
     },
     {
-      "name": "Toy Story Splash Pad",
+      "name": "玩具总动员戏水区 Toy Story Splash Pad",
       "deck": 17,
       "zone": "mid",
       "category": "pool",
@@ -221,7 +221,7 @@
       ]
     },
     {
-      "name": "Wayfinder Beach",
+      "name": "寻路人海滩 Wayfinder Beach",
       "deck": 10,
       "zone": "stern",
       "category": "pool",
@@ -237,7 +237,7 @@
       ]
     },
     {
-      "name": "Woody and Jessie's Wild Slides",
+      "name": "胡迪与翠丝狂野滑梯 Woody and Jessie's Wild Slides",
       "deck": 17,
       "zone": "mid",
       "category": "pool",
@@ -249,7 +249,7 @@
       ]
     },
     {
-      "name": "3 Wishes",
+      "name": "三个愿望 3 Wishes",
       "deck": 17,
       "zone": "bow",
       "category": "shop",
@@ -261,7 +261,7 @@
       ]
     },
     {
-      "name": "Bibbidi Bobbidi Boutique",
+      "name": "魔法变身精品店 Bibbidi Bobbidi Boutique",
       "deck": 7,
       "zone": "mid",
       "category": "shop",
@@ -273,7 +273,7 @@
       ]
     },
     {
-      "name": "Castle Collection",
+      "name": "城堡典藏 Castle Collection",
       "deck": 11,
       "zone": "mid",
       "category": "shop",
@@ -285,7 +285,7 @@
       ]
     },
     {
-      "name": "Diamonds and Wishes",
+      "name": "钻石与愿望 Diamonds and Wishes",
       "deck": 7,
       "zone": "mid",
       "category": "shop",
@@ -297,7 +297,7 @@
       ]
     },
     {
-      "name": "Disney Studio",
+      "name": "迪士尼影楼 Disney Studio",
       "deck": 7,
       "zone": "mid",
       "category": "shop",
@@ -313,7 +313,7 @@
       ]
     },
     {
-      "name": "Duffy and Friends Shop",
+      "name": "达菲与朋友商店 Duffy and Friends Shop",
       "deck": 7,
       "zone": "stern",
       "category": "shop",
@@ -325,7 +325,7 @@
       ]
     },
     {
-      "name": "Marvel Style Studio",
+      "name": "漫威造型工作室 Marvel Style Studio",
       "deck": 6,
       "zone": "stern",
       "category": "shop",
@@ -337,7 +337,7 @@
       ]
     },
     {
-      "name": "National Geographic",
+      "name": "国家地理 National Geographic",
       "deck": 7,
       "zone": "stern",
       "category": "shop",
@@ -349,7 +349,7 @@
       ]
     },
     {
-      "name": "Palace Treasures",
+      "name": "宫廷珍宝 Palace Treasures",
       "deck": 17,
       "zone": "bow",
       "category": "shop",
@@ -361,7 +361,7 @@
       ]
     },
     {
-      "name": "Pics Photo Shop",
+      "name": "快照摄影店 Pics Photo Shop",
       "deck": 7,
       "zone": "bow",
       "category": "shop",
@@ -373,7 +373,7 @@
       ]
     },
     {
-      "name": "Royal Studio",
+      "name": "皇家影楼 Royal Studio",
       "deck": 7,
       "zone": "mid",
       "category": "shop",
@@ -389,7 +389,7 @@
       ]
     },
     {
-      "name": "Treasures Untold",
+      "name": "未诉珍宝 Treasures Untold",
       "deck": 10,
       "zone": "stern",
       "category": "shop",
@@ -401,7 +401,7 @@
       ]
     },
     {
-      "name": "World of Disney",
+      "name": "迪士尼世界 World of Disney",
       "deck": 5,
       "zone": "mid",
       "category": "shop",
@@ -413,7 +413,7 @@
       ]
     },
     {
-      "name": "World of Disney Too",
+      "name": "迪士尼世界二号店 World of Disney Too",
       "deck": 5,
       "zone": "mid",
       "category": "shop",
@@ -425,7 +425,7 @@
       ]
     },
     {
-      "name": "Disney's Oceaneer Club",
+      "name": "迪士尼海洋探险家俱乐部 Disney's Oceaneer Club",
       "deck": 8,
       "zone": "mid",
       "category": "youth",
@@ -442,7 +442,7 @@
       ]
     },
     {
-      "name": "Edge",
+      "name": "边缘少年俱乐部 Edge",
       "deck": 7,
       "zone": "stern",
       "category": "youth",
@@ -455,7 +455,7 @@
       ]
     },
     {
-      "name": "it's a small world nursery",
+      "name": "小小世界托儿所 it's a small world nursery",
       "deck": 8,
       "zone": "bow",
       "category": "youth",
@@ -467,7 +467,7 @@
       ]
     },
     {
-      "name": "Mickey & Minnie Captain's Deck",
+      "name": "米奇米妮船长甲板 Mickey & Minnie Captain's Deck",
       "deck": 8,
       "zone": "bow",
       "category": "youth",
@@ -479,7 +479,7 @@
       ]
     },
     {
-      "name": "Vibe",
+      "name": "活力少年俱乐部 Vibe",
       "deck": 7,
       "zone": "stern",
       "category": "youth",
@@ -604,7 +604,7 @@
       ]
     },
     {
-      "name": "Pixar Market Restaurant",
+      "name": "皮克斯市场餐厅 Pixar Market Restaurant",
       "deck": 17,
       "zone": "stern",
       "category": "meal",
@@ -688,7 +688,7 @@
       ]
     },
     {
-      "name": "Animator's Palate",
+      "name": "动画师味觉餐厅 Animator's Palate",
       "deck": 5,
       "zone": "stern",
       "category": "meal",
@@ -719,7 +719,7 @@
       ]
     },
     {
-      "name": "Hollywood Spotlight Club",
+      "name": "好莱坞聚光灯俱乐部 Hollywood Spotlight Club",
       "deck": 8,
       "zone": "stern",
       "category": "meal",
@@ -750,7 +750,7 @@
       ]
     },
     {
-      "name": "Alley Cat Café©",
+      "name": "流浪猫咖啡馆 Alley Cat Café",
       "deck": 7,
       "zone": "stern",
       "category": "meal",
@@ -764,11 +764,11 @@
       ]
     },
     {
-      "name": "Bewitching Boba & Brews ($)",
+      "name": "迷魂珍珠奶茶 Bewitching Boba & Brews",
       "deck": 10,
       "zone": "stern",
       "category": "meal",
-      "group": "bar",
+      "group": "paid",
       "slots": [
         {
           "start": "10:00",
@@ -778,7 +778,7 @@
       ]
     },
     {
-      "name": "Bounce and Hops",
+      "name": "弹跳啤酒坊 Bounce and Hops",
       "deck": 17,
       "zone": "mid",
       "category": "meal",
@@ -807,7 +807,7 @@
       ]
     },
     {
-      "name": "Garden Bar",
+      "name": "花园酒吧 Garden Bar",
       "deck": 11,
       "zone": "mid",
       "category": "meal",
@@ -821,7 +821,7 @@
       ]
     },
     {
-      "name": "Infinity Bar",
+      "name": "无边际酒吧 Infinity Bar",
       "deck": 18,
       "zone": "stern",
       "category": "meal",
@@ -835,7 +835,7 @@
       ]
     },
     {
-      "name": "Market Bar",
+      "name": "市场酒吧 Market Bar",
       "deck": 17,
       "zone": "mid",
       "category": "meal",
@@ -849,7 +849,7 @@
       ]
     },
     {
-      "name": "Premier Sips & Snacks",
+      "name": "顶级饮品小吃 Premier Sips & Snacks",
       "deck": 6,
       "zone": "bow",
       "category": "meal",
@@ -878,7 +878,7 @@
       ]
     },
     {
-      "name": "Taverna Portorosso",
+      "name": "波尔托罗索小酒馆 Taverna Portorosso",
       "deck": 11,
       "zone": "stern",
       "category": "meal",
@@ -892,7 +892,7 @@
       ]
     },
     {
-      "name": "Tiana's Bayou Lounge",
+      "name": "蒂安娜河口酒廊 Tiana's Bayou Lounge",
       "deck": 5,
       "zone": "mid",
       "category": "meal",
@@ -907,7 +907,7 @@
       ]
     },
     {
-      "name": "Wayfinder Bar",
+      "name": "寻路人酒吧 Wayfinder Bar",
       "deck": 10,
       "zone": "stern",
       "category": "meal",
@@ -922,11 +922,11 @@
       ]
     },
     {
-      "name": "Bacha Coffee ($)",
+      "name": "巴哈咖啡 Bacha Coffee",
       "deck": 7,
       "zone": "mid",
       "category": "meal",
-      "group": "quick",
+      "group": "paid",
       "slots": [
         {
           "start": "10:00",
@@ -936,7 +936,7 @@
       ]
     },
     {
-      "name": "Cosmic Kebabs",
+      "name": "宇宙烤肉串 Cosmic Kebabs",
       "deck": 10,
       "zone": "stern",
       "category": "meal",
@@ -990,11 +990,11 @@
       ]
     },
     {
-      "name": "Palo Café© ($)",
+      "name": "帕洛咖啡 Palo Café",
       "deck": 10,
       "zone": "stern",
       "category": "meal",
-      "group": "quick",
+      "group": "paid",
       "slots": [
         {
           "start": "09:00",
@@ -1004,7 +1004,7 @@
       ]
     },
     {
-      "name": "Pizza Planet",
+      "name": "披萨星球 Pizza Planet",
       "deck": 17,
       "zone": "mid",
       "category": "meal",
@@ -1018,7 +1018,7 @@
       ]
     },
     {
-      "name": "Room Service",
+      "name": "客房送餐 Room Service",
       "deck": null,
       "zone": null,
       "category": "meal",
@@ -1027,12 +1027,17 @@
         {
           "start": "00:00",
           "end": "23:59",
+          "meal": "breakfast"
+        },
+        {
+          "start": "00:00",
+          "end": "23:59",
           "meal": "snack"
         }
       ]
     },
     {
-      "name": "Stitch's Ohana Grill",
+      "name": "史迪奇奥哈纳烧烤 Stitch's Ohana Grill",
       "deck": 10,
       "zone": "stern",
       "category": "meal",
@@ -1046,11 +1051,11 @@
       ]
     },
     {
-      "name": "TWG Tea ($)",
+      "name": "TWG 茶室 TWG Tea",
       "deck": 7,
       "zone": "mid",
       "category": "meal",
-      "group": "quick",
+      "group": "paid",
       "slots": [
         {
           "start": "10:00",
@@ -1060,7 +1065,7 @@
       ]
     },
     {
-      "name": "Wheezy's Freezies",
+      "name": "威希冰品 Wheezy's Freezies",
       "deck": 17,
       "zone": "mid",
       "category": "meal",
