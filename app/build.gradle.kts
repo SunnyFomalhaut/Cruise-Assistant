@@ -88,4 +88,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
+    // 单元测试环境（mockable android.jar）没有真实 org.json 实现（方法抛 "not mocked"），
+    // parseLocationsJson 用 org.json 解析 assets JSON —— 测试类路径补真实实现（仅测试，不影响 APK）
+    testImplementation(libs.org.json)
 }

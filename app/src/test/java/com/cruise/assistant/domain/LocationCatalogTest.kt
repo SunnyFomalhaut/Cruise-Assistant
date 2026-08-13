@@ -20,44 +20,30 @@ class LocationCatalogTest {
     )
 
     @Test
-    fun catalog_hasFiveStages_andTenDiningSpots() {
-        assertEquals(4, BUILT_IN_LOCATION_CATALOG.getValue("show").size)
-        assertEquals(10, BUILT_IN_LOCATION_CATALOG.getValue("meal").size)
+    fun venuesByCategory_empty_whenNotLoaded() {
+        // 未加载（或加载失败兜底）时返回空目录，不崩溃
+        LocationCatalog.setCatalog(emptyList())
+        assertTrue(LocationCatalog.venuesByCategory().isEmpty())
     }
 
     @Test
-    fun diningGroups_haveExpectedCounts() {
-        val meal = BUILT_IN_LOCATION_CATALOG.getValue("meal")
-        assertEquals(3, meal.count { it.diningGroup == DiningGroup.MAIN })
-        assertEquals(3, meal.count { it.diningGroup == DiningGroup.BAR })
-        assertEquals(2, meal.count { it.diningGroup == DiningGroup.PAID })
-        assertEquals(2, meal.count { it.diningGroup == DiningGroup.QUICK })
-    }
-
-    @Test
-    fun stageEntries_haveNoDiningGroup() {
-        BUILT_IN_LOCATION_CATALOG.getValue("show").forEach { entry ->
-            assertTrue("stage ${entry.placeName} has diningGroup", entry.diningGroup == null)
-        }
-    }
-
-    @Test
-    fun allEntries_deckWithinAdventureRange_andPlaceNamesUnique() {
-        val all = BUILT_IN_LOCATION_CATALOG.values.flatten()
-        all.forEach { entry ->
-            assertTrue("${entry.placeName} deck ${entry.deck} out of 5..19", entry.deck != null && entry.deck in 5..19)
-        }
-        val names = all.map { it.placeName }
-        assertEquals(names.size, names.distinct().size)
-    }
-
-    @Test
-    fun stageCatalog_matchesSpecData() {
-        val stages = BUILT_IN_LOCATION_CATALOG.getValue("show")
-        assertTrue(stages.any { it.placeName == "华特迪士尼剧院 Walt Disney Theatre" && it.deck == 6 && it.zone == ShipZone.BOW })
-        assertTrue(stages.any { it.placeName == "寻路者湾 Wayfinder Bay" && it.deck == 10 && it.zone == ShipZone.STERN })
-        assertTrue(stages.any { it.placeName == "花园舞台 Garden Stage" && it.deck == 10 && it.zone == ShipZone.STERN })
-        assertTrue(stages.any { it.placeName == "露天泳池" && it.deck == 17 && it.zone == ShipZone.MID })
+    fun setCatalog_groupsEntriesByCategory() {
+        LocationCatalog.setCatalog(
+            listOf(
+                LocationCatalogEntry(6, ShipZone.BOW, "华特迪士尼剧院 Walt Disney Theatre", category = "show"),
+                LocationCatalogEntry(10, ShipZone.STERN, "寻路者湾 Wayfinder Bay", category = "show"),
+                LocationCatalogEntry(
+                    9, ShipZone.STERN, "动画师餐厅 Animator's Table",
+                    diningGroup = DiningGroup.MAIN, category = "meal",
+                ),
+                LocationCatalogEntry(null, null, "Room Service", category = "meal"),
+            ),
+        )
+        val byCategory = LocationCatalog.venuesByCategory()
+        assertEquals(2, byCategory.size)
+        assertEquals(2, byCategory.getValue("show").size)
+        assertEquals(2, byCategory.getValue("meal").size)
+        assertEquals("Room Service", byCategory.getValue("meal")[1].placeName)
     }
 
     @Test

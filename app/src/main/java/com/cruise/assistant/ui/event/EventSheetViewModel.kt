@@ -8,9 +8,9 @@ import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.data.repo.LocationPresetRepository
 import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.data.repo.VoyageRepository
-import com.cruise.assistant.domain.BUILT_IN_LOCATION_CATALOG
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.LocationCatalog
 import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
@@ -190,7 +190,7 @@ class EventSheetViewModel(
 
     fun onCategorySelect(id: Long) = _state.update {
         val iconKey = it.categories.firstOrNull { c -> c.id == id }?.iconKey
-        val presetAvailable = it.builtInShip && iconKey in BUILT_IN_LOCATION_CATALOG.keys
+        val presetAvailable = it.builtInShip && LocationCatalog.venuesByCategory().containsKey(iconKey)
         it.copy(
             selectedCategoryId = id,
             categoryIconKey = iconKey,
@@ -303,7 +303,7 @@ class EventSheetViewModel(
         // hoursCheckOverride（用户点过"仍要保存"）时整体跳过，避免反复弹窗。
         if (!s.hoursCheckOverride) {
             val matchedVenue = if (s.categoryIconKey == "meal" && !s.noLocation && s.deck != null) {
-                BUILT_IN_LOCATION_CATALOG["meal"].orEmpty().firstOrNull { entry ->
+                LocationCatalog.venuesByCategory()["meal"].orEmpty().firstOrNull { entry ->
                     entry.deck == s.deck && entry.zone == s.zone && entry.placeName == s.placeName
                 }
             } else {
@@ -373,10 +373,13 @@ class EventSheetViewModel(
         zone: ShipZone?,
         placeName: String?,
     ): Boolean {
-        if (!builtInShip || iconKey !in BUILT_IN_LOCATION_CATALOG.keys) return false
+        // 快照一份目录：containsKey 与 getValue 必须看同一份 map，
+        // 否则期间 setCatalog 换 map 时 getValue 可能 KeyNotFound
+        val catalog = LocationCatalog.venuesByCategory()
+        if (!builtInShip || !catalog.containsKey(iconKey)) return false
         if (!isEditing) return true
         val key = iconKey ?: return false
-        val matched = BUILT_IN_LOCATION_CATALOG.getValue(key).any { entry ->
+        val matched = catalog.getValue(key).any { entry ->
             entry.deck == deck && entry.zone == zone && entry.placeName == placeName
         }
         return matched || currentMode

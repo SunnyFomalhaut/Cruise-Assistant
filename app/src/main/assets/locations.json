@@ -1,0 +1,27 @@
+{
+  "venues": [
+    {
+      "name": "动画师餐厅 Animator's Table",
+      "deck": 9, "zone": "stern",
+      "category": "meal", "group": "main",
+      "slots": [
+        {"start": "08:30", "end": "10:00", "meal": "breakfast"},
+        {"start": "12:00", "end": "13:30", "meal": "lunch"},
+        {"start": "17:45", "end": "19:45", "meal": "dinner"},
+        {"start": "20:15", "end": "22:15", "meal": "dinner"}
+      ]
+    },
+    {
+      "name": "Edge",
+      "deck": 7, "zone": "stern",
+      "category": "youth",
+      "slots": [
+        {"start": "09:00", "end": "01:00"}
+      ]
+    },
+    {
+      "name": "Room Service",
+      "category": "meal"
+    }
+  ]
+}

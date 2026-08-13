@@ -48,36 +48,17 @@ data class LocationCatalogEntry(
     val hours: OperatingHours? = null,
 )
 
-/** 按类别 iconKey 索引的预置地点（show = 舞台 5 个；meal = 餐饮 10 个、四组） */
-val BUILT_IN_LOCATION_CATALOG: Map<String, List<LocationCatalogEntry>> = mapOf(
-    "show" to listOf(
-        LocationCatalogEntry(6, ShipZone.BOW, "华特迪士尼剧院 Walt Disney Theatre"),
-        LocationCatalogEntry(10, ShipZone.STERN, "寻路者湾 Wayfinder Bay"),
-        LocationCatalogEntry(10, ShipZone.STERN, "花园舞台 Garden Stage"),
-        LocationCatalogEntry(17, ShipZone.MID, "露天泳池"),
+/** 运行时地点目录：CruiseApp 启动时从 assets 加载；未加载时返回空目录 */
+object LocationCatalog {
+    @Volatile
+    private var catalog: Map<String, List<LocationCatalogEntry>> = emptyMap()
 
-    ),
-    "meal" to listOf(
-        LocationCatalogEntry(6, ShipZone.MID, "魔法盛夏餐厅 Enchanted Summer Restaurant", DiningGroup.MAIN),
-        LocationCatalogEntry(6, ShipZone.STERN, "航海家俱乐部 Navigator's Club Restaurant", DiningGroup.MAIN),
-        LocationCatalogEntry(9, ShipZone.STERN, "动画师餐厅 Animator's Table Restaurant", DiningGroup.MAIN,
-            hours = OperatingHours(
-                slots = listOf(
-                    OperatingSlot(LocalTime.of(8, 30), LocalTime.of(10, 0), MealPeriod.BREAKFAST),
-                    OperatingSlot(LocalTime.of(12, 0), LocalTime.of(13, 30), MealPeriod.LUNCH),
-                    OperatingSlot(LocalTime.of(17, 45), LocalTime.of(19, 45), MealPeriod.DINNER),
-                    OperatingSlot(LocalTime.of(20, 15), LocalTime.of(22, 15), MealPeriod.DINNER),
-                ),
-            )),
-        LocationCatalogEntry(6, ShipZone.MID, "咒语酒廊 Spellbound", DiningGroup.BAR),
-        LocationCatalogEntry(6, ShipZone.MID, "皇家宫廷酒廊 Royal Court", DiningGroup.BAR),
-        LocationCatalogEntry(6, ShipZone.STERN, "海盗酒吧 Buccaneer Bar", DiningGroup.BAR),
-        LocationCatalogEntry(10, ShipZone.STERN, "Mike & Sulley's Flavors of Asia 怪兽亚洲风味", DiningGroup.PAID),
-        LocationCatalogEntry(10, ShipZone.STERN, "Palo Trattoria 帕洛意大利餐厅", DiningGroup.PAID),
-        LocationCatalogEntry(10, ShipZone.BOW, "莫格利餐厅 Mowgli's Eatery", DiningGroup.QUICK),
-        LocationCatalogEntry(10, ShipZone.BOW, "塔拉奶奶的厨房 Gramma Talas Kitchen", DiningGroup.QUICK),
-    ),
-)
+    fun venuesByCategory(): Map<String, List<LocationCatalogEntry>> = catalog
+
+    fun setCatalog(venues: List<LocationCatalogEntry>) {
+        catalog = venues.groupBy { it.category }
+    }
+}
 
 /** 地点下拉的选项：分组标题（餐饮四组）/ 预置条目 / 自定义入口 */
 sealed interface LocationPresetOption {
@@ -91,7 +72,7 @@ fun locationPresetOptions(
     iconKey: String,
     mealPeriod: MealPeriod? = null,
 ): List<LocationPresetOption> {
-    val entries = BUILT_IN_LOCATION_CATALOG[iconKey] ?: return emptyList()
+    val entries = LocationCatalog.venuesByCategory()[iconKey] ?: return emptyList()
     if (iconKey != "meal") {
         return entries.map { LocationPresetOption.Entry(it) } + LocationPresetOption.Custom
     }
