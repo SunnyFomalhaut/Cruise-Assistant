@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Casino
 import androidx.compose.material.icons.outlined.Celebration
+import androidx.compose.material.icons.outlined.ChildCare
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DirectionsBoat
@@ -45,6 +46,7 @@ val ICON_REGISTRY: List<Pair<String, ImageVector>> = listOf(
     "party" to Icons.Outlined.Celebration,
     "sleep" to Icons.Outlined.NightsStay,
     "work" to Icons.Outlined.WorkOutline,
+    "youth" to Icons.Outlined.ChildCare,
     "person" to Icons.Outlined.Person,
     "check" to Icons.Outlined.CheckCircle,
     "trash" to Icons.Outlined.Delete,

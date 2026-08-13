@@ -10,6 +10,9 @@ val BUILT_IN_CATEGORIES: List<Category> = listOf(
     Category(name = "琐事", colorArgb = 0xFF4A7DFF.toInt(), iconKey = "chore", isBuiltIn = true, sortOrder = 3),
     Category(name = "娱乐项目", colorArgb = 0xFF9B5DE5.toInt(), iconKey = "fun", isBuiltIn = true, sortOrder = 4),
     Category(name = "见面会", colorArgb = 0xFF00A5A5.toInt(), iconKey = "meetup", isBuiltIn = true, sortOrder = 5),
+    Category(name = "泳池娱乐", colorArgb = 0xFF45C4B8.toInt(), iconKey = "pool", isBuiltIn = true, sortOrder = 6),
+    Category(name = "商店", colorArgb = 0xFFF2994A.toInt(), iconKey = "shop", isBuiltIn = true, sortOrder = 7),
+    Category(name = "青少年活动", colorArgb = 0xFFA97BF0.toInt(), iconKey = "youth", isBuiltIn = true, sortOrder = 8),
 )
 
 /** 截图3 的 8 色调色板 */
