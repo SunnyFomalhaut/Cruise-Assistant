@@ -24,11 +24,16 @@ val RULER_WIDTH = 56.dp
 @Composable
 fun TimeRuler(layout: TimelineLayout, modifier: Modifier = Modifier) {
     Box(modifier.width(RULER_WIDTH).height(layout.totalHeightDp.dp)) {
-        layout.hourTicks().forEach { (minute, topDp) ->
+        layout.hourTicks().forEach { (minute, topDp, isHalf) ->
             Text(
-                text = "%02d:00".format(minute / 60),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = if (isHalf) "%d:%02d".format(minute / 60, minute % 60) else "%02d:00".format(minute / 60),
+                // 半点用更小更浅的样式，与整点区分
+                style = if (isHalf) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
+                color = if (isHalf) {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
                 modifier = Modifier.offset(x = 8.dp, y = topDp.dp - 8.dp),
             )
         }
@@ -56,7 +61,8 @@ fun TimelineGrid(
 ) {
     val ticks = layout.hourTicks()
     Canvas(modifier.fillMaxSize()) {
-        ticks.forEach { (_, topDp) ->
+        // 横向网格线只画整点（规格 §1），半点不画线
+        ticks.filter { !it.third }.forEach { (_, topDp) ->
             val y = topDp * density
             drawLine(
                 color = GridLine,

@@ -91,13 +91,17 @@ class TimelineLayoutTest {
         assertEquals(420, ticks.first().first)
         assertEquals(1440, ticks.last().first)
         assertEquals(0f, ticks.first().second, EPS)
+        // 60dp 高度 < 90，不插入半点
+        assertTrue(ticks.all { !it.third })
     }
 
     @Test
     fun hourTicks_startAtFirstWholeHourAtOrAfterRangeStart() {
         // 07:30 起 → 第一个刻度是 08:00
         val l = buildTimelineLayout(450, 1440, 60, emptyList(), false)
-        assertEquals(480, l.hourTicks().first().first)
+        val first = l.hourTicks().first()
+        assertEquals(480, first.first)
+        assertEquals(false, first.third)
     }
 
     // ---------- 折叠空时段 ----------
@@ -208,5 +212,29 @@ class TimelineLayoutTest {
             showEffectiveRange(e, isShow = e.id == 1L)
         }
         assertEquals(1, conflicts.size)
+    }
+
+    // ---------- 半点刻度 ----------
+
+    @Test
+    fun hourTicks_includeHalfHours_whenHourHeight90Plus() {
+        val layout = buildTimelineLayout(
+            rangeStartMinute = 300, rangeEndMinute = 420, hourHeightDp = 90,
+            events = emptyList(), collapseEmptyGaps = false,
+        )
+        val ticks = layout.hourTicks()
+        // 5:00, 5:30, 6:00, 6:30, 7:00
+        assertEquals(listOf(300, 330, 360, 390, 420), ticks.map { it.first })
+        // 半点标记正确
+        assertEquals(listOf(false, true, false, true, false), ticks.map { it.third })
+    }
+
+    @Test
+    fun hourTicks_omitHalfHours_below90() {
+        val layout = buildTimelineLayout(
+            rangeStartMinute = 300, rangeEndMinute = 420, hourHeightDp = 89,
+            events = emptyList(), collapseEmptyGaps = false,
+        )
+        assertEquals(listOf(300, 360, 420), layout.hourTicks().map { it.first })
     }
 }

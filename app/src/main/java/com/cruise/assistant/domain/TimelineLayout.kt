@@ -168,13 +168,16 @@ fun TimelineLayout.dpToMinute(dp: Float): Int {
 }
 
 /**
- * 需要绘制的整点刻度：(分钟, dp偏移)。
- * 第一个刻度是 >= rangeStartMinute 的第一个整点；折叠段内的整点跳过不画。
+ * 需要绘制的刻度：(分钟, dp偏移, 是否半点)。
+ * 第一个刻度是 >= rangeStartMinute 的第一个整点；折叠段内的刻度跳过不画。
+ * 仅 hourHeightDp >= 90 时插入半点（密度足够才显示，避免拥挤）。
  */
-fun TimelineLayout.hourTicks(): List<Pair<Int, Float>> {
+fun TimelineLayout.hourTicks(): List<Triple<Int, Float, Boolean>> {
     val firstHour = ((rangeStartMinute + 59) / 60) * 60
-    return (firstHour..rangeEndMinute step 60).mapNotNull { minute ->
+    val withHalves = hourHeightDp >= 90
+    val step = if (withHalves) 30 else 60
+    return (firstHour..rangeEndMinute step step).mapNotNull { minute ->
         val inCollapsed = segments.any { it.collapsed && minute > it.startMinute && minute < it.endMinute }
-        if (inCollapsed) null else minute to minuteToDp(minute)
+        if (inCollapsed) null else Triple(minute, minuteToDp(minute), withHalves && minute % 60 != 0)
     }
 }
