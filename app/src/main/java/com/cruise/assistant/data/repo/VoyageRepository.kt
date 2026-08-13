@@ -75,9 +75,14 @@ class VoyageRepository(
             voyage.datesInVoyage().map { DayPlan(date = it).toEntity() },
         )
 
-        if (categoryDao.count() == 0) {
-            categoryDao.insertAll(BUILT_IN_CATEGORIES.map { it.toEntity() })
+        // 播种内置类别：首次创建航次时全量；老版本升级后按 iconKey 补缺失的内置类别
+        // （如 v1.7.4 新增的 泳池娱乐/商店/青少年活动）——count()==0 时全量，
+        // 否则只插入缺失的，保证老用户升级后新类别立即可见。
+        val existing = categoryDao.observeAllOnce()
+        val missing = BUILT_IN_CATEGORIES.filter { builtIn ->
+            existing.none { it.iconKey == builtIn.iconKey }
         }
+        if (missing.isNotEmpty()) categoryDao.insertAll(missing.map { it.toEntity() })
         // 只查一次：类别表刚在上面播种过（或早已存在），为空是编程错误，允许 .first() 抛异常。
         val categories = categoryDao.observeAllOnce()
         val importantId = categories.firstOrNull { it.iconKey == "important" }?.id

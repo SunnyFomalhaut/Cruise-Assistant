@@ -39,4 +39,30 @@ class LocationCatalogLoaderTest {
     fun parse_invalidJson_returnsEmpty() {
         assertEquals(emptyList<LocationCatalogEntry>(), parseLocationsJson("not json"))
     }
+
+    @Test
+    fun parse_barAndQuickVenues_areMealCategoryWithGroups() {
+        val json = """{"venues":[
+            {"name":"Spellbound","deck":6,"zone":"mid","category":"meal","group":"bar",
+             "slots":[{"start":"07:30","end":"01:00","meal":"drink"}]},
+            {"name":"Mowgli's Eatery","deck":10,"zone":"mid","category":"meal","group":"quick",
+             "slots":[{"start":"22:00","end":"00:00","meal":"snack","lateNight":true}]}
+        ]}"""
+        val venues = parseLocationsJson(json)
+        assertEquals(2, venues.size)
+        assertEquals(DiningGroup.BAR, venues[0].diningGroup)
+        assertEquals(DiningGroup.QUICK, venues[1].diningGroup)
+        assertTrue(venues[0].isOpenFor(MealPeriod.DRINK))
+        assertTrue(venues[1].isOpenFor(MealPeriod.LATE_NIGHT))
+        assertTrue(venues[1].isOpenAt(LocalTime.of(23, 0)))  // 跨午夜
+    }
+
+    @Test
+    fun parse_dinnerSecondSeating_lateNightTagged() {
+        val json = """{"venues":[{"name":"Animator's Table","deck":9,"zone":"stern",
+            "category":"meal","group":"main",
+            "slots":[{"start":"20:15","end":"22:15","meal":"dinner","lateNight":true}]}]}"""
+        val venue = parseLocationsJson(json).first()
+        assertTrue(venue.isOpenFor(MealPeriod.LATE_NIGHT))
+    }
 }

@@ -2,7 +2,7 @@ package com.cruise.assistant.data
 
 import com.cruise.assistant.domain.Category
 
-/** spec §8：预制 6 个类别，颜色有区分度 */
+/** spec §8：预制 9 个类别，颜色有区分度 */
 val BUILT_IN_CATEGORIES: List<Category> = listOf(
     Category(name = "餐食", colorArgb = 0xFF34A853.toInt(), iconKey = "meal", isBuiltIn = true, sortOrder = 0),
     Category(name = "演出", colorArgb = 0xFFF5B301.toInt(), iconKey = "show", isBuiltIn = true, sortOrder = 1),
