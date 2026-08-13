@@ -20,8 +20,9 @@ const val EXTRA_EVENT_ID = "event_id"
 const val EXTRA_TITLE_LINE = "title_line"
 const val EXTRA_BODY_LINE = "body_line"
 
-/** 一次最多排这么多个闹钟，其余等 App 下次启动时补（每事件最多 3 个） */
-private const val MAX_SCHEDULED = 300
+/** 一次最多排这么多个闹钟（每事件最多 3 个槽位），其余等 App 下次启动时补。
+ * 500 贴近 Android 每应用 ~500 闹钟的软上限；典型航次（几十事件 × 3 槽）远低于此。 */
+private const val MAX_SCHEDULED = 500
 
 /** 提醒槽位：slot 0 = 提前 15 分钟（action null 兼容旧版本）、1 = 5 分钟、2 = 开始时 */
 private val SLOT_LEAD_MINUTES = intArrayOf(15, 5, 0)
