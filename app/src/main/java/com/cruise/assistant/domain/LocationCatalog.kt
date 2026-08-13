@@ -25,7 +25,7 @@ val BUILT_IN_LOCATION_CATALOG: Map<String, List<LocationCatalogEntry>> = mapOf(
         LocationCatalogEntry(10, ShipZone.STERN, "寻路者湾 Wayfinder Bay"),
         LocationCatalogEntry(10, ShipZone.STERN, "花园舞台 Garden Stage"),
         LocationCatalogEntry(17, ShipZone.MID, "露天泳池"),
-        LocationCatalogEntry(10, ShipZone.STERN, "泳池舞台"),
+
     ),
     "meal" to listOf(
         LocationCatalogEntry(6, ShipZone.MID, "魔法盛夏餐厅 Enchanted Summer Restaurant", DiningGroup.MAIN),

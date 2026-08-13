@@ -123,7 +123,7 @@ class ShowPresetTest {
                 title = "海洋奇缘 Moana: Call of the Sea",
                 deck = 10,
                 zone = ShipZone.STERN,
-                placeName = "泳池舞台",
+                placeName = "寻路者湾 Wayfinder Bay",
                 durationMinutes = 15,
                 dayOffsets = listOf(2),
                 dailyRangeTo = 4,

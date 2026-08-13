@@ -8,7 +8,7 @@ class LocationCatalogTest {
 
     @Test
     fun catalog_hasFiveStages_andTenDiningSpots() {
-        assertEquals(5, BUILT_IN_LOCATION_CATALOG.getValue("show").size)
+        assertEquals(4, BUILT_IN_LOCATION_CATALOG.getValue("show").size)
         assertEquals(10, BUILT_IN_LOCATION_CATALOG.getValue("meal").size)
     }
 
@@ -45,6 +45,5 @@ class LocationCatalogTest {
         assertTrue(stages.any { it.placeName == "寻路者湾 Wayfinder Bay" && it.deck == 10 && it.zone == ShipZone.STERN })
         assertTrue(stages.any { it.placeName == "花园舞台 Garden Stage" && it.deck == 10 && it.zone == ShipZone.STERN })
         assertTrue(stages.any { it.placeName == "露天泳池" && it.deck == 17 && it.zone == ShipZone.MID })
-        assertTrue(stages.any { it.placeName == "泳池舞台" && it.deck == 10 && it.zone == ShipZone.STERN })
     }
 }
