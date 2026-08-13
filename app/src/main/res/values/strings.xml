@@ -15,7 +15,7 @@
     <string name="schedule_label">船期</string>
     <string name="dinner_time_label">晚餐时段</string>
     <string name="dinner_time_early">17:45</string>
-    <string name="dinner_time_late">20:00</string>
+    <string name="dinner_time_late">20:15</string>
     <string name="max_deck_label">最高层数</string>
     <string name="generate_timeline">生成时间轴</string>
     <string name="error_disembark_before_board">下船日期不能早于上船日期</string>
@@ -103,7 +103,7 @@
     <string name="reminder_section">提醒</string>
     <string name="dinner_time_section">晚餐时段</string>
     <string name="dinner_time_1745">17:45</string>
-    <string name="dinner_time_2000">20:00</string>
+    <string name="dinner_time_2015">20:15</string>
     <string name="reminder_enabled">开启提醒</string>
     <string name="reminder_lead_time">提前提醒</string>
     <string name="reminder_before_15">15 分钟前</string>

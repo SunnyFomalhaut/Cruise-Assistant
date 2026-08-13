@@ -185,7 +185,7 @@ fun OnboardingScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
                     java.time.LocalTime.of(17, 45) to R.string.dinner_time_early,
-                    java.time.LocalTime.of(20, 0) to R.string.dinner_time_late,
+                    java.time.LocalTime.of(20, 15) to R.string.dinner_time_late,
                 ).forEach { (time, labelRes) ->
                     FilterChip(
                         selected = state.dinnerTime == time,

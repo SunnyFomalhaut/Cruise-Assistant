@@ -205,7 +205,7 @@ fun SettingsScreen(
         ) {
             listOf(
                 java.time.LocalTime.of(17, 45) to R.string.dinner_time_1745,
-                java.time.LocalTime.of(20, 0) to R.string.dinner_time_2000,
+                java.time.LocalTime.of(20, 15) to R.string.dinner_time_2015,
             ).forEach { (time, labelRes) ->
                 FilterChip(
                     selected = state.settings.dinnerTime == time,
