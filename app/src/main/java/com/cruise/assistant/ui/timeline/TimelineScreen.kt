@@ -1,8 +1,10 @@
 package com.cruise.assistant.ui.timeline
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -50,6 +52,9 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 private val HEADER_FMT = DateTimeFormatter.ofPattern("M月d日")
+
+/** 规划模式栏区总宽 = 视口 × 1.2（三栏等宽、每栏 0.4× 视口，默认第三栏半露） */
+private const val LANE_SCROLL_FACTOR = 1.2f
 
 @Composable
 fun TimelineScreen(
@@ -183,79 +188,94 @@ fun TimelineScreen(
                 Box(Modifier.weight(1f).verticalScroll(scrollState)) {
                     Row(Modifier.fillMaxWidth().height(state.layout.totalHeightDp.dp)) {
                         TimeRuler(state.layout)
-                        Box(Modifier.weight(1f)) {
-                            TimelineGrid(
-                                layout = state.layout,
-                                laneBoundaries = if (state.isFinalized) {
-                                    emptyList()
-                                } else {
-                                    laneBoundaryFractions()
-                                },
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                            LaneCanvas(
-                                layout = state.layout,
-                                events = state.events,
-                                categories = state.categories,
-                                conflictIds = conflictIds,
-                                singleLane = state.isFinalized,
-                                onEventClick = { event -> if (!state.isFinalized) onEditEvent(event) },
-                                onEventLongClick = { event -> if (!state.isFinalized) menuEvent = event },
-                                menuFor = menuEvent,
-                                menuContent = { event ->
-                                    // 长按菜单：换栏 / 编辑 / 删除（锚定到被按卡片）
-                                    DropdownMenu(expanded = true, onDismissRequest = { menuEvent = null }) {
-                                        if (!state.isFinalized && !event.isSystemGenerated) {
-                                            DropdownMenuItem(
-                                                text = {
-                                                    Text(
-                                                        stringResource(
-                                                            if (event.isActive) R.string.set_inactive else R.string.set_active,
-                                                        ),
-                                                    )
-                                                },
-                                                onClick = {
-                                                    onToggleActive(event.id, !event.isActive)
-                                                    menuEvent = null
-                                                },
-                                            )
-                                        }
-                                        if (!state.isFinalized) {
-                                            (0 until LANE_COUNT).filter { it != event.lane }.forEach { lane ->
+                        // 栏区可横向平移：内容总宽 = 3 × laneWidthDp（≈1.2× 屏宽），
+                        // 默认位置第 1、2 栏全显、第 3 栏露出一半；左右滑动看全各栏。
+                        // 定稿模式单栏满宽、不滚动。
+                        BoxWithConstraints(Modifier.weight(1f)) {
+                            val laneAreaWidth = if (state.isFinalized) {
+                                maxWidth
+                            } else {
+                                maxWidth * LANE_SCROLL_FACTOR // 1.2f
+                            }
+                            val laneScrollState = rememberScrollState()
+                            Box(
+                                Modifier
+                                    .horizontalScroll(laneScrollState)
+                                    .width(laneAreaWidth),
+                            ) {
+                                TimelineGrid(
+                                    layout = state.layout,
+                                    laneBoundaries = if (state.isFinalized) {
+                                        emptyList()
+                                    } else {
+                                        laneBoundaryFractions()
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                LaneCanvas(
+                                    layout = state.layout,
+                                    events = state.events,
+                                    categories = state.categories,
+                                    conflictIds = conflictIds,
+                                    singleLane = state.isFinalized,
+                                    onEventClick = { event -> if (!state.isFinalized) onEditEvent(event) },
+                                    onEventLongClick = { event -> if (!state.isFinalized) menuEvent = event },
+                                    menuFor = menuEvent,
+                                    menuContent = { event ->
+                                        // 长按菜单：换栏 / 编辑 / 删除（锚定到被按卡片）
+                                        DropdownMenu(expanded = true, onDismissRequest = { menuEvent = null }) {
+                                            if (!state.isFinalized && !event.isSystemGenerated) {
                                                 DropdownMenuItem(
-                                                    text = { Text(stringResource(R.string.move_to_lane_format, lane + 1)) },
+                                                    text = {
+                                                        Text(
+                                                            stringResource(
+                                                                if (event.isActive) R.string.set_inactive else R.string.set_active,
+                                                            ),
+                                                        )
+                                                    },
                                                     onClick = {
-                                                        onMoveToLane(event.id, lane)
+                                                        onToggleActive(event.id, !event.isActive)
+                                                        menuEvent = null
+                                                    },
+                                                )
+                                            }
+                                            if (!state.isFinalized) {
+                                                (0 until LANE_COUNT).filter { it != event.lane }.forEach { lane ->
+                                                    DropdownMenuItem(
+                                                        text = { Text(stringResource(R.string.move_to_lane_format, lane + 1)) },
+                                                        onClick = {
+                                                            onMoveToLane(event.id, lane)
+                                                            menuEvent = null
+                                                        },
+                                                    )
+                                                }
+                                            }
+                                            if (!state.isFinalized) {
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(R.string.edit)) },
+                                                    onClick = {
+                                                        onEditEvent(event)
+                                                        menuEvent = null
+                                                    },
+                                                )
+                                            }
+                                            if (!event.isSystemGenerated && !state.isFinalized) {
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(R.string.delete)) },
+                                                    onClick = {
+                                                        // 选"仅本日 / 所有重复项"是 Task 8 的弹窗职责，这里先固定仅本日。
+                                                        onDeleteEvent(event, RecurrenceScope.THIS_DAY_ONLY)
                                                         menuEvent = null
                                                     },
                                                 )
                                             }
                                         }
-                                        if (!state.isFinalized) {
-                                            DropdownMenuItem(
-                                                text = { Text(stringResource(R.string.edit)) },
-                                                onClick = {
-                                                    onEditEvent(event)
-                                                    menuEvent = null
-                                                },
-                                            )
-                                        }
-                                        if (!event.isSystemGenerated && !state.isFinalized) {
-                                            DropdownMenuItem(
-                                                text = { Text(stringResource(R.string.delete)) },
-                                                onClick = {
-                                                    // 选"仅本日 / 所有重复项"是 Task 8 的弹窗职责，这里先固定仅本日。
-                                                    onDeleteEvent(event, RecurrenceScope.THIS_DAY_ONLY)
-                                                    menuEvent = null
-                                                },
-                                            )
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.padding(end = 8.dp),
-                            )
-                            if (state.isToday) {
-                                NowIndicator(state.layout, state.nowMinute)
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                if (state.isToday) {
+                                    NowIndicator(state.layout, state.nowMinute)
+                                }
                             }
                         }
                     }

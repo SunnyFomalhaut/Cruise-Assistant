@@ -20,8 +20,8 @@ import com.cruise.assistant.domain.minuteToDp
 import com.cruise.assistant.domain.showEffectiveRange
 import com.cruise.assistant.ui.theme.NowRed
 
-/** 需求4：栏0/栏1 等宽偏左，栏2 更窄贴最右 */
-private val LANE_WEIGHTS = floatArrayOf(1f, 1f, 0.45f)
+/** 三栏等宽（各占 1/3 总宽） */
+private val LANE_WEIGHTS = floatArrayOf(1f, 1f, 1f)
 private val LANE_GAP = 3.dp
 private val MIN_CARD_HEIGHT = 22.dp
 
@@ -89,8 +89,8 @@ fun LaneCanvas(
                 val widthFraction = LANE_WEIGHTS[lane] / weightSum
                 (totalWidth * leftFraction) to (totalWidth * widthFraction - LANE_GAP)
             }
-            // 最窄的那栏（栏 LANE_COUNT-1）compact 卡片要让 EventCard 舍弃时间只留标题。
-            val narrow = !singleLane && lane == LANE_COUNT - 1
+            // 三栏等宽后不再有"窄栏"概念；narrow 恒为 false（compact 分支的取舍逻辑保留但不再触发窄栏路径）
+            val narrow = false
 
             Box(
                 Modifier
