@@ -21,6 +21,8 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -142,14 +144,22 @@ fun OnboardingScreen(
                     FilterChip(
                         selected = state.selectedScheduleIndex == index,
                         onClick = { onScheduleSelected(index) },
-                        label = { Text(schedule.label) },
+                        label = { Text(schedule.label, maxLines = 1) },
+                        // 中间的五天四夜给很淡的暖底色，与默认选中色（淡紫）区分
+                        colors = if (index == 1) {
+                            FilterChipDefaults.filterChipColors(
+                                containerColor = Color(0xFFF7EFE0),
+                            )
+                        } else {
+                            FilterChipDefaults.filterChipColors()
+                        },
                         modifier = Modifier.weight(1.4f),
                     )
                 }
                 FilterChip(
                     selected = state.selectedScheduleIndex < 0,
                     onClick = { onScheduleSelected(-1) },
-                    label = { Text(stringResource(R.string.custom_schedule)) },
+                    label = { Text(stringResource(R.string.custom_schedule), style = MaterialTheme.typography.labelSmall, maxLines = 1) },
                     modifier = Modifier.weight(0.6f),
                 )
             }

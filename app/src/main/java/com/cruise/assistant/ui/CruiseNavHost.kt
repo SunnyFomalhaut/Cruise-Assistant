@@ -173,6 +173,7 @@ fun CruiseNavHost(container: AppContainer) {
                         }
                     },
                     onUnlockDay = { vm.unlockDay(current.selectedDate) },
+                    onJumpToNow = { vm.jumpToToday() },
                     onToggleFullDay = vm::toggleFullDay,
                     conflictIds = highlightIds,
                 )

@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -69,6 +72,7 @@ fun TimelineScreen(
     onDeleteEvent: (CruiseEvent, RecurrenceScope) -> Unit,
     onGeneratePlan: () -> Unit,
     onUnlockDay: () -> Unit,
+    onJumpToNow: () -> Unit,
     onToggleFullDay: () -> Unit,
     conflictIds: Set<Long>,
 ) {
@@ -138,7 +142,7 @@ fun TimelineScreen(
                 )
             }
 
-            // ---- 定稿状态条 ----
+            // ---- 定稿状态条（中间：跳到当前时间，仅航次内显示）----
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -151,9 +155,31 @@ fun TimelineScreen(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                     )
-                    TextButton(onClick = onUnlockDay) { Text(stringResource(R.string.unlock)) }
                 } else {
                     Spacer(Modifier.weight(1f))
+                }
+                if (state.todayInVoyage && !state.isToday) {
+                    // 显眼的"跳到当前时间"：主色调填充按钮 + 时钟图标，船上随时看现在
+                    FilledTonalButton(
+                        onClick = onJumpToNow,
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Schedule,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.jump_to_now),
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                if (state.isFinalized) {
+                    TextButton(onClick = onUnlockDay) { Text(stringResource(R.string.unlock)) }
+                } else {
                     TextButton(onClick = onGeneratePlan) {
                         Text(stringResource(R.string.generate_plan))
                     }

@@ -42,6 +42,8 @@ data class TimelineUiState(
     val settings: AppSettings,
     val nowMinute: Int,
     val isToday: Boolean,
+    /** 系统当前日期是否在航次内（控制"跳到当前时间"按钮显示） */
+    val todayInVoyage: Boolean = false,
 ) {
     val isFinalized: Boolean get() = dayPlans[selectedDate]?.finalized == true
 
@@ -80,7 +82,9 @@ class TimelineViewModel(
         viewModelScope.launch {
             val saved = settingsStore.settings.first().lastViewedDate
             val voyage = voyageRepository.getVoyage()
-            val target = saved ?: todayProvider()
+            val today = todayProvider()
+            // 航次内优先跳转今天：船上随时打开看"现在"，其次才是上次浏览日期
+            val target = if (voyage?.containsDate(today) == true) today else (saved ?: today)
             selectedDate.value = voyage?.clampDate(target) ?: target
         }
         // 每分钟刷新"现在"指示线与横幅
@@ -145,10 +149,18 @@ class TimelineViewModel(
                         settings = settings,
                         nowMinute = now,
                         isToday = date == todayProvider(),
+                        todayInVoyage = voyage?.containsDate(todayProvider()) == true,
                     )
                 }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** 跳到今天（航次内）：切日期并滚动由 TimelineScreen 的 isToday 效果触发 */
+    fun jumpToToday() {
+        val today = todayProvider()
+        selectedDate.value = today
+        viewModelScope.launch { settingsStore.setLastViewedDate(today) }
+    }
 
     fun selectDate(date: LocalDate) {
         selectedDate.value = date
