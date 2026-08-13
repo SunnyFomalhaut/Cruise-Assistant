@@ -9,11 +9,11 @@ import androidx.compose.material.icons.outlined.ChildCare
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DirectionsBoat
-import androidx.compose.material.icons.outlined.DirectionsRun
+import androidx.compose.material.icons.automirrored.outlined.DirectionsRun
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocalBar
-import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PhotoCamera
@@ -39,10 +39,10 @@ val ICON_REGISTRY: List<Pair<String, ImageVector>> = listOf(
     "bar" to Icons.Outlined.LocalBar,
     "spa" to Icons.Outlined.Spa,
     "gym" to Icons.Outlined.FitnessCenter,
-    "run" to Icons.Outlined.DirectionsRun,
+    "run" to Icons.AutoMirrored.Outlined.DirectionsRun,
     "shop" to Icons.Outlined.ShoppingBag,
     "photo" to Icons.Outlined.PhotoCamera,
-    "book" to Icons.Outlined.MenuBook,
+    "book" to Icons.AutoMirrored.Outlined.MenuBook,
     "party" to Icons.Outlined.Celebration,
     "sleep" to Icons.Outlined.NightsStay,
     "work" to Icons.Outlined.WorkOutline,
