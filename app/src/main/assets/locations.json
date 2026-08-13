@@ -436,7 +436,8 @@
         },
         {
           "start": "18:00",
-          "end": "23:15"
+          "end": "23:15",
+          "lateNight": true
         }
       ]
     },
@@ -448,7 +449,8 @@
       "slots": [
         {
           "start": "09:00",
-          "end": "01:00"
+          "end": "01:00",
+          "lateNight": true
         }
       ]
     },
@@ -484,7 +486,8 @@
       "slots": [
         {
           "start": "12:30",
-          "end": "01:00"
+          "end": "01:00",
+          "lateNight": true
         }
       ]
     },
@@ -513,7 +516,8 @@
         {
           "start": "20:15",
           "end": "22:15",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         },
         {
           "start": "18:00",
@@ -523,7 +527,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         }
       ]
     },
@@ -552,7 +557,8 @@
         {
           "start": "20:15",
           "end": "22:15",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         },
         {
           "start": "18:00",
@@ -562,7 +568,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         }
       ]
     },
@@ -591,7 +598,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         },
         {
           "start": "18:00",
@@ -601,7 +609,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         }
       ]
     },
@@ -630,7 +639,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         },
         {
           "start": "18:00",
@@ -640,7 +650,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         }
       ]
     },
@@ -693,7 +704,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         }
       ]
     },
@@ -712,7 +724,8 @@
         {
           "start": "20:15",
           "end": "22:15",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         },
         {
           "start": "18:00",
@@ -722,7 +735,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         }
       ]
     },
@@ -741,7 +755,8 @@
         {
           "start": "20:15",
           "end": "22:15",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         },
         {
           "start": "18:00",
@@ -751,7 +766,8 @@
         {
           "start": "20:30",
           "end": "22:30",
-          "meal": "dinner"
+          "meal": "dinner",
+          "lateNight": true
         }
       ]
     },
@@ -878,7 +894,8 @@
         {
           "start": "07:30",
           "end": "01:00",
-          "meal": "drink"
+          "meal": "drink",
+          "lateNight": true
         }
       ]
     },
@@ -906,7 +923,8 @@
         {
           "start": "07:30",
           "end": "01:30",
-          "meal": "drink"
+          "meal": "drink",
+          "lateNight": true
         }
       ]
     },
@@ -920,7 +938,8 @@
         {
           "start": "09:30",
           "end": "00:00",
-          "meal": "drink"
+          "meal": "drink",
+          "lateNight": true
         }
       ]
     },
@@ -1072,7 +1091,8 @@
         {
           "start": "11:00",
           "end": "00:00",
-          "meal": "snack"
+          "meal": "snack",
+          "lateNight": true
         }
       ]
     },
