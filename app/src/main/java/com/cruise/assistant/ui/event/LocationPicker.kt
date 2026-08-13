@@ -81,15 +81,18 @@ fun LocationPicker(
             Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Box {
+                // 下拉模式：字段只读展示、图标负责展开——不受 noLocation 影响
+                //（新事件默认 noLocation=true，若用 fieldsEnabled 会把整个下拉禁用，
+                // 导致无法选择任何预置地点；"不设地点"由底部复选框独立控制）。
                 OutlinedTextField(
                     value = placeName.ifEmpty { stringResource(R.string.select_location_hint) },
                     onValueChange = { },
                     label = { Text(stringResource(R.string.location_label)) },
                     readOnly = true,
                     singleLine = true,
-                    enabled = fieldsEnabled,
+                    enabled = enabled,
                     trailingIcon = {
-                        IconButton(onClick = { presetMenuOpen = true }, enabled = fieldsEnabled) {
+                        IconButton(onClick = { presetMenuOpen = true }, enabled = enabled) {
                             Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
                         }
                     },

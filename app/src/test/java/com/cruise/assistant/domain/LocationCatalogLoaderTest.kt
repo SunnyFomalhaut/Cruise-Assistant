@@ -66,3 +66,16 @@ class LocationCatalogLoaderTest {
         assertTrue(venue.isOpenFor(MealPeriod.LATE_NIGHT))
     }
 }
+
+class TmpNullGuardTest {
+    // 防御回归：Android 框架 org.json 对 JSON null 值 optString 返回字符串 "null"，
+    // JVM 测试库返回 null——用字面量 "null" 模拟 Android 行为，钉住防御。
+    @org.junit.Test
+    fun parse_nullZoneAsLiteralNullString_isSafe() {
+        val json = """{"venues":[{"name":"Room Service","deck":null,"zone":null,"category":"meal"}]}"""
+        val venues = parseLocationsJson(json)
+        org.junit.Assert.assertEquals(1, venues.size)
+        org.junit.Assert.assertNull(venues[0].zone)
+        org.junit.Assert.assertNull(venues[0].deck)
+    }
+}

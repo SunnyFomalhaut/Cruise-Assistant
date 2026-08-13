@@ -21,7 +21,10 @@ fun parseLocationsJson(json: String): List<LocationCatalogEntry> = runCatching {
                             OperatingSlot(
                                 start = LocalTime.parse(s.getString("start")),
                                 end = LocalTime.parse(s.getString("end")),
-                                meal = s.optString("meal").takeIf { it.isNotEmpty() }
+                                // Android 框架 org.json 对 JSON null 值 optString 返回字符串 "null"
+                                //（JVM 库返回 null）——必须显式排除，否则 valueOf("NULL") 抛异常
+                                // 导致整个目录解析失败（曾造成所有类别无预置地点）。
+                                meal = s.optString("meal").takeIf { it.isNotEmpty() && it != "null" }
                                     ?.let { MealPeriod.valueOf(it.uppercase()) },
                                 lateNight = s.optBoolean("lateNight", false),
                             ),
@@ -32,10 +35,10 @@ fun parseLocationsJson(json: String): List<LocationCatalogEntry> = runCatching {
             add(
                 LocationCatalogEntry(
                     deck = v.optInt("deck", -1).takeIf { it >= 0 },
-                    zone = v.optString("zone").takeIf { it.isNotEmpty() }
+                    zone = v.optString("zone").takeIf { it.isNotEmpty() && it != "null" }
                         ?.let { ShipZone.valueOf(it.uppercase()) },
                     placeName = v.getString("name"),
-                    diningGroup = v.optString("group").takeIf { it.isNotEmpty() }
+                    diningGroup = v.optString("group").takeIf { it.isNotEmpty() && it != "null" }
                         ?.let { DiningGroup.valueOf(it.uppercase()) },
                     category = v.optString("category", "meal"),
                     hours = hours,
