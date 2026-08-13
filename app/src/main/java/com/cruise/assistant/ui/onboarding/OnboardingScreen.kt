@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -38,7 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.BUILT_IN_SHIPS
-import com.cruise.assistant.ui.common.TimeWheel
+import com.cruise.assistant.domain.boardingSlots
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -207,11 +208,49 @@ fun OnboardingScreen(
         Spacer(Modifier.height(20.dp))
         Text(stringResource(R.string.board_time_label), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        TimeWheel(
-            value = state.boardTime,
-            onValueChange = onBoardTimeChange,
+        var boardMenuExpanded by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = boardMenuExpanded,
+            onExpandedChange = { boardMenuExpanded = it },
             modifier = Modifier.fillMaxWidth(),
-        )
+        ) {
+            OutlinedTextField(
+                value = "%02d:%02d-%02d:%02d".format(
+                    state.boardTime.hour, state.boardTime.minute,
+                    (state.boardTime.plusMinutes(15).hour + 24) % 24,
+                    state.boardTime.plusMinutes(15).minute,
+                ),
+                onValueChange = { },
+                label = { Text(stringResource(R.string.board_time_label)) },
+                readOnly = true,
+                singleLine = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = boardMenuExpanded) },
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
+            )
+            ExposedDropdownMenu(
+                expanded = boardMenuExpanded,
+                onDismissRequest = { boardMenuExpanded = false },
+                modifier = Modifier.heightIn(max = 320.dp),
+            ) {
+                boardingSlots().forEach { slot ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "%02d:%02d-%02d:%02d".format(
+                                    slot.hour, slot.minute,
+                                    (slot.plusMinutes(15).hour + 24) % 24,
+                                    slot.plusMinutes(15).minute,
+                                ),
+                            )
+                        },
+                        onClick = {
+                            onBoardTimeChange(slot)
+                            boardMenuExpanded = false
+                        },
+                    )
+                }
+            }
+        }
 
         Spacer(Modifier.height(20.dp))
         Text(stringResource(R.string.disembark_date_label), style = MaterialTheme.typography.titleMedium)

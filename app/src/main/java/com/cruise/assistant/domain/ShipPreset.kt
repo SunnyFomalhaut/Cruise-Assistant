@@ -39,6 +39,19 @@ fun nextOccurrenceOfDayOfWeek(target: DayOfWeek, today: LocalDate): LocalDate {
     return today.plusDays(diff.toLong())
 }
 
+/** 登船时间段选项：11:45 起每 15 分钟一段至 3:00（次日凌晨），共 62 段（11:45-23:45 共 49 段 + 0:00-3:00 共 13 段；迪士尼探险号 PAT） */
+fun boardingSlots(): List<LocalTime> {
+    val startMin = 11 * 60 + 45          // 11:45
+    val endMin = 24 * 60 + 3 * 60        // 次日 3:00
+    return buildList {
+        var m = startMin
+        while (m <= endMin) {
+            add(LocalTime.of((m / 60) % 24, m % 60))
+            m += 15
+        }
+    }
+}
+
 val BUILT_IN_SHIPS: List<ShipPreset> = listOf(
     ShipPreset(
         name = "Disney Adventure",
