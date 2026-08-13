@@ -10,17 +10,18 @@ enum class DiningGroup(val label: String) {
     BAR("酒吧"),
 }
 
-/** 一个营业时段（半开区间 [start, end)） */
-data class OperatingSlot(val start: LocalTime, val end: LocalTime)
+/** 营业时段：end < start 表示跨午夜（次日）；meal 为餐次标签，设施为 null */
+data class OperatingSlot(
+    val start: LocalTime,
+    val end: LocalTime,
+    val meal: MealPeriod? = null,
+    /** 夜宵打标（导入时按规则自动判定） */
+    val lateNight: Boolean = false,
+)
 
-/** 餐厅三时段营业时间；某时段为 null 表示该时段不营业 */
-data class OperatingHours(
-    val breakfast: OperatingSlot? = null,
-    val lunch: OperatingSlot? = null,
-    val dinner: OperatingSlot? = null,
-) {
-    /** 是否配置过营业时间（三时段全 null = 未配置，不参与筛选/校验） */
-    val isConfigured: Boolean get() = breakfast != null || lunch != null || dinner != null
+data class OperatingHours(val slots: List<OperatingSlot> = emptyList()) {
+    /** 是否配置过营业时间（空列表 = 未配置，不参与筛选/校验） */
+    val isConfigured: Boolean get() = slots.isNotEmpty()
 }
 
 /** 餐次（二级选项） */
@@ -35,12 +36,14 @@ enum class MealPeriod(val label: String) {
 
 /** 预置地点条目（绑定迪士尼探险号） */
 data class LocationCatalogEntry(
-    val deck: Int,
-    val zone: ShipZone,
+    val deck: Int?,          // null = 无甲板（如 Room Service "Dial 0"）
+    val zone: ShipZone?,     // null = 无区域
     /** 中文名（含英文），如 "华特迪士尼剧院 Walt Disney Theatre" */
     val placeName: String,
     /** 餐饮条目分组；舞台条目为 null */
     val diningGroup: DiningGroup? = null,
+    /** 数据表类别（meal/pool/shop/youth/chore） */
+    val category: String = "meal",
     /** 营业时间；null 或未配置 = 不参与筛选/校验（宽松处理） */
     val hours: OperatingHours? = null,
 )
@@ -59,9 +62,12 @@ val BUILT_IN_LOCATION_CATALOG: Map<String, List<LocationCatalogEntry>> = mapOf(
         LocationCatalogEntry(6, ShipZone.STERN, "航海家俱乐部 Navigator's Club Restaurant", DiningGroup.MAIN),
         LocationCatalogEntry(9, ShipZone.STERN, "动画师餐厅 Animator's Table Restaurant", DiningGroup.MAIN,
             hours = OperatingHours(
-                breakfast = OperatingSlot(LocalTime.of(8, 30), LocalTime.of(10, 0)),
-                lunch = OperatingSlot(LocalTime.of(12, 0), LocalTime.of(13, 30)),
-                dinner = OperatingSlot(LocalTime.of(18, 0), LocalTime.of(22, 0)),
+                slots = listOf(
+                    OperatingSlot(LocalTime.of(8, 30), LocalTime.of(10, 0), MealPeriod.BREAKFAST),
+                    OperatingSlot(LocalTime.of(12, 0), LocalTime.of(13, 30), MealPeriod.LUNCH),
+                    OperatingSlot(LocalTime.of(17, 45), LocalTime.of(19, 45), MealPeriod.DINNER),
+                    OperatingSlot(LocalTime.of(20, 15), LocalTime.of(22, 15), MealPeriod.DINNER),
+                ),
             )),
         LocationCatalogEntry(6, ShipZone.MID, "咒语酒廊 Spellbound", DiningGroup.BAR),
         LocationCatalogEntry(6, ShipZone.MID, "皇家宫廷酒廊 Royal Court", DiningGroup.BAR),
@@ -103,24 +109,31 @@ fun locationPresetOptions(
     }
 }
 
-/** 餐厅在某个餐次是否营业；未配置营业时间的餐厅恒视为营业 */
-fun LocationCatalogEntry.isOpenFor(period: MealPeriod): Boolean {
-    val h = hours ?: return true
-    if (!h.isConfigured) return true
-    return when (period) {
-        MealPeriod.BREAKFAST -> h.breakfast != null
-        MealPeriod.LUNCH -> h.lunch != null
-        MealPeriod.DINNER -> h.dinner != null
-        MealPeriod.LATE_NIGHT -> (h.dinner?.end?.hour ?: 0) >= 22
-        MealPeriod.SNACK -> true          // 任一餐次营业即算（isConfigured 已保证至少一个）
-        MealPeriod.DRINK -> h.dinner != null
-    }
-}
-
-/** 某时刻是否在餐厅任一营业时段内（半开区间）；未配置营业时间的餐厅恒视为营业 */
+/** 某时刻是否在任一营业时段内；跨午夜时段（end < start）：time >= start || time < end；未配置恒营业 */
 fun LocationCatalogEntry.isOpenAt(time: LocalTime): Boolean {
     val h = hours ?: return true
     if (!h.isConfigured) return true
-    return listOfNotNull(h.breakfast, h.lunch, h.dinner)
-        .any { !time.isBefore(it.start) && time.isBefore(it.end) }
+    return h.slots.any { slot ->
+        if (slot.end > slot.start) {
+            !time.isBefore(slot.start) && time.isBefore(slot.end)
+        } else {
+            !time.isBefore(slot.start) || time.isBefore(slot.end)
+        }
+    }
+}
+
+/** 餐次是否营业：按时段标签匹配；LATE_NIGHT 看任一 lateNight；未配置恒营业 */
+fun LocationCatalogEntry.isOpenFor(period: MealPeriod): Boolean {
+    val h = hours ?: return true
+    if (!h.isConfigured) return true
+    return h.slots.any { slot ->
+        when (period) {
+            MealPeriod.BREAKFAST -> slot.meal == MealPeriod.BREAKFAST
+            MealPeriod.LUNCH -> slot.meal == MealPeriod.LUNCH
+            MealPeriod.DINNER -> slot.meal == MealPeriod.DINNER
+            MealPeriod.LATE_NIGHT -> slot.lateNight
+            MealPeriod.SNACK -> slot.meal == MealPeriod.SNACK
+            MealPeriod.DRINK -> slot.meal == MealPeriod.DRINK
+        }
+    }
 }

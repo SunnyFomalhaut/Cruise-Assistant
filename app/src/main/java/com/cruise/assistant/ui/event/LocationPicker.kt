@@ -119,7 +119,7 @@ fun LocationPicker(
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            "Deck ${option.entry.deck} ${option.entry.zone.label} ${option.entry.placeName}",
+                                            "Deck ${option.entry.deck} ${option.entry.zone?.label.orEmpty()} ${option.entry.placeName}",
                                         )
                                     },
                                     onClick = {

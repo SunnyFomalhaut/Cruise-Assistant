@@ -312,11 +312,7 @@ class EventSheetViewModel(
             val venue = matchedVenue
             val openNow = venue == null || venue.hours?.isConfigured != true || venue.isOpenAt(s.startTime)
             if (!openNow) {
-                val hoursText = listOfNotNull(
-                    venue.hours?.breakfast?.let { "早餐 ${it.start}-${it.end}" },
-                    venue.hours?.lunch?.let { "午餐 ${it.start}-${it.end}" },
-                    venue.hours?.dinner?.let { "晚餐 ${it.start}-${it.end}" },
-                ).joinToString(" / ")
+                val hoursText = venue.hours?.slots?.joinToString(" / ") { "${it.start}-${it.end}" }
                 _state.update {
                     it.copy(
                         hoursCheckPending = true,
