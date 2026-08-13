@@ -47,8 +47,8 @@ class ShowPresetTest {
     }
 
     @Test
-    fun fixedDayWithMultipleOffsets_returnsOnlyListedDays() {
-        // 固定天契约：只取 dayOffsets 列出的天，不填充中间天（1、3 不产生第 2 天）
+    fun fixedDayWithMultipleOffsets_returnsRangeUpToLastOffset() {
+        // 固定天契约：取 dayOffsets 首..末天的连续区间（1、3 → 第 1、2、3 天）
         val show = ShowPreset(
             key = "test_multi_offset",
             title = "测试 Test",
@@ -62,8 +62,13 @@ class ShowPresetTest {
             dinnerLinked = false,
         )
         assertEquals(
-            listOf(boardMonday, boardMonday.plusDays(2)),
+            listOf(boardMonday, boardMonday.plusDays(1), boardMonday.plusDays(2)),
             show.resolveDates(boardMonday, dayCount = 5),
+        )
+        // 末天同样截断到 dayCount-1（2 天航程：dayCount-1 = 1，第 3 天越界被截断）
+        assertEquals(
+            listOf(boardMonday),
+            show.resolveDates(boardMonday, dayCount = 2),
         )
     }
 
@@ -268,5 +273,14 @@ class ShowPresetTest {
         // 被误扩展为 19:15–19:55）下两者不重叠 → 冲突数为 0，测试失败。能区分正确/错误实现。
         val conflicts = findConflicts(listOf(showEvent, ordinaryEvent), rangeOf)
         assertEquals(1, conflicts.size)
+    }
+
+    @Test
+    fun fixedDayShows_clampToLastVoyageDay() {
+        // 1 夜航程（dayCount=2）：第 2 天 = 下船日，固定天演出不得生成在下船日
+        val lionKing = DISNEY_ADVENTURE_SHOWS.first { it.key == "show_lion_king" }
+        assertEquals(emptyList<LocalDate>(), lionKing.resolveDates(boardMonday, dayCount = 2))
+        // 常规 4 天航程不受影响
+        assertEquals(listOf(boardMonday.plusDays(1)), lionKing.resolveDates(boardMonday, dayCount = 4))
     }
 }
