@@ -17,6 +17,7 @@ import com.cruise.assistant.domain.TimelineLayout
 import com.cruise.assistant.domain.hourTicks
 import com.cruise.assistant.domain.minuteToDp
 import com.cruise.assistant.ui.theme.GridLine
+import com.cruise.assistant.ui.theme.GridLineHour
 
 val RULER_WIDTH = 56.dp
 
@@ -61,14 +62,15 @@ fun TimelineGrid(
 ) {
     val ticks = layout.hourTicks()
     Canvas(modifier.fillMaxSize()) {
-        // 横向网格线只画整点（规格 §1），半点不画线
-        ticks.filter { !it.third }.forEach { (_, topDp) ->
+        // 横向网格线：整点 + 半点都画线。整点用更深更粗的线突出，半点用浅线
+        // （hourTicks 仅在 hourHeight >= 90 时包含半点，低于 90 密度不够只有整点）。
+        ticks.forEach { (_, topDp, isHalf) ->
             val y = topDp * density
             drawLine(
-                color = GridLine,
+                color = if (isHalf) GridLine else GridLineHour,
                 start = Offset(0f, y),
                 end = Offset(size.width, y),
-                strokeWidth = 1f,
+                strokeWidth = if (isHalf) 1f else 1.5f,
             )
         }
         laneBoundaries.forEach { fraction ->

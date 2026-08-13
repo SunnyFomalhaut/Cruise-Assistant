@@ -7,6 +7,8 @@ val CruiseBlue = Color(0xFF2C5F8D)
 val CruiseBlueLight = Color(0xFF5B8DEF)
 val SurfaceGray = Color(0xFFF6F7F9)
 val GridLine = Color(0xFFE8EAED)
+/** 整点横向网格线：比半点线更深更粗，突出整点（需求：主界面每整点/半点都画线且整点更明显） */
+val GridLineHour = Color(0xFFD0D4DA)
 val NowRed = Color(0xFFE8563F)
 
 fun Int.toComposeColor(): Color = Color(this)
