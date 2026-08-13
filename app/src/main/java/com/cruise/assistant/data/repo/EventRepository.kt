@@ -96,6 +96,9 @@ class EventRepository(
                     target.recurrenceGroupId
                 },
                 isSystemGenerated = target.isSystemGenerated,
+                // 保留目标行的激活状态：UI 层构造的 event 不带 isActive（恒为 true），
+                // 若不保留，编辑会静默"复活"被停用的事件（WHOLE_GROUP 时整组已停用成员一起复活）。
+                isActive = target.isActive,
             )
             val timingUnchanged = merged.startTime == target.startTime &&
                 merged.durationMinutes == target.durationMinutes
