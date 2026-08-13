@@ -1,27 +1,1108 @@
 {
   "venues": [
     {
-      "name": "动画师餐厅 Animator's Table",
-      "deck": 9, "zone": "stern",
-      "category": "meal", "group": "main",
+      "name": "Concierge Fitness Center",
+      "deck": 18,
+      "zone": "bow",
+      "category": "chore",
       "slots": [
-        {"start": "08:30", "end": "10:00", "meal": "breakfast"},
-        {"start": "12:00", "end": "13:30", "meal": "lunch"},
-        {"start": "17:45", "end": "19:45", "meal": "dinner"},
-        {"start": "20:15", "end": "22:15", "meal": "dinner"}
+        {
+          "start": "06:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Concierge Lounge",
+      "deck": 17,
+      "zone": "bow",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Concierge Lounge Outdoor",
+      "deck": 17,
+      "zone": "bow",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Concierge Sundeck",
+      "deck": 19,
+      "zone": "bow",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Fairytale Fresh Laundry",
+      "deck": 16,
+      "zone": "mid",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "00:00",
+          "end": "23:59"
+        }
+      ]
+    },
+    {
+      "name": "Fitness Center",
+      "deck": 10,
+      "zone": "mid",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "06:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Guest Services",
+      "deck": 6,
+      "zone": "mid",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "00:00",
+          "end": "23:59"
+        }
+      ]
+    },
+    {
+      "name": "Infinite Bliss Spa - Elemis at Sea",
+      "deck": 10,
+      "zone": "mid",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "08:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Medical Health Center",
+      "deck": 9,
+      "zone": "bow",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "08:30",
+          "end": "12:00"
+        },
+        {
+          "start": "14:00",
+          "end": "18:30"
+        }
+      ]
+    },
+    {
+      "name": "Opulence Spa - Elemis at Sea (Concierge)",
+      "deck": 18,
+      "zone": "bow",
+      "category": "chore",
+      "slots": [
+        {
+          "start": "08:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Concierge Pool",
+      "deck": 19,
+      "zone": "bow",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "19:30"
+        }
+      ]
+    },
+    {
+      "name": "Flying Saucer Splash Zone",
+      "deck": 17,
+      "zone": "mid",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "19:30"
+        }
+      ]
+    },
+    {
+      "name": "Groot Galaxy Spin",
+      "deck": 18,
+      "zone": "stern",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "21:00"
+        }
+      ]
+    },
+    {
+      "name": "Infinity Pool",
+      "deck": 18,
+      "zone": "stern",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "21:00"
+        }
+      ]
+    },
+    {
+      "name": "Pym Quantum Racers",
+      "deck": 18,
+      "zone": "stern",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "21:00"
+        }
+      ]
+    },
+    {
+      "name": "San Fransokyo Street",
+      "deck": 7,
+      "zone": "stern",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "00:00",
+          "end": "23:59"
+        }
+      ]
+    },
+    {
+      "name": "Sunnyside Pool",
+      "deck": 17,
+      "zone": "mid",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "21:30"
+        }
+      ]
+    },
+    {
+      "name": "Toy Story Splash Pad",
+      "deck": 17,
+      "zone": "mid",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "19:30"
+        }
+      ]
+    },
+    {
+      "name": "Wayfinder Beach",
+      "deck": 10,
+      "zone": "stern",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "08:00"
+        },
+        {
+          "start": "11:30",
+          "end": "20:30"
+        }
+      ]
+    },
+    {
+      "name": "Woody and Jessie's Wild Slides",
+      "deck": 17,
+      "zone": "mid",
+      "category": "pool",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "19:30"
+        }
+      ]
+    },
+    {
+      "name": "3 Wishes",
+      "deck": 17,
+      "zone": "bow",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Bibbidi Bobbidi Boutique",
+      "deck": 7,
+      "zone": "mid",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "21:00"
+        }
+      ]
+    },
+    {
+      "name": "Castle Collection",
+      "deck": 11,
+      "zone": "mid",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Diamonds and Wishes",
+      "deck": 7,
+      "zone": "mid",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Disney Studio",
+      "deck": 7,
+      "zone": "mid",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:15",
+          "end": "12:00"
+        },
+        {
+          "start": "13:45",
+          "end": "17:45"
+        }
+      ]
+    },
+    {
+      "name": "Duffy and Friends Shop",
+      "deck": 7,
+      "zone": "stern",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Marvel Style Studio",
+      "deck": 6,
+      "zone": "stern",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "18:00"
+        }
+      ]
+    },
+    {
+      "name": "National Geographic",
+      "deck": 7,
+      "zone": "stern",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Palace Treasures",
+      "deck": 17,
+      "zone": "bow",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Pics Photo Shop",
+      "deck": 7,
+      "zone": "bow",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Royal Studio",
+      "deck": 7,
+      "zone": "mid",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:15",
+          "end": "13:00"
+        },
+        {
+          "start": "14:45",
+          "end": "17:45"
+        }
+      ]
+    },
+    {
+      "name": "Treasures Untold",
+      "deck": 10,
+      "zone": "stern",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "World of Disney",
+      "deck": 5,
+      "zone": "mid",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "World of Disney Too",
+      "deck": 5,
+      "zone": "mid",
+      "category": "shop",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00"
+        }
+      ]
+    },
+    {
+      "name": "Disney's Oceaneer Club",
+      "deck": 8,
+      "zone": "mid",
+      "category": "youth",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "15:00"
+        },
+        {
+          "start": "18:00",
+          "end": "23:15"
+        }
       ]
     },
     {
       "name": "Edge",
-      "deck": 7, "zone": "stern",
+      "deck": 7,
+      "zone": "stern",
       "category": "youth",
       "slots": [
-        {"start": "09:00", "end": "01:00"}
+        {
+          "start": "09:00",
+          "end": "01:00"
+        }
+      ]
+    },
+    {
+      "name": "it's a small world nursery",
+      "deck": 8,
+      "zone": "bow",
+      "category": "youth",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "23:15"
+        }
+      ]
+    },
+    {
+      "name": "Mickey & Minnie Captain's Deck",
+      "deck": 8,
+      "zone": "bow",
+      "category": "youth",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "21:00"
+        }
+      ]
+    },
+    {
+      "name": "Vibe",
+      "deck": 7,
+      "zone": "stern",
+      "category": "youth",
+      "slots": [
+        {
+          "start": "12:30",
+          "end": "01:00"
+        }
+      ]
+    },
+    {
+      "name": "动画师餐厅 Animator's Table Restaurant",
+      "deck": 9,
+      "zone": "stern",
+      "category": "meal",
+      "group": "main",
+      "slots": [
+        {
+          "start": "08:30",
+          "end": "10:00",
+          "meal": "breakfast"
+        },
+        {
+          "start": "12:00",
+          "end": "13:30",
+          "meal": "lunch"
+        },
+        {
+          "start": "17:45",
+          "end": "19:45",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:15",
+          "end": "22:15",
+          "meal": "dinner"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        }
+      ]
+    },
+    {
+      "name": "魔法盛夏餐厅 Enchanted Summer Restaurant",
+      "deck": 6,
+      "zone": "mid",
+      "category": "meal",
+      "group": "main",
+      "slots": [
+        {
+          "start": "08:00",
+          "end": "10:30",
+          "meal": "breakfast"
+        },
+        {
+          "start": "12:00",
+          "end": "14:00",
+          "meal": "lunch"
+        },
+        {
+          "start": "17:45",
+          "end": "19:45",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:15",
+          "end": "22:15",
+          "meal": "dinner"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        }
+      ]
+    },
+    {
+      "name": "航海家俱乐部 Navigator's Club Restaurant",
+      "deck": 6,
+      "zone": "stern",
+      "category": "meal",
+      "group": "main",
+      "slots": [
+        {
+          "start": "08:00",
+          "end": "09:30",
+          "meal": "breakfast"
+        },
+        {
+          "start": "12:00",
+          "end": "13:30",
+          "meal": "lunch"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        }
+      ]
+    },
+    {
+      "name": "Pixar Market Restaurant",
+      "deck": 17,
+      "zone": "stern",
+      "category": "meal",
+      "group": "main",
+      "slots": [
+        {
+          "start": "07:00",
+          "end": "10:45",
+          "meal": "breakfast"
+        },
+        {
+          "start": "12:00",
+          "end": "14:00",
+          "meal": "lunch"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        }
+      ]
+    },
+    {
+      "name": "怪兽亚洲风味 Mike & Sulley's Flavors of Asia",
+      "deck": 10,
+      "zone": "stern",
+      "category": "meal",
+      "group": "paid",
+      "slots": [
+        {
+          "start": "11:30",
+          "end": "13:30",
+          "meal": "lunch"
+        },
+        {
+          "start": "18:00",
+          "end": "20:30",
+          "meal": "dinner"
+        },
+        {
+          "start": "11:00",
+          "end": "17:00",
+          "meal": "snack"
+        },
+        {
+          "start": "18:00",
+          "end": "20:30",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "帕洛意大利餐厅 Palo Trattoria",
+      "deck": 10,
+      "zone": "stern",
+      "category": "meal",
+      "group": "paid",
+      "slots": [
+        {
+          "start": "09:30",
+          "end": "12:00",
+          "meal": "lunch"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        }
+      ]
+    },
+    {
+      "name": "Animator's Palate",
+      "deck": 5,
+      "zone": "stern",
+      "category": "meal",
+      "group": "main",
+      "slots": [
+        {
+          "start": "17:45",
+          "end": "19:45",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:15",
+          "end": "22:15",
+          "meal": "dinner"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        }
+      ]
+    },
+    {
+      "name": "Hollywood Spotlight Club",
+      "deck": 8,
+      "zone": "stern",
+      "category": "meal",
+      "group": "main",
+      "slots": [
+        {
+          "start": "17:45",
+          "end": "19:45",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:15",
+          "end": "22:15",
+          "meal": "dinner"
+        },
+        {
+          "start": "18:00",
+          "end": "20:00",
+          "meal": "dinner"
+        },
+        {
+          "start": "20:30",
+          "end": "22:30",
+          "meal": "dinner"
+        }
+      ]
+    },
+    {
+      "name": "Alley Cat Café©",
+      "deck": 7,
+      "zone": "stern",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "08:30",
+          "end": "23:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Bewitching Boba & Brews ($)",
+      "deck": 10,
+      "zone": "stern",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Bounce and Hops",
+      "deck": 17,
+      "zone": "mid",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "海盗酒吧 Buccaneer Bar",
+      "deck": 6,
+      "zone": "stern",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "17:00",
+          "end": "01:00",
+          "meal": "drink",
+          "lateNight": true
+        }
+      ]
+    },
+    {
+      "name": "Garden Bar",
+      "deck": 11,
+      "zone": "mid",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "23:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Infinity Bar",
+      "deck": 18,
+      "zone": "stern",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "23:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Market Bar",
+      "deck": 17,
+      "zone": "mid",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "23:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Premier Sips & Snacks",
+      "deck": 6,
+      "zone": "bow",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "12:00",
+          "end": "21:30",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "咒语酒廊 Spellbound",
+      "deck": 6,
+      "zone": "mid",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "07:30",
+          "end": "01:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Taverna Portorosso",
+      "deck": 11,
+      "zone": "stern",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "16:30",
+          "end": "22:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Tiana's Bayou Lounge",
+      "deck": 5,
+      "zone": "mid",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "07:30",
+          "end": "01:30",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Wayfinder Bar",
+      "deck": 10,
+      "zone": "stern",
+      "category": "bar",
+      "group": "bar",
+      "slots": [
+        {
+          "start": "09:30",
+          "end": "00:00",
+          "meal": "drink"
+        }
+      ]
+    },
+    {
+      "name": "Bacha Coffee ($)",
+      "deck": 7,
+      "zone": "mid",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "Cosmic Kebabs",
+      "deck": 10,
+      "zone": "stern",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "10:30",
+          "end": "22:00",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "塔拉奶奶的厨房 Gramma Talas Kitchen",
+      "deck": 10,
+      "zone": "mid",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "11:00",
+          "end": "18:00",
+          "meal": "snack"
+        },
+        {
+          "start": "22:00",
+          "end": "00:00",
+          "meal": "snack",
+          "lateNight": true
+        }
+      ]
+    },
+    {
+      "name": "莫格利餐厅 Mowgli's Eatery",
+      "deck": 10,
+      "zone": "mid",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "11:00",
+          "end": "18:00",
+          "meal": "snack"
+        },
+        {
+          "start": "22:00",
+          "end": "00:00",
+          "meal": "snack",
+          "lateNight": true
+        }
+      ]
+    },
+    {
+      "name": "Palo Café© ($)",
+      "deck": 10,
+      "zone": "stern",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "09:00",
+          "end": "22:00",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "Pizza Planet",
+      "deck": 17,
+      "zone": "mid",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "10:30",
+          "end": "21:00",
+          "meal": "snack"
+        }
       ]
     },
     {
       "name": "Room Service",
-      "category": "meal"
+      "deck": null,
+      "zone": null,
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "00:00",
+          "end": "23:59",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "Stitch's Ohana Grill",
+      "deck": 10,
+      "zone": "stern",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "10:30",
+          "end": "22:00",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "TWG Tea ($)",
+      "deck": 7,
+      "zone": "mid",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "10:00",
+          "end": "22:00",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "Wheezy's Freezies",
+      "deck": 17,
+      "zone": "mid",
+      "category": "quick",
+      "group": "quick",
+      "slots": [
+        {
+          "start": "11:00",
+          "end": "00:00",
+          "meal": "snack"
+        }
+      ]
+    },
+    {
+      "name": "华特迪士尼剧院 Walt Disney Theatre",
+      "deck": 6,
+      "zone": "bow",
+      "category": "show",
+      "slots": []
+    },
+    {
+      "name": "寻路者湾 Wayfinder Bay",
+      "deck": 10,
+      "zone": "stern",
+      "category": "show",
+      "slots": []
+    },
+    {
+      "name": "花园舞台 Garden Stage",
+      "deck": 10,
+      "zone": "stern",
+      "category": "show",
+      "slots": []
+    },
+    {
+      "name": "露天泳池",
+      "deck": 17,
+      "zone": "mid",
+      "category": "show",
+      "slots": []
     }
   ]
 }
