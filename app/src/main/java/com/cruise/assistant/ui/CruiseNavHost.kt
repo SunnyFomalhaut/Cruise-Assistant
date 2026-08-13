@@ -121,7 +121,9 @@ fun CruiseNavHost(container: AppContainer) {
             val current = timelineState
 
             var sheetRequest by remember { mutableStateOf<EventSheetRequest?>(null) }
-            var sheetSeq by remember { mutableStateOf(0L) }
+            // saveable：旋转后 sheetSeq 从 0 重新递增会撞上 ViewModelStore 里旋转前的
+            // 旧 VM（key "event-sheet-1" 复用）→ 编辑状态残留，可能覆盖错误的事件。
+            var sheetSeq by rememberSaveable { mutableStateOf(0L) }
             var showRangePanel by remember { mutableStateOf(false) }
             var rangeErrorResId by remember { mutableStateOf<Int?>(null) }
             val coroutineScope = rememberCoroutineScope()
@@ -161,6 +163,9 @@ fun CruiseNavHost(container: AppContainer) {
                         val date = current.selectedDate
                         coroutineScope.launch {
                             val found = vm.conflictsOn(date)
+                            // 期间用户切了日期 → 丢弃结果：dialog 描述会指错天、定稿会定错天。
+                            // 不能比较 current（lambda 创建时的旧快照），必须读 VM 当前选中日期。
+                            if (vm.state.value?.selectedDate != date) return@launch
                             highlightIds = found.flatMap { listOf(it.first.id, it.second.id) }.toSet()
                             conflictCheckDate = date
                             conflictCheck = found

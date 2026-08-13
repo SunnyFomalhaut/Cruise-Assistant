@@ -15,6 +15,7 @@ import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.isOpenAt
+import com.cruise.assistant.domain.isOpenFor
 import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -110,6 +111,25 @@ class EventSheetViewModel(
                     builtInShip = builtIn,
                 )
             }
+            // builtInShip 更新后补一次收敛：若 categories 流先发射（builtInShip 还是默认
+            // false），餐次行/预置下拉就不会显示且不再恢复——这里用最新值重算一遍。
+            _state.update { current ->
+                val iconKey = current.categories
+                    .firstOrNull { it.id == current.selectedCategoryId }?.iconKey
+                current.copy(
+                    categoryIconKey = current.categoryIconKey ?: iconKey,
+                    showMealPeriodRow = current.builtInShip && iconKey == "meal",
+                    locationPresetMode = resolvePresetMode(
+                        isEditing = current.isEditing,
+                        builtInShip = current.builtInShip,
+                        iconKey = iconKey,
+                        currentMode = current.locationPresetMode,
+                        deck = current.deck,
+                        zone = current.zone,
+                        placeName = current.placeName,
+                    ),
+                )
+            }
         }
         viewModelScope.launch {
             categoryRepository.observeActive().collect { list ->
@@ -155,7 +175,7 @@ class EventSheetViewModel(
                             deck = event.deck,
                             zone = event.zone ?: ShipZone.MID,
                             placeName = event.placeName.orEmpty(),
-                            noLocation = event.deck == null,
+                            noLocation = event.deck == null && event.zone == null && event.placeName == null,
                             startTime = event.startTime,
                             endTime = LocalTime.of(
                                 (endMinutes / 60).coerceAtMost(23),
@@ -204,7 +224,18 @@ class EventSheetViewModel(
     }
 
     fun onMealPeriodSelect(period: MealPeriod?) = _state.update {
-        it.copy(selectedMealPeriod = period)
+        // 切换餐次后若当前已选地点不在新餐次营业列表（或已被过滤掉），清空地点选择，
+        // 否则用户看着 stale 的 venue 直接保存。未配置营业时间的 venue 恒 open → 保留。
+        val entries = LocationCatalog.venuesByCategory()["meal"].orEmpty()
+        val currentVenueOpen = period == null || entries
+            .firstOrNull { e -> e.deck == it.deck && e.zone == it.zone && e.placeName == it.placeName }
+            ?.isOpenFor(period) != false
+        it.copy(
+            selectedMealPeriod = period,
+            deck = if (currentVenueOpen) it.deck else null,
+            zone = if (currentVenueOpen) it.zone else null,
+            placeName = if (currentVenueOpen) it.placeName else "",
+        )
     }
     fun onTitleChange(value: String) = _state.update { it.copy(title = value, errorResId = null) }
     fun onDeckChange(value: Int) = _state.update { it.copy(deck = value, noLocation = false) }
