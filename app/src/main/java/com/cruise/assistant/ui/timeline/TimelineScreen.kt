@@ -158,7 +158,7 @@ fun TimelineScreen(
                 } else {
                     Spacer(Modifier.weight(1f))
                 }
-                if (state.todayInVoyage && !state.isToday) {
+                if (state.todayInVoyage) {
                     // 显眼的"跳到当前时间"：主色调填充按钮 + 时钟图标，船上随时看现在
                     FilledTonalButton(
                         onClick = onJumpToNow,
