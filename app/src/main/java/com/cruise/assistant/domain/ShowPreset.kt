@@ -49,8 +49,8 @@ fun ShowPreset.resolveDates(boardDate: LocalDate, dayCount: Int): List<LocalDate
 }
 
 /**
- * 晚餐联动演出选场：17:45 晚餐（早于 19:00）→ 20:30 场；20:00 晚餐 → 18:00 场。
- * 选中的恰好是与晚餐不冲突的那场（17:45–19:00 vs 20:30 场；20:00–21:15 vs 18:00 场）。
+ * 晚餐联动演出选场：17:45 晚餐（早于 19:00）→ 20:30 场；20:15 晚餐 → 18:00 场。
+ * 选中的恰好是与晚餐不冲突的那场（17:45–19:00 vs 20:30 场；20:15–21:30 vs 18:00 场）。
  */
 fun pickDinnerLinkedTime(dinnerTime: LocalTime): LocalTime =
     if (dinnerTime.isBefore(LocalTime.of(19, 0))) {

@@ -42,8 +42,8 @@ class ShowPresetTest {
     }
 
     @Test
-    fun dinnerLinked_2000_returns1800Show() {
-        assertEquals(LocalTime.of(18, 0), pickDinnerLinkedTime(LocalTime.of(20, 0)))
+    fun dinnerLinked_2015_returns1800Show() {
+        assertEquals(LocalTime.of(18, 0), pickDinnerLinkedTime(LocalTime.of(20, 15)))
     }
 
     @Test
