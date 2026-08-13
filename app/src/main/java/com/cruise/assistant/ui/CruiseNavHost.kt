@@ -80,6 +80,7 @@ fun CruiseNavHost(container: AppContainer) {
                     OnboardingViewModel(
                         container.voyageRepository,
                         container.settingsStore,
+                        container.reminderScheduler,
                         LocalDate.now(),
                     )
                 },

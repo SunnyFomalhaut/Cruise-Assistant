@@ -45,6 +45,17 @@ class VoyageRepository(
         }
 
     /**
+     * 幂等补缺内置类别：按 iconKey 插入缺失项（升级用户不重建航次也能获得新类别）
+     */
+    suspend fun seedMissingBuiltInCategories() {
+        val existing = categoryDao.observeAllOnce()
+        val missing = BUILT_IN_CATEGORIES.filter { builtIn ->
+            existing.none { it.iconKey == builtIn.iconKey }
+        }
+        if (missing.isNotEmpty()) categoryDao.insertAll(missing.map { it.toEntity() })
+    }
+
+    /**
      * 需求7：创建航次并生成初始时间轴。
      * 1) 写 voyage  2) 每天建 DayPlan(finalized=false)
      * 3) 播种内置类别（仅当类别表为空）
@@ -75,15 +86,9 @@ class VoyageRepository(
             voyage.datesInVoyage().map { DayPlan(date = it).toEntity() },
         )
 
-        // 播种内置类别：首次创建航次时全量；老版本升级后按 iconKey 补缺失的内置类别
-        // （如 v1.7.4 新增的 泳池娱乐/商店/青少年活动）——count()==0 时全量，
-        // 否则只插入缺失的，保证老用户升级后新类别立即可见。
-        val existing = categoryDao.observeAllOnce()
-        val missing = BUILT_IN_CATEGORIES.filter { builtIn ->
-            existing.none { it.iconKey == builtIn.iconKey }
-        }
-        if (missing.isNotEmpty()) categoryDao.insertAll(missing.map { it.toEntity() })
-        // 只查一次：类别表刚在上面播种过（或早已存在），为空是编程错误，允许 .first() 抛异常。
+        // 播种内置类别：幂等按 iconKey 补缺（count()==0 时该方法会全量插入，行为等价）。
+        seedMissingBuiltInCategories()
+        // 只查一次：类别表刚播种过（或早已存在），为空是编程错误，允许 .first() 抛异常。
         val categories = categoryDao.observeAllOnce()
         val importantId = categories.firstOrNull { it.iconKey == "important" }?.id
             ?: categories.first().id
@@ -115,7 +120,10 @@ class VoyageRepository(
 
             val presetEvents = mutableListOf<CruiseEvent>()
 
-            // 安全演习：仅上船日（第一天），15:45–16:20，Deck 6 船中
+            // 安全演习：仅上船日（第一天），15:45–16:20，Deck 6 船中。
+            // lane=1（第二栏）：避免 boardTime 选 16:00 时上船（16:00–16:15）与
+            // 安全演习同栏重叠（冲突检查会标记 App 自己生成的事件）；与预置演出
+            // （下午场 14:45–15:15 扩展后 15:15 结束）及晚餐（18:00+）均不冲突。
             presetEvents += CruiseEvent(
                 date = boardDate,
                 startTime = SAFETY_DRILL_TIME,
@@ -124,6 +132,7 @@ class VoyageRepository(
                 title = "安全演习",
                 deck = 6,
                 zone = ShipZone.MID,
+                lane = 1,
                 isSystemGenerated = false,
                 presetKey = "safety_drill",
             )

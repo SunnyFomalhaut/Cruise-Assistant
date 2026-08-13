@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.domain.BUILT_IN_SHIPS
+import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,7 @@ data class OnboardingState(
 class OnboardingViewModel(
     private val voyageRepository: VoyageRepository,
     private val settingsStore: SettingsStore,
+    private val reminderScheduler: ReminderScheduler,
     today: LocalDate,
 ) : ViewModel() {
 
@@ -141,6 +143,9 @@ class OnboardingViewModel(
                 dinnerTime = current.dinnerTime,
                 shipPresetName = shipPresetName,
             )
+            // 引导完成后立即排程：createVoyage 生成的上船/下船/安全演习/晚餐/演出
+            // 提醒不等到下次启动才排上（否则新装用户直到重启都收不到任何提醒）。
+            reminderScheduler.rescheduleAll()
             settingsStore.setLastViewedDate(current.boardDate)
             settingsStore.setOnboardingCompleted(true)
             _state.update { it.copy(saving = false) }
