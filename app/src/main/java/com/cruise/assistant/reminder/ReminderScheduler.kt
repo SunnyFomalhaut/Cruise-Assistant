@@ -121,10 +121,10 @@ class ReminderScheduler(
             }
         pendingAlarms.sortedBy { it.second }.take(MAX_SCHEDULED).forEach { (event, triggerMs, slot) ->
             val categoryName = categories[event.categoryId]?.name.orEmpty()
-            val titleLine = if (categoryName.isEmpty()) {
-                event.title
-            } else {
-                context.getString(R.string.notification_title_format, categoryName, event.title)
+            val titleLine = when {
+                categoryName.isEmpty() -> event.title.ifEmpty { "" }
+                event.title.isBlank() -> categoryName
+                else -> context.getString(R.string.notification_title_format, categoryName, event.title)
             }
             val location = formatLocation(event.deck, event.zone, event.placeName)
             val lead = SLOT_LEAD_MINUTES[slot]

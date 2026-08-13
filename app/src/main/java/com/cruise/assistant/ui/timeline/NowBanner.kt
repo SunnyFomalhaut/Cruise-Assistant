@@ -59,7 +59,7 @@ private fun BannerRow(label: String, event: CruiseEvent, categories: Map<Long, C
             buildString {
                 append("%02d:%02d".format(event.startTime.hour, event.startTime.minute))
                 append("  ")
-                append(event.title)
+                append(event.title.ifEmpty { categories[event.categoryId]?.name ?: "" })
                 location?.let { append("  ").append(it) }
             },
             style = MaterialTheme.typography.labelSmall,

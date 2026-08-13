@@ -65,6 +65,23 @@ class LocationCatalogLoaderTest {
         val venue = parseLocationsJson(json).first()
         assertTrue(venue.isOpenFor(MealPeriod.LATE_NIGHT))
     }
+
+    @Test
+    fun parse_roomService_hasBreakfastAndSnackTags() {
+        val json = """{"venues":[{"name":"客房送餐 Room Service","category":"meal","group":"quick",
+            "slots":[{"start":"00:00","end":"23:59","meal":"breakfast"},{"start":"00:00","end":"23:59","meal":"snack"}]}]}"""
+        val venue = parseLocationsJson(json).first()
+        assertTrue(venue.isOpenFor(MealPeriod.BREAKFAST))
+        assertTrue(venue.isOpenFor(MealPeriod.SNACK))
+    }
+
+    @Test
+    fun parse_dollarVenues_arePaidGroup() {
+        val json = """{"venues":[{"name":"巴哈咖啡 Bacha Coffee","deck":7,"zone":"mid","category":"meal","group":"paid",
+            "slots":[{"start":"10:00","end":"22:00","meal":"drink"}]}]}"""
+        val venue = parseLocationsJson(json).first()
+        assertEquals(DiningGroup.PAID, venue.diningGroup)
+    }
 }
 
 class TmpNullGuardTest {

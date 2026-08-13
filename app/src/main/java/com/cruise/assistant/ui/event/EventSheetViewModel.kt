@@ -230,14 +230,26 @@ class EventSheetViewModel(
         val currentVenueOpen = period == null || entries
             .firstOrNull { e -> e.deck == it.deck && e.zone == it.zone && e.placeName == it.placeName }
             ?.isOpenFor(period) != false
-        // 餐次联动起止时间：早餐 08:00-08:30、午餐 12:00-12:30、晚餐 18:00-18:30、
-        // 夜宵 22:00-22:30；全部/零食/酒水不调整时间。
-        val (newStart, newEnd) = when (period) {
-            MealPeriod.BREAKFAST -> LocalTime.of(8, 0) to LocalTime.of(8, 30)
-            MealPeriod.LUNCH -> LocalTime.of(12, 0) to LocalTime.of(12, 30)
-            MealPeriod.DINNER -> LocalTime.of(18, 0) to LocalTime.of(18, 30)
-            MealPeriod.LATE_NIGHT -> LocalTime.of(22, 0) to LocalTime.of(22, 30)
-            else -> it.startTime to it.endTime
+        // 餐次联动起止时间：优先从保留地点在该餐次的营业时段取开始时间（如动画师早餐
+        // 08:30），否则用规范默认值（早餐 08:00、午餐 12:00、晚餐 18:00、夜宵 22:00，
+        // 各 30 分钟）——避免自动时间落在营业时段外（如帕洛午餐 12:00 在外）触发自家校验。
+        // 全部/零食/酒水不调整时间。
+        val defaultStart = when (period) {
+            MealPeriod.BREAKFAST -> LocalTime.of(8, 0)
+            MealPeriod.LUNCH -> LocalTime.of(12, 0)
+            MealPeriod.DINNER -> LocalTime.of(18, 0)
+            MealPeriod.LATE_NIGHT -> LocalTime.of(22, 0)
+            else -> null
+        }
+        val (newStart, newEnd) = if (defaultStart != null && period != null) {
+            // isOpenFor(period) 确保 slot 匹配该餐次；venue 已被保留说明营业。
+            val venueSlotStart = entries
+                .firstOrNull { e -> e.deck == it.deck && e.zone == it.zone && e.placeName == it.placeName }
+                ?.let { e -> e.hours?.slots?.firstOrNull { s -> e.isOpenFor(period) && s.meal == period }?.start }
+            val s = venueSlotStart ?: defaultStart
+            s to s.plusMinutes(30)
+        } else {
+            it.startTime to it.endTime
         }
         it.copy(
             selectedMealPeriod = period,
@@ -362,7 +374,7 @@ class EventSheetViewModel(
         }
 
         // 空标题允许：兜底 = 预置地点名优先，其次类别名（卡片显示兜底，编辑时字段仍为空）
-        val fallbackTitle = s.placeName.trim().takeIf { it.isNotEmpty() }
+        val fallbackTitle = s.placeName.trim().takeIf { it.isNotEmpty() && !s.noLocation }
             ?: s.categories.firstOrNull { it.id == categoryId }?.name.orEmpty()
         val event = CruiseEvent(
             id = s.editingId,
