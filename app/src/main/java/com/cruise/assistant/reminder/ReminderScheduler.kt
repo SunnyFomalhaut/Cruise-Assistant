@@ -12,6 +12,8 @@ import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.formatLocation
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 
 const val EXTRA_EVENT_ID = "event_id"
@@ -41,6 +43,9 @@ class ReminderScheduler(
     private val alarmManager: AlarmManager? =
         context.getSystemService(AlarmManager::class.java)
 
+    /** 串行化 rescheduleAll：App 启动、BootReceiver、TimeChangeReceiver、UI 回调可能并发触发 */
+    private val rescheduleMutex = Mutex()
+
     fun canScheduleExact(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             alarmManager?.canScheduleExactAlarms() == true
@@ -52,7 +57,7 @@ class ReminderScheduler(
      * 取消所有旧闹钟并按当前数据重排。
      * 事件增删改、设置变更、定稿/解锁、开机、App 启动时都要调。
      */
-    suspend fun rescheduleAll() {
+    suspend fun rescheduleAll() = rescheduleMutex.withLock {
         val manager = alarmManager ?: return
         val settings = settingsStore.settings.first()
         val events = eventRepository.getAllEvents()
