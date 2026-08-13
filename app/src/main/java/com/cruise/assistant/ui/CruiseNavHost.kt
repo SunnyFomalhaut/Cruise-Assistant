@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +58,8 @@ fun CruiseNavHost(container: AppContainer) {
     val settings by container.settingsStore.settings.collectAsState(initial = null)
 
     // 选完内置船（探险号）进入后的一次性演出提示
-    var showPresetShowsDialog by remember { mutableStateOf(false) }
+    // rememberSaveable：旋转/配置变更不丢一次性弹窗（引导提交后丢失则永不重现）
+    var showPresetShowsDialog by rememberSaveable { mutableStateOf(false) }
 
     // 设置还没读出来，先转圈，避免闪一下引导页
     val loaded = settings

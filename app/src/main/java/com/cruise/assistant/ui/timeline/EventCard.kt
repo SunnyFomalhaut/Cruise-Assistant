@@ -76,10 +76,11 @@ fun EventCard(
     val bodyHeightDp = heightDp - waitSegmentHeightDp - 2.dp
     // 候场区两行阈值从 typography 派生（fontScale 自适应）：两行 labelSmall 行高 + 4dp padding
     // 注意：自定义主题的 labelSmall 未设 lineHeight（TextUnit.Unspecified），
-    // 对 Unspecified 做算术会抛 "Cannot perform operation for Unspecified type"——回退到 fontSize。
+    // 对 Unspecified 做算术会抛 "Cannot perform operation for Unspecified type"——
+    // 未设 lineHeight 时按 fontSize×1.25 估算实际行高，避免两行在 26dp 段被裁剪。
     val labelSmall = MaterialTheme.typography.labelSmall
     val labelLineHeight = labelSmall.lineHeight.takeIf { it != TextUnit.Unspecified }
-        ?: labelSmall.fontSize
+        ?: (labelSmall.fontSize * 1.25f)
     val waitTwoLineMinDp = with(LocalDensity.current) {
         (labelLineHeight * 2).toDp() + 4.dp
     }

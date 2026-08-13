@@ -55,7 +55,9 @@ class SettingsStore(private val context: Context) {
                 ?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
             displayStartMinute = prefs[Keys.displayStart] ?: defaults.displayStartMinute,
             displayEndMinute = prefs[Keys.displayEnd] ?: defaults.displayEndMinute,
-            hourHeightDp = prefs[Keys.hourHeight] ?: defaults.hourHeightDp,
+            // 旧版本允许 36..140，存量值可能低于新下限 60——加载时钳到新范围，
+            // 避免渲染与设置页滑块不一致（滑块钳 60，渲染仍用旧值）。
+            hourHeightDp = prefs[Keys.hourHeight]?.coerceIn(60, 180) ?: defaults.hourHeightDp,
             collapseEmptyGaps = prefs[Keys.collapseGaps] ?: defaults.collapseEmptyGaps,
             remindBefore15 = prefs[Keys.remindBefore15] ?: defaults.remindBefore15,
             remindBefore5 = prefs[Keys.remindBefore5] ?: defaults.remindBefore5,
