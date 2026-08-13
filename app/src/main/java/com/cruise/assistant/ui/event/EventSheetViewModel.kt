@@ -230,11 +230,22 @@ class EventSheetViewModel(
         val currentVenueOpen = period == null || entries
             .firstOrNull { e -> e.deck == it.deck && e.zone == it.zone && e.placeName == it.placeName }
             ?.isOpenFor(period) != false
+        // 餐次联动起止时间：早餐 08:00-08:30、午餐 12:00-12:30、晚餐 18:00-18:30、
+        // 夜宵 22:00-22:30；全部/零食/酒水不调整时间。
+        val (newStart, newEnd) = when (period) {
+            MealPeriod.BREAKFAST -> LocalTime.of(8, 0) to LocalTime.of(8, 30)
+            MealPeriod.LUNCH -> LocalTime.of(12, 0) to LocalTime.of(12, 30)
+            MealPeriod.DINNER -> LocalTime.of(18, 0) to LocalTime.of(18, 30)
+            MealPeriod.LATE_NIGHT -> LocalTime.of(22, 0) to LocalTime.of(22, 30)
+            else -> it.startTime to it.endTime
+        }
         it.copy(
             selectedMealPeriod = period,
             deck = if (currentVenueOpen) it.deck else null,
             zone = if (currentVenueOpen) it.zone else null,
             placeName = if (currentVenueOpen) it.placeName else "",
+            startTime = newStart,
+            endTime = newEnd,
         )
     }
     fun onTitleChange(value: String) = _state.update { it.copy(title = value, errorResId = null) }
