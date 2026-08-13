@@ -3,6 +3,7 @@ package com.cruise.assistant.ui.timeline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -52,6 +53,10 @@ fun LaneCanvas(
     singleLane: Boolean,
     onEventClick: (CruiseEvent) -> Unit,
     onEventLongClick: (CruiseEvent) -> Unit,
+    /** 长按选中的事件（用于在其卡片位置弹出菜单）；null 表示无菜单 */
+    menuFor: CruiseEvent? = null,
+    /** 菜单内容槽：渲染在被按卡片上的 DropdownMenu */
+    menuContent: @Composable (CruiseEvent) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier.fillMaxWidth().height(layout.totalHeightDp.dp)) {
@@ -87,20 +92,27 @@ fun LaneCanvas(
             // 最窄的那栏（栏 LANE_COUNT-1）compact 卡片要让 EventCard 舍弃时间只留标题。
             val narrow = !singleLane && lane == LANE_COUNT - 1
 
-            EventCard(
-                event = event,
-                category = categories[event.categoryId],
-                heightDp = heightDp,
-                waitSegmentHeightDp = waitHeightDp,
-                hasConflict = event.id in conflictIds,
-                onClick = { onEventClick(event) },
-                onLongClick = { onEventLongClick(event) },
-                modifier = Modifier
+            Box(
+                Modifier
                     .offset(x = offsetX, y = top.dp)
                     .width(cardWidth)
                     .height(heightDp),
-                narrow = narrow,
-            )
+            ) {
+                EventCard(
+                    event = event,
+                    category = categories[event.categoryId],
+                    heightDp = heightDp,
+                    waitSegmentHeightDp = waitHeightDp,
+                    hasConflict = event.id in conflictIds,
+                    onClick = { onEventClick(event) },
+                    onLongClick = { onEventLongClick(event) },
+                    modifier = Modifier.fillMaxSize(),
+                    narrow = narrow,
+                )
+                if (menuFor?.id == event.id) {
+                    menuContent(event)
+                }
+            }
         }
     }
 }

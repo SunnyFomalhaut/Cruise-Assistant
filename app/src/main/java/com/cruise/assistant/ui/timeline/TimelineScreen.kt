@@ -201,6 +201,57 @@ fun TimelineScreen(
                                 singleLane = state.isFinalized,
                                 onEventClick = { event -> if (!state.isFinalized) onEditEvent(event) },
                                 onEventLongClick = { event -> if (!state.isFinalized) menuEvent = event },
+                                menuFor = menuEvent,
+                                menuContent = { event ->
+                                    // 长按菜单：换栏 / 编辑 / 删除（锚定到被按卡片）
+                                    DropdownMenu(expanded = true, onDismissRequest = { menuEvent = null }) {
+                                        if (!state.isFinalized && !event.isSystemGenerated) {
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        stringResource(
+                                                            if (event.isActive) R.string.set_inactive else R.string.set_active,
+                                                        ),
+                                                    )
+                                                },
+                                                onClick = {
+                                                    onToggleActive(event.id, !event.isActive)
+                                                    menuEvent = null
+                                                },
+                                            )
+                                        }
+                                        if (!state.isFinalized) {
+                                            (0 until LANE_COUNT).filter { it != event.lane }.forEach { lane ->
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(R.string.move_to_lane_format, lane + 1)) },
+                                                    onClick = {
+                                                        onMoveToLane(event.id, lane)
+                                                        menuEvent = null
+                                                    },
+                                                )
+                                            }
+                                        }
+                                        if (!state.isFinalized) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.edit)) },
+                                                onClick = {
+                                                    onEditEvent(event)
+                                                    menuEvent = null
+                                                },
+                                            )
+                                        }
+                                        if (!event.isSystemGenerated && !state.isFinalized) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.delete)) },
+                                                onClick = {
+                                                    // 选"仅本日 / 所有重复项"是 Task 8 的弹窗职责，这里先固定仅本日。
+                                                    onDeleteEvent(event, RecurrenceScope.THIS_DAY_ONLY)
+                                                    menuEvent = null
+                                                },
+                                            )
+                                        }
+                                    }
+                                },
                                 modifier = Modifier.padding(end = 8.dp),
                             )
                             if (state.isToday) {
@@ -215,57 +266,6 @@ fun TimelineScreen(
                 HiddenHint(
                     text = stringResource(R.string.hidden_after_format, state.layout.hiddenAfter),
                     onClick = onToggleFullDay,
-                )
-            }
-        }
-    }
-
-    // ---- 长按菜单：换栏 / 编辑 / 删除 ----
-    menuEvent?.let { event ->
-        DropdownMenu(expanded = true, onDismissRequest = { menuEvent = null }) {
-            if (!state.isFinalized && !event.isSystemGenerated) {
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            stringResource(
-                                if (event.isActive) R.string.set_inactive else R.string.set_active,
-                            ),
-                        )
-                    },
-                    onClick = {
-                        onToggleActive(event.id, !event.isActive)
-                        menuEvent = null
-                    },
-                )
-            }
-            if (!state.isFinalized) {
-                (0 until LANE_COUNT).filter { it != event.lane }.forEach { lane ->
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.move_to_lane_format, lane + 1)) },
-                        onClick = {
-                            onMoveToLane(event.id, lane)
-                            menuEvent = null
-                        },
-                    )
-                }
-            }
-            if (!state.isFinalized) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.edit)) },
-                    onClick = {
-                        onEditEvent(event)
-                        menuEvent = null
-                    },
-                )
-            }
-            if (!event.isSystemGenerated && !state.isFinalized) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.delete)) },
-                    onClick = {
-                        // 选"仅本日 / 所有重复项"是 Task 8 的弹窗职责，这里先固定仅本日。
-                        onDeleteEvent(event, RecurrenceScope.THIS_DAY_ONLY)
-                        menuEvent = null
-                    },
                 )
             }
         }
