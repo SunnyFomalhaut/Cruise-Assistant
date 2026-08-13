@@ -158,6 +158,7 @@ class EventSheetViewModel(
                         val iconKey = current.categories
                             .firstOrNull { it.id == current.selectedCategoryId }?.iconKey
                         current.copy(
+                            categoryIconKey = iconKey,
                             locationPresetMode = resolvePresetMode(
                                 isEditing = true,
                                 builtInShip = current.builtInShip,
@@ -217,7 +218,14 @@ class EventSheetViewModel(
         } else if (value) {
             it.copy(noLocation = true, deck = null)
         } else {
-            it.copy(noLocation = false)
+            // 重新启用地点：deck 已被清空且没有备份，zone/placeName 一并清掉，
+            // 否则保存时 deck=null + zone/placeName 残留会写出"幽灵地点"
+            // （卡片不显示地点、再编辑时"不设地点"又被勾上）。
+            if (it.deck == null) {
+                it.copy(noLocation = false, zone = null, placeName = "")
+            } else {
+                it.copy(noLocation = false)
+            }
         }
     }
 
