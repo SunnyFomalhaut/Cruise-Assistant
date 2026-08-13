@@ -330,10 +330,6 @@ class EventSheetViewModel(
             _state.update { it.copy(errorResId = R.string.error_no_category) }
             return
         }
-        if (s.title.isBlank()) {
-            _state.update { it.copy(errorResId = R.string.error_title_required) }
-            return
-        }
         val startMin = s.startTime.hour * 60 + s.startTime.minute
         val endMin = s.endTime.hour * 60 + s.endTime.minute
         if (endMin <= startMin) {
@@ -365,13 +361,16 @@ class EventSheetViewModel(
             }
         }
 
+        // 空标题允许：兜底 = 预置地点名优先，其次类别名（卡片显示兜底，编辑时字段仍为空）
+        val fallbackTitle = s.placeName.trim().takeIf { it.isNotEmpty() }
+            ?: s.categories.firstOrNull { it.id == categoryId }?.name.orEmpty()
         val event = CruiseEvent(
             id = s.editingId,
             date = s.date,
             startTime = s.startTime,
             durationMinutes = endMin - startMin,
             categoryId = categoryId,
-            title = s.title.trim(),
+            title = s.title.trim().ifEmpty { fallbackTitle },
             deck = if (s.noLocation) null else s.deck,
             zone = if (s.noLocation) null else s.zone,
             placeName = if (s.noLocation) null else s.placeName.trim().takeIf { it.isNotEmpty() },

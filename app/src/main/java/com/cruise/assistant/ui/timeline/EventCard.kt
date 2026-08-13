@@ -185,7 +185,7 @@ fun EventCard(
                     // （比非 compact 分支的 bodySmall 小 1sp）进一步给窄栏腾空间。
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = event.title,
+                            text = event.title.ifEmpty { category?.name ?: "" },
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = textColor,
@@ -227,7 +227,7 @@ fun EventCard(
                             Spacer(Modifier.width(4.dp))
                         }
                         Text(
-                            text = event.title,
+                            text = event.title.ifEmpty { category?.name ?: "" },
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.SemiBold,
                             color = textColor,
@@ -269,7 +269,7 @@ fun EventCard(
                 // 本体只够 1 行：演出名（labelSmall），地点/时间都在候场段
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = event.title,
+                        text = event.title.ifEmpty { category?.name ?: "" },
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = textColor,
@@ -295,7 +295,7 @@ fun EventCard(
                         Spacer(Modifier.width(4.dp))
                     }
                     Text(
-                        text = event.title,
+                        text = event.title.ifEmpty { category?.name ?: "" },
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                         color = textColor,

@@ -146,7 +146,7 @@ class VoyageRepository(
                         startTime = dinnerTime,
                         durationMinutes = DINNER_DURATION_MINUTES,
                         categoryId = mealId,
-                        title = "晚餐",
+                        title = "",
                         isSystemGenerated = false,
                         presetKey = "dinner",
                     )
