@@ -1,5 +1,7 @@
 package com.cruise.assistant.ui.event
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -15,6 +18,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.LocationPreset
@@ -81,7 +87,7 @@ fun LocationPicker(
             Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Box {
-                // 下拉模式：字段只读展示、图标负责展开——不受 noLocation 影响
+                // 下拉模式：字段只读展示、点击字段或箭头展开——不受 noLocation 影响
                 //（新事件默认 noLocation=true，若用 fieldsEnabled 会把整个下拉禁用，
                 // 导致无法选择任何预置地点；"不设地点"由底部复选框独立控制）。
                 OutlinedTextField(
@@ -96,29 +102,46 @@ fun LocationPicker(
                             Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = enabled) { presetMenuOpen = true },
                 )
                 DropdownMenu(
                     expanded = presetMenuOpen,
                     onDismissRequest = { presetMenuOpen = false },
                     modifier = Modifier.heightIn(max = 360.dp),
                 ) {
-                    presetOptions.forEach { option ->
+                    presetOptions.forEachIndexed { index, option ->
+                        // 分隔线只在相邻的两个 Entry 之间；Group 标题靠 surfaceVariant
+                        // 底色与首条 Entry 区分
+                        if (index > 0 &&
+                            option is com.cruise.assistant.domain.LocationPresetOption.Entry &&
+                            presetOptions[index - 1] is com.cruise.assistant.domain.LocationPresetOption.Entry
+                        ) {
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                            )
+                        }
                         when (option) {
                             is com.cruise.assistant.domain.LocationPresetOption.Group -> {
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            option.label,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    },
-                                    enabled = false,
-                                    onClick = {},
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                ) {
+                                    Text(
+                                        option.label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             }
                             is com.cruise.assistant.domain.LocationPresetOption.Entry -> {
+                                val selected = option.entry.deck == deck &&
+                                    option.entry.zone == zone &&
+                                    option.entry.placeName == placeName
                                 DropdownMenuItem(
                                     text = {
                                         Text(
@@ -127,7 +150,14 @@ fun LocationPicker(
                                                 option.entry.zone?.label,
                                                 option.entry.placeName,
                                             ).joinToString(" "),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                         )
+                                    },
+                                    modifier = if (selected) {
+                                        Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                    } else {
+                                        Modifier
                                     },
                                     onClick = {
                                         onSelectPreset(option.entry)
