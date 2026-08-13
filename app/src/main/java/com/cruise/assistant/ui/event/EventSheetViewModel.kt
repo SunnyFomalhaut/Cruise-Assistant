@@ -12,6 +12,7 @@ import com.cruise.assistant.domain.BUILT_IN_LOCATION_CATALOG
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LocationPreset
+import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,6 +55,10 @@ data class EventSheetState(
     val builtInShip: Boolean = false,
     /** 是否处于预置地点下拉模式；false = 自由输入 */
     val locationPresetMode: Boolean = false,
+    /** 餐次二级选项（仅餐食类别显示）；null = 全部 */
+    val selectedMealPeriod: MealPeriod? = null,
+    /** 是否餐食类别且内置船（决定是否显示餐次行） */
+    val showMealPeriodRow: Boolean = false,
 ) {
     val isEditing: Boolean get() = editingId != 0L
 
@@ -111,6 +116,7 @@ class EventSheetViewModel(
                         categories = list,
                         categoryIconKey = iconKey,
                         selectedCategoryId = resolvedId,
+                        showMealPeriodRow = current.builtInShip && iconKey == "meal",
                         locationPresetMode = resolvePresetMode(
                             isEditing = current.isEditing,
                             builtInShip = current.builtInShip,
@@ -159,6 +165,7 @@ class EventSheetViewModel(
                             .firstOrNull { it.id == current.selectedCategoryId }?.iconKey
                         current.copy(
                             categoryIconKey = iconKey,
+                            showMealPeriodRow = current.builtInShip && iconKey == "meal",
                             locationPresetMode = resolvePresetMode(
                                 isEditing = true,
                                 builtInShip = current.builtInShip,
@@ -183,8 +190,15 @@ class EventSheetViewModel(
             categoryIconKey = iconKey,
             // 切到演出/餐饮时默认进下拉模式；其他类别退回自由输入
             locationPresetMode = presetAvailable,
+            // 餐次行仅餐食类别显示；切类别时重置餐次选择
+            selectedMealPeriod = null,
+            showMealPeriodRow = it.builtInShip && iconKey == "meal",
             errorResId = null,
         )
+    }
+
+    fun onMealPeriodSelect(period: MealPeriod?) = _state.update {
+        it.copy(selectedMealPeriod = period)
     }
     fun onTitleChange(value: String) = _state.update { it.copy(title = value, errorResId = null) }
     fun onDeckChange(value: Int) = _state.update { it.copy(deck = value, noLocation = false) }

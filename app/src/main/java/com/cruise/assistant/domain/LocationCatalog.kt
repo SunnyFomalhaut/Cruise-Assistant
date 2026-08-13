@@ -81,14 +81,19 @@ sealed interface LocationPresetOption {
 }
 
 /** 按类别 iconKey 展开成下拉选项（meal 按四组分组，组标题不可选） */
-fun locationPresetOptions(iconKey: String): List<LocationPresetOption> {
+fun locationPresetOptions(
+    iconKey: String,
+    mealPeriod: MealPeriod? = null,
+): List<LocationPresetOption> {
     val entries = BUILT_IN_LOCATION_CATALOG[iconKey] ?: return emptyList()
     if (iconKey != "meal") {
         return entries.map { LocationPresetOption.Entry(it) } + LocationPresetOption.Custom
     }
+    // 餐次筛选：选了餐次时只保留该餐次营业的餐厅（未配置营业时间的餐厅恒显示）
+    val filtered = if (mealPeriod == null) entries else entries.filter { it.isOpenFor(mealPeriod) }
     return buildList {
         DiningGroup.entries.forEach { group ->
-            val groupEntries = entries.filter { it.diningGroup == group }
+            val groupEntries = filtered.filter { it.diningGroup == group }
             if (groupEntries.isNotEmpty()) {
                 add(LocationPresetOption.Group(group.label))
                 groupEntries.forEach { add(LocationPresetOption.Entry(it)) }

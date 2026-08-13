@@ -1,4 +1,7 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+)
 
 package com.cruise.assistant.ui.event
 
@@ -7,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
+import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.locationPresetOptions
 import com.cruise.assistant.ui.common.TimeWheel
@@ -61,6 +67,7 @@ fun EventSheet(
     onNoLocationToggle: (Boolean) -> Unit,
     onSelectPresetLocation: (com.cruise.assistant.domain.LocationCatalogEntry) -> Unit,
     onCustomLocationSelected: () -> Unit,
+    onMealPeriodSelect: (MealPeriod?) -> Unit,
     onStartChange: (LocalTime) -> Unit,
     onEndChange: (LocalTime) -> Unit,
     onRecurringToggle: (Boolean) -> Unit,
@@ -180,6 +187,31 @@ fun EventSheet(
                 HorizontalDivider()
                 Spacer(Modifier.height(16.dp))
 
+                // ---- 餐次二级选项（仅餐食类别且内置船显示）----
+                if (state.showMealPeriodRow) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(stringResource(R.string.meal_period_label), style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    // FlowRow：7 个 chip 在窄屏（360dp）下换行而不是横向溢出裁剪
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = state.selectedMealPeriod == null,
+                            onClick = { onMealPeriodSelect(null) },
+                            label = { Text(stringResource(R.string.meal_period_all)) },
+                        )
+                        MealPeriod.entries.forEach { period ->
+                            FilterChip(
+                                selected = state.selectedMealPeriod == period,
+                                onClick = { onMealPeriodSelect(period) },
+                                label = { Text(period.label) },
+                            )
+                        }
+                    }
+                }
+
                 LocationPicker(
                     maxDeck = state.maxDeck,
                     minDeck = state.minDeck,
@@ -192,7 +224,10 @@ fun EventSheet(
                     onZoneChange = onZoneChange,
                     onPlaceNameChange = onPlaceNameChange,
                     onNoLocationToggle = onNoLocationToggle,
-                    presetOptions = locationPresetOptions(state.categoryIconKey ?: ""),
+                    presetOptions = locationPresetOptions(
+                        state.categoryIconKey ?: "",
+                        state.selectedMealPeriod,
+                    ),
                     presetMode = state.locationPresetMode,
                     onSelectPreset = onSelectPresetLocation,
                     onCustomLocation = onCustomLocationSelected,
