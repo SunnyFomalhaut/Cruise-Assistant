@@ -119,6 +119,7 @@ fun CruiseNavHost(container: AppContainer) {
             val current = timelineState
 
             var sheetRequest by remember { mutableStateOf<EventSheetRequest?>(null) }
+            var sheetSeq by remember { mutableStateOf(0L) }
             var showRangePanel by remember { mutableStateOf(false) }
             var rangeErrorResId by remember { mutableStateOf<Int?>(null) }
             val coroutineScope = rememberCoroutineScope()
@@ -144,10 +145,12 @@ fun CruiseNavHost(container: AppContainer) {
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenDisplayRange = { showRangePanel = true },
                     onAddEvent = { startMinute ->
-                        sheetRequest = EventSheetRequest(current.selectedDate, startMinute, 0L)
+                        sheetSeq++
+                        sheetRequest = EventSheetRequest(current.selectedDate, startMinute, 0L, sheetSeq)
                     },
                     onEditEvent = { event ->
-                        sheetRequest = EventSheetRequest(event.date, 0, event.id)
+                        sheetSeq++
+                        sheetRequest = EventSheetRequest(event.date, 0, event.id, sheetSeq)
                     },
                     onMoveToLane = vm::moveToLane,
                     onToggleActive = vm::toggleActive,
@@ -238,8 +241,9 @@ fun CruiseNavHost(container: AppContainer) {
             sheetRequest?.let { request ->
                 // key 必须能区分弹窗类型（否则会撞上其它同作用域的 viewModel key，
                 // ViewModelFactory 盲转型会在运行时抛 ClassCastException——见 Task 6 遗留问题）。
+                // key 只依赖 requestId（每次打开递增），保证新开弹窗不复用旧 ViewModel、不带旧草稿。
                 val sheetVm: EventSheetViewModel = viewModel(
-                    key = "event-sheet-${request.date}-${request.editingId}-${request.startMinute}",
+                    key = "event-sheet-${request.requestId}",
                     factory = viewModelFactory {
                         EventSheetViewModel(
                             container.eventRepository,
@@ -390,9 +394,10 @@ fun CruiseNavHost(container: AppContainer) {
     }
 }
 
-/** FAB/编辑入口 → 事件弹窗 的请求参数。editingId==0L 表示新建。 */
+/** FAB/编辑入口 → 事件弹窗 的请求参数。editingId==0L 表示新建。requestId 每次打开递增，保证 ViewModel 不复用。 */
 data class EventSheetRequest(
     val date: LocalDate,
     val startMinute: Int,
     val editingId: Long,
+    val requestId: Long,
 )
