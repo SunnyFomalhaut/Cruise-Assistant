@@ -128,6 +128,9 @@ class OnboardingViewModel(
         _state.update { it.copy(saving = true, errorResId = null) }
         viewModelScope.launch {
             val shipPresetName = if (current.isBuiltInShip) current.shipName else null
+            // 把引导页选的晚餐时段写入设置：时间轴用 createVoyage 的参数，
+            // 设置页读 SettingsStore——不持久化会导致设置页显示旧默认值 17:45。
+            settingsStore.setDinnerTime(current.dinnerTime)
             voyageRepository.createVoyage(
                 shipName = current.shipName,
                 boardDate = current.boardDate,
