@@ -299,11 +299,11 @@ class EventSheetViewModel(
             return
         }
 
-        // 营业时间校验：预置餐厅地点 + 已配置营业时间 + 开始时间不在营业时段内 → 提示。
+        // 营业时间校验：任意类别预置地点 + 已配置营业时间 + 开始时间不在营业时段内 → 提示。
         // hoursCheckOverride（用户点过"仍要保存"）时整体跳过，避免反复弹窗。
         if (!s.hoursCheckOverride) {
-            val matchedVenue = if (s.categoryIconKey == "meal" && !s.noLocation && s.deck != null) {
-                LocationCatalog.venuesByCategory()["meal"].orEmpty().firstOrNull { entry ->
+            val matchedVenue = if (!s.noLocation && s.deck != null && s.categoryIconKey != null) {
+                LocationCatalog.venuesByCategory()[s.categoryIconKey]?.firstOrNull { entry ->
                     entry.deck == s.deck && entry.zone == s.zone && entry.placeName == s.placeName
                 }
             } else {
@@ -316,7 +316,7 @@ class EventSheetViewModel(
                 _state.update {
                     it.copy(
                         hoursCheckPending = true,
-                        hoursCheckMessage = "该餐厅 ${s.startTime} 不营业，营业时间：$hoursText",
+                        hoursCheckMessage = "该地点 ${s.startTime} 不营业，营业时间：$hoursText",
                     )
                 }
                 return
