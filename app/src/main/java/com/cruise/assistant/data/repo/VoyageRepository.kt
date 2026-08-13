@@ -196,6 +196,12 @@ class VoyageRepository(
         val newPlans = validDates.filter { it !in existingPlans }.map { DayPlan(date = it).toEntity() }
         if (newPlans.isNotEmpty()) voyageDao.upsertDayPlans(newPlans)
 
+        // 移除落出新范围的 DayPlan：否则缩小的日期带着 finalized 状态残留，
+        // 再扩大航程时以旧定稿状态"复活"、无操作即锁定。
+        voyageDao.observeDayPlansOnce()
+            .filter { it.date !in validDates }
+            .forEach { voyageDao.deleteDayPlan(it) }
+
         // 只查一次，供下面两步复用。
         val allEvents = eventDao.getAll()
 

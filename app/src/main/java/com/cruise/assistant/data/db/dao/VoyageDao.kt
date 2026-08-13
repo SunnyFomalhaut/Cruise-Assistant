@@ -1,6 +1,7 @@
 package com.cruise.assistant.data.db.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import com.cruise.assistant.data.db.entity.DayPlanEntity
@@ -39,4 +40,7 @@ interface VoyageDao {
 
     @Query("DELETE FROM day_plan")
     suspend fun clearDayPlans()
+
+    @Delete
+    suspend fun deleteDayPlan(plan: DayPlanEntity)
 }
