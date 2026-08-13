@@ -600,17 +600,6 @@
           "end": "22:30",
           "meal": "dinner",
           "lateNight": true
-        },
-        {
-          "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
-          "meal": "dinner",
-          "lateNight": true
         }
       ]
     },
@@ -630,17 +619,6 @@
           "start": "12:00",
           "end": "14:00",
           "meal": "lunch"
-        },
-        {
-          "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
-          "meal": "dinner",
-          "lateNight": true
         },
         {
           "start": "18:00",
@@ -775,7 +753,7 @@
       "name": "Alley Cat Café©",
       "deck": 7,
       "zone": "stern",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -789,7 +767,7 @@
       "name": "Bewitching Boba & Brews ($)",
       "deck": 10,
       "zone": "stern",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -803,7 +781,7 @@
       "name": "Bounce and Hops",
       "deck": 17,
       "zone": "mid",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -817,7 +795,7 @@
       "name": "海盗酒吧 Buccaneer Bar",
       "deck": 6,
       "zone": "stern",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -832,7 +810,7 @@
       "name": "Garden Bar",
       "deck": 11,
       "zone": "mid",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -846,7 +824,7 @@
       "name": "Infinity Bar",
       "deck": 18,
       "zone": "stern",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -860,7 +838,7 @@
       "name": "Market Bar",
       "deck": 17,
       "zone": "mid",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -874,7 +852,7 @@
       "name": "Premier Sips & Snacks",
       "deck": 6,
       "zone": "bow",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -888,7 +866,7 @@
       "name": "咒语酒廊 Spellbound",
       "deck": 6,
       "zone": "mid",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -903,7 +881,7 @@
       "name": "Taverna Portorosso",
       "deck": 11,
       "zone": "stern",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -917,7 +895,7 @@
       "name": "Tiana's Bayou Lounge",
       "deck": 5,
       "zone": "mid",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -932,7 +910,7 @@
       "name": "Wayfinder Bar",
       "deck": 10,
       "zone": "stern",
-      "category": "bar",
+      "category": "meal",
       "group": "bar",
       "slots": [
         {
@@ -947,7 +925,7 @@
       "name": "Bacha Coffee ($)",
       "deck": 7,
       "zone": "mid",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -961,7 +939,7 @@
       "name": "Cosmic Kebabs",
       "deck": 10,
       "zone": "stern",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -975,7 +953,7 @@
       "name": "塔拉奶奶的厨房 Gramma Talas Kitchen",
       "deck": 10,
       "zone": "mid",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -995,7 +973,7 @@
       "name": "莫格利餐厅 Mowgli's Eatery",
       "deck": 10,
       "zone": "mid",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -1015,7 +993,7 @@
       "name": "Palo Café© ($)",
       "deck": 10,
       "zone": "stern",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -1029,7 +1007,7 @@
       "name": "Pizza Planet",
       "deck": 17,
       "zone": "mid",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -1043,7 +1021,7 @@
       "name": "Room Service",
       "deck": null,
       "zone": null,
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -1057,7 +1035,7 @@
       "name": "Stitch's Ohana Grill",
       "deck": 10,
       "zone": "stern",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -1071,7 +1049,7 @@
       "name": "TWG Tea ($)",
       "deck": 7,
       "zone": "mid",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
@@ -1085,7 +1063,7 @@
       "name": "Wheezy's Freezies",
       "deck": 17,
       "zone": "mid",
-      "category": "quick",
+      "category": "meal",
       "group": "quick",
       "slots": [
         {
