@@ -293,7 +293,8 @@ private fun defaultStartMinute(state: TimelineUiState): Int =
         ((state.nowMinute / 15) + 1) * 15
     } else {
         state.layout.rangeStartMinute
-    }.coerceIn(0, 1439)
+    // 上限 1409（23:29）：默认 30 分钟事件以 ≤23:59 结束，避免一打开就是"结束早于开始"
+    }.coerceIn(0, 1409)
 
 @Composable
 fun TimelineLoading() {

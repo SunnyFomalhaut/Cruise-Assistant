@@ -230,13 +230,15 @@ class EventSheetViewModel(
     }
 
     fun onStartChange(value: LocalTime) = _state.update { current ->
-        // 开始时间往后越过结束时间时，结束时间跟着推 30 分钟
-        val end = if (!current.endTime.isAfter(value)) {
-            value.plusMinutes(30).takeIf { it.isAfter(value) } ?: LocalTime.of(23, 59)
+        // 开始时间钳到 23:29：保证默认 30 分钟事件以 ≤23:59 结束，
+        // 否则滚到 23:30+ 后结束时间回卷、保存必报"结束早于开始"
+        val clamped = if (value.isAfter(LocalTime.of(23, 29))) LocalTime.of(23, 29) else value
+        val end = if (!current.endTime.isAfter(clamped)) {
+            clamped.plusMinutes(30)
         } else {
             current.endTime
         }
-        current.copy(startTime = value, endTime = end, errorResId = null)
+        current.copy(startTime = clamped, endTime = end, errorResId = null)
     }
 
     fun onEndChange(value: LocalTime) = _state.update { it.copy(endTime = value, errorResId = null) }
