@@ -262,6 +262,9 @@ fun CruiseNavHost(container: AppContainer) {
                 val sheetState by sheetVm.state.collectAsState()
                 var showCategorySheet by remember { mutableStateOf(false) }
                 var pendingScopeChoice by remember { mutableStateOf(false) }
+                // 营业时间校验弹窗"仍要保存"时重发的 scope：记住 scope 弹窗里用户的选择，
+                // 否则循环成员事件在 WHOLE_GROUP 下被校验拦截后，重发会静默退化成仅本日。
+                var hoursCheckScope by remember { mutableStateOf(RecurrenceScope.THIS_DAY_ONLY) }
 
                 EventSheet(
                     state = sheetState,
@@ -282,9 +285,18 @@ fun CruiseNavHost(container: AppContainer) {
                         if (sheetState.isRecurrenceMember) {
                             pendingScopeChoice = true
                         } else {
+                            hoursCheckScope = RecurrenceScope.THIS_DAY_ONLY
                             sheetVm.save(RecurrenceScope.THIS_DAY_ONLY) { sheetRequest = null }
                         }
                     },
+                    // 先置 override 标志再重发 save：save() 内 hoursCheckPending 已清、
+                    // hoursCheckOverride 短路校验，不会重复弹窗。scope 用 hoursCheckScope
+                    // （scope 弹窗里用户的选择），保持循环成员事件的 scope 语义一致。
+                    onHoursCheckOverride = {
+                        sheetVm.onHoursCheckOverride()
+                        sheetVm.save(hoursCheckScope) { sheetRequest = null }
+                    },
+                    onHoursCheckDismiss = sheetVm::onHoursCheckDismiss,
                     onDismiss = { sheetRequest = null },
                 )
 
@@ -295,12 +307,14 @@ fun CruiseNavHost(container: AppContainer) {
                         confirmButton = {
                             TextButton(onClick = {
                                 pendingScopeChoice = false
+                                hoursCheckScope = RecurrenceScope.WHOLE_GROUP
                                 sheetVm.save(RecurrenceScope.WHOLE_GROUP) { sheetRequest = null }
                             }) { Text(stringResource(R.string.recur_scope_whole_group)) }
                         },
                         dismissButton = {
                             TextButton(onClick = {
                                 pendingScopeChoice = false
+                                hoursCheckScope = RecurrenceScope.THIS_DAY_ONLY
                                 sheetVm.save(RecurrenceScope.THIS_DAY_ONLY) { sheetRequest = null }
                             }) { Text(stringResource(R.string.recur_scope_this_day)) }
                         },

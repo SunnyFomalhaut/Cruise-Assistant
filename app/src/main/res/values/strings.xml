@@ -70,6 +70,9 @@
     <string name="recur_scope_title">这是一个重复事件</string>
     <string name="recur_scope_this_day">仅本日</string>
     <string name="recur_scope_whole_group">所有重复项</string>
+    <string name="hours_check_title">营业时间提醒</string>
+    <string name="hours_check_confirm">仍要保存</string>
+    <string name="hours_check_back">返回修改</string>
 
     <!-- 类别弹窗 -->
     <string name="category_sheet_title_add">添加图标</string>

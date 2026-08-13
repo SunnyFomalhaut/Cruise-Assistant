@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -34,6 +35,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,6 +74,8 @@ fun EventSheet(
     onEndChange: (LocalTime) -> Unit,
     onRecurringToggle: (Boolean) -> Unit,
     onSave: () -> Unit,
+    onHoursCheckOverride: () -> Unit,
+    onHoursCheckDismiss: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -292,6 +296,25 @@ fun EventSheet(
                 enabled = !state.saving,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text(stringResource(R.string.confirm)) }
+        }
+
+        // ---- 营业时间冲突提示（仿 pendingScopeChoice 弹窗模式）----
+        if (state.hoursCheckPending) {
+            AlertDialog(
+                onDismissRequest = onHoursCheckDismiss,
+                title = { Text(stringResource(R.string.hours_check_title)) },
+                text = { Text(state.hoursCheckMessage.orEmpty()) },
+                confirmButton = {
+                    TextButton(onClick = onHoursCheckOverride) {
+                        Text(stringResource(R.string.hours_check_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onHoursCheckDismiss) {
+                        Text(stringResource(R.string.hours_check_back))
+                    }
+                },
+            )
         }
     }
 }

@@ -14,6 +14,7 @@ import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
+import com.cruise.assistant.domain.isOpenAt
 import com.cruise.assistant.reminder.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,11 @@ data class EventSheetState(
     val selectedMealPeriod: MealPeriod? = null,
     /** 是否餐食类别且内置船（决定是否显示餐次行） */
     val showMealPeriodRow: Boolean = false,
+    /** 营业时间冲突待用户决策 */
+    val hoursCheckPending: Boolean = false,
+    val hoursCheckMessage: String? = null,
+    /** 用户确认"仍要保存"后为 true：跳过本次校验 */
+    val hoursCheckOverride: Boolean = false,
 ) {
     val isEditing: Boolean get() = editingId != 0L
 
@@ -257,6 +263,16 @@ class EventSheetViewModel(
 
     fun onEndChange(value: LocalTime) = _state.update { it.copy(endTime = value, errorResId = null) }
 
+    /** 用户选择"仍要保存"：绕过校验继续 */
+    fun onHoursCheckOverride() = _state.update {
+        it.copy(hoursCheckPending = false, hoursCheckMessage = null, hoursCheckOverride = true)
+    }
+
+    /** 用户选择"返回修改" */
+    fun onHoursCheckDismiss() = _state.update {
+        it.copy(hoursCheckPending = false, hoursCheckMessage = null)
+    }
+
     /**
      * scope 仅在编辑循环组成员时生效。
      * 用 s.saving 挡快速二次点击：保存期间再次调用直接忽略，避免插入两次。
@@ -264,6 +280,8 @@ class EventSheetViewModel(
     fun save(scope: RecurrenceScope, onDone: () -> Unit) {
         val s = _state.value
         if (s.saving) return
+        // 营业时间冲突弹窗未决时忽略再次保存（防重复触发）
+        if (s.hoursCheckPending) return
 
         val categoryId = s.selectedCategoryId
         if (categoryId == null) {
@@ -279,6 +297,34 @@ class EventSheetViewModel(
         if (endMin <= startMin) {
             _state.update { it.copy(errorResId = R.string.error_end_before_start) }
             return
+        }
+
+        // 营业时间校验：预置餐厅地点 + 已配置营业时间 + 开始时间不在营业时段内 → 提示。
+        // hoursCheckOverride（用户点过"仍要保存"）时整体跳过，避免反复弹窗。
+        if (!s.hoursCheckOverride) {
+            val matchedVenue = if (s.categoryIconKey == "meal" && !s.noLocation && s.deck != null) {
+                BUILT_IN_LOCATION_CATALOG["meal"].orEmpty().firstOrNull { entry ->
+                    entry.deck == s.deck && entry.zone == s.zone && entry.placeName == s.placeName
+                }
+            } else {
+                null
+            }
+            val venue = matchedVenue
+            val openNow = venue == null || venue.hours?.isConfigured != true || venue.isOpenAt(s.startTime)
+            if (!openNow) {
+                val hoursText = listOfNotNull(
+                    venue.hours?.breakfast?.let { "早餐 ${it.start}-${it.end}" },
+                    venue.hours?.lunch?.let { "午餐 ${it.start}-${it.end}" },
+                    venue.hours?.dinner?.let { "晚餐 ${it.start}-${it.end}" },
+                ).joinToString(" / ")
+                _state.update {
+                    it.copy(
+                        hoursCheckPending = true,
+                        hoursCheckMessage = "该餐厅 ${s.startTime} 不营业，营业时间：$hoursText",
+                    )
+                }
+                return
+            }
         }
 
         val event = CruiseEvent(
