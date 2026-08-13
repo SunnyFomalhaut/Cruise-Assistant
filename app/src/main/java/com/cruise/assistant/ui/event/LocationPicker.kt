@@ -1,7 +1,8 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.cruise.assistant.ui.event
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,9 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.LocationPreset
@@ -86,10 +89,16 @@ fun LocationPicker(
         if (presetMode && presetOptions.isNotEmpty()) {
             Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-            Box {
-                // 下拉模式：字段只读展示、点击字段或箭头展开——不受 noLocation 影响
-                //（新事件默认 noLocation=true，若用 fieldsEnabled 会把整个下拉禁用，
-                // 导致无法选择任何预置地点；"不设地点"由底部复选框独立控制）。
+            ExposedDropdownMenuBox(
+                expanded = presetMenuOpen,
+                onExpandedChange = { if (enabled) presetMenuOpen = it },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                // 下拉模式：字段只读展示、点击字段即展开——PrimaryNotEditable 的 menuAnchor
+                // 接管了字段自身的焦点 clickable（此前外层 clickable 抢不过 TextField 内部
+                // 的焦点点击，只有箭头能开菜单）。不受 noLocation 影响（新事件默认
+                // noLocation=true，若用 fieldsEnabled 会把整个下拉禁用，导致无法选择任何
+                // 预置地点；"不设地点"由底部复选框独立控制）。
                 OutlinedTextField(
                     value = placeName.ifEmpty { stringResource(R.string.select_location_hint) },
                     onValueChange = { },
@@ -97,16 +106,12 @@ fun LocationPicker(
                     readOnly = true,
                     singleLine = true,
                     enabled = enabled,
-                    trailingIcon = {
-                        IconButton(onClick = { presetMenuOpen = true }, enabled = enabled) {
-                            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-                        }
-                    },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = presetMenuOpen) },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = enabled) { presetMenuOpen = true },
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = enabled)
+                        .fillMaxWidth(),
                 )
-                DropdownMenu(
+                ExposedDropdownMenu(
                     expanded = presetMenuOpen,
                     onDismissRequest = { presetMenuOpen = false },
                     modifier = Modifier.heightIn(max = 360.dp),
@@ -150,8 +155,6 @@ fun LocationPicker(
                                                 option.entry.zone?.label,
                                                 option.entry.placeName,
                                             ).joinToString(" "),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
                                         )
                                     },
                                     modifier = if (selected) {

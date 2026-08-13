@@ -373,9 +373,9 @@ class EventSheetViewModel(
             }
         }
 
-        // 空标题允许：兜底 = 预置地点名优先，其次类别名（卡片显示兜底，编辑时字段仍为空）
-        val fallbackTitle = s.placeName.trim().takeIf { it.isNotEmpty() && !s.noLocation }
-            ?: s.categories.firstOrNull { it.id == categoryId }?.name.orEmpty()
+        // 空标题允许：选了餐次时兜底为餐次名（主界面直接显示二级标题）；
+        // 无餐次且无标题 → 空着（用户要求不再抄餐厅名/类别名）
+        val fallbackTitle = s.selectedMealPeriod?.label.orEmpty()
         val event = CruiseEvent(
             id = s.editingId,
             date = s.date,
