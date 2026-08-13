@@ -20,18 +20,24 @@ const val EXTRA_EVENT_ID = "event_id"
 const val EXTRA_TITLE_LINE = "title_line"
 const val EXTRA_BODY_LINE = "body_line"
 
-/** 一次最多排这么多个闹钟（每事件最多 3 个槽位），其余等 App 下次启动时补。
+/** 一次最多排这么多个闹钟（每事件最多 4 个槽位），其余等 App 下次启动时补。
  * 500 贴近 Android 每应用 ~500 闹钟的软上限；典型航次（几十事件 × 3 槽）远低于此。 */
 private const val MAX_SCHEDULED = 500
 
-/** 提醒槽位：slot 0 = 提前 15 分钟（action null 兼容旧版本）、1 = 5 分钟、2 = 开始时 */
-private val SLOT_LEAD_MINUTES = intArrayOf(15, 5, 0)
+/** 演出候场提前量：候场 = 开场前 30 分钟（提醒基准） */
+private const val SHOW_QUEUE_LEAD_MINUTES = 30
 
-/** 槽位对应的 intent action；slot 0 用 null 与旧版本一致（旧闹钟被自然覆盖） */
+/** 提醒槽位：slot 0 = 提前 15 分钟（action null 兼容旧版本）、1 = 5 分钟、2 = 开始时、
+ * 3 = 演出"开场前 5 分钟"（仅演出事件生成） */
+private val SLOT_LEAD_MINUTES = intArrayOf(15, 5, 0, 5)
+
+/** 槽位对应的 intent action；slot 0 用 null 与旧版本一致（旧闹钟被自然覆盖）。
+ * slot 3 = 演出"开场前 5 分钟"（仅演出事件生成）。 */
 private fun actionForSlot(slot: Int): String? = when (slot) {
     0 -> null
     1 -> "lead_5"
     2 -> "lead_0"
+    3 -> "show_open_5"
     else -> null
 }
 
@@ -75,7 +81,7 @@ class ReminderScheduler(
         val currentEventIds = events.map { it.id }.toSet()
         val idsToCancel = previouslyArmed + currentEventIds
         idsToCancel.forEach { eventId ->
-            (0..2).forEach { slot ->
+            (0..3).forEach { slot ->
                 lookupExistingPendingIntent(eventId, slot)?.let { manager.cancel(it) }
             }
         }
@@ -99,10 +105,18 @@ class ReminderScheduler(
         events.asSequence()
             .filter { it.isActive }
             .forEach { event ->
-                val baseMs = event.date.atTime(event.startTime).atZone(zone).toInstant().toEpochMilli()
+                val showMs = event.date.atTime(event.startTime).atZone(zone).toInstant().toEpochMilli()
+                // 演出：提醒基准 = 候场开始（开场前 30 分钟），三个开关都相对候场；
+                // 另加 slot 3"开场前 5 分钟"安全网。非演出保持原语义。
+                val isShow = categories[event.categoryId]?.iconKey == "show"
+                val baseMs = if (isShow) showMs - SHOW_QUEUE_LEAD_MINUTES * 60_000L else showMs
                 enabledSlots.forEach { slot ->
                     val triggerMs = baseMs - SLOT_LEAD_MINUTES[slot] * 60_000L
                     if (triggerMs > nowMs) pendingAlarms += Triple(event, triggerMs, slot)
+                }
+                if (isShow) {
+                    val openTriggerMs = showMs - 5 * 60_000L
+                    if (openTriggerMs > nowMs) pendingAlarms += Triple(event, openTriggerMs, 3)
                 }
             }
         pendingAlarms.sortedBy { it.second }.take(MAX_SCHEDULED).forEach { (event, triggerMs, slot) ->
@@ -114,13 +128,16 @@ class ReminderScheduler(
             }
             val location = formatLocation(event.deck, event.zone, event.placeName)
             val lead = SLOT_LEAD_MINUTES[slot]
+            val isShow = categories[event.categoryId]?.iconKey == "show"
             val bodyLine = buildString {
                 append("%02d:%02d".format(event.startTime.hour, event.startTime.minute))
                 location?.let { append(" · ").append(it) }
-                if (lead > 0) {
-                    append(" · 还有 ").append(lead).append(" 分钟开始")
-                } else {
-                    append(" · 现在开始")
+                when {
+                    slot == 3 -> append(" · 还有 5 分钟开场")
+                    isShow && lead > 0 -> append(" · 还有 ").append(lead).append(" 分钟开始候场")
+                    isShow -> append(" · 现在开始候场")
+                    lead > 0 -> append(" · 还有 ").append(lead).append(" 分钟开始")
+                    else -> append(" · 现在开始")
                 }
             }
             val pending = schedulingPendingIntentFor(event.id, titleLine, bodyLine, slot)
