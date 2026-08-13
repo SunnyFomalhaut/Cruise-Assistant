@@ -28,15 +28,24 @@ data class ShowPreset(
 )
 
 /**
- * 演出在航次中的全部日期。固定天取 dayOffsets 首..末；范围天截断到 dayCount-1。
- * 固定天同样截断到 dayCount-1（下船日无演出）。
+ * 演出在航次中的全部日期。固定天只取列出的偏移、过滤掉 dayCount 及之后的（下船日无演出）；
+ * 范围天截断到 dayCount-1。
  */
 fun ShowPreset.resolveDates(boardDate: LocalDate, dayCount: Int): List<LocalDate> {
-    val firstDay = dayOffsets.first()
-    val lastDay = dailyRangeTo?.let { minOf(it, dayCount - 1) }
-        ?: dayOffsets.last().coerceAtMost(dayCount - 1)
-    if (firstDay > lastDay) return emptyList()
-    return (firstDay..lastDay).map { boardDate.plusDays((it - 1).toLong()) }
+    val lastAllowed = dayCount - 1
+    return if (dailyRangeTo != null) {
+        val firstDay = dayOffsets.first()
+        val lastDay = minOf(dailyRangeTo, lastAllowed)
+        if (firstDay > lastDay) {
+            emptyList()
+        } else {
+            (firstDay..lastDay).map { boardDate.plusDays((it - 1).toLong()) }
+        }
+    } else {
+        // 固定天：只取列出的偏移，过滤掉越界（≥ dayCount 即下船日及之后）的
+        dayOffsets.filter { it <= lastAllowed }
+            .map { boardDate.plusDays((it - 1).toLong()) }
+    }
 }
 
 /**
