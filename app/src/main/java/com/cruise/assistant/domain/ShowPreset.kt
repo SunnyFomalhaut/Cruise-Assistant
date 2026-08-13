@@ -17,7 +17,7 @@ data class ShowPreset(
     /** 演出地点名，如 "花园舞台" */
     val placeName: String,
     val durationMinutes: Int,
-    /** 相对上船日的天数（第1天 = 1） */
+    /** 相对登船日的天数（第1天 = 1） */
     val dayOffsets: List<Int>,
     /** 非空 = 从 dayOffsets 首日起每天都有，直到 min(该值, 航次天数-1)（不含下船日） */
     val dailyRangeTo: Int? = null,

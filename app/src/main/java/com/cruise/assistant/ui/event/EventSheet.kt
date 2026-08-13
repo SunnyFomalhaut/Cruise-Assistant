@@ -181,10 +181,10 @@ fun EventSheet(
             }
 
             // ---- 地点（新增，需求3）----
-            // 上船/下船按设计没有地点（deck/zone/placeName 均为 NULL），且系统事件规范是
+            // 登船/下船按设计没有地点（deck/zone/placeName 均为 NULL），且系统事件规范是
             // "只能改时间"。Fix round 2: 之前只强制显示值为"不设地点"，但真实 ViewModel 状态
             // 未被锁定 —— 勾选框仍可被点击并把 state.noLocation 翻成 false，save() 读的是
-            // 真实状态而非显示值，于是上船会被写入 zone='MID' 的幽灵地点。改为整块不渲染，
+            // 真实状态而非显示值，于是登船会被写入 zone='MID' 的幽灵地点。改为整块不渲染，
             // 结构上排除这条泄漏路径，而不是逐个控件禁用。
             if (!state.isSystemEvent) {
                 Spacer(Modifier.height(16.dp))

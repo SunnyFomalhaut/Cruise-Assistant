@@ -21,7 +21,7 @@ data class Voyage(
     /** 客用最低楼层（如迪士尼探险号 Deck 5-19，minDeck=5） */
     val minDeck: Int = 1,
 ) {
-    /** 航次总天数，含上船日和下船日 */
+    /** 航次总天数，含登船日和下船日 */
     val dayCount: Int
         get() = (disembarkDate.toEpochDay() - boardDate.toEpochDay()).toInt() + 1
 

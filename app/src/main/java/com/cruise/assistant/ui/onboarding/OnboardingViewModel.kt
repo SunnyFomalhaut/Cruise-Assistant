@@ -92,7 +92,7 @@ class OnboardingViewModel(
     fun onDinnerTimeChange(time: LocalTime) = _state.update { it.copy(dinnerTime = time) }
 
     fun onBoardDateChange(value: LocalDate) = _state.update { current ->
-        // 选了船期时按 nights 自动算下船日；否则只做不早于上船的保护。
+        // 选了船期时按 nights 自动算下船日；否则只做不早于登船的保护。
         val disembark = if (current.selectedScheduleIndex >= 0) {
             val shipIndex = current.selectedShipIndex
             if (shipIndex in BUILT_IN_SHIPS.indices) {
@@ -143,7 +143,7 @@ class OnboardingViewModel(
                 dinnerTime = current.dinnerTime,
                 shipPresetName = shipPresetName,
             )
-            // 引导完成后立即排程：createVoyage 生成的上船/下船/安全演习/晚餐/演出
+            // 引导完成后立即排程：createVoyage 生成的登船/下船/安全演习/晚餐/演出
             // 提醒不等到下次启动才排上（否则新装用户直到重启都收不到任何提醒）。
             reminderScheduler.rescheduleAll()
             settingsStore.setLastViewedDate(current.boardDate)

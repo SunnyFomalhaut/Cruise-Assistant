@@ -246,7 +246,7 @@ fun EventCard(
                     }
                     // 第2/3行：地点与时间。等待段已显示过它们（show 事件），此处省略避免重复。
                     if (!hasWaitSegment) {
-                        // 第2行：地点。deck 为 null 时整行不显示（上船/下船）
+                        // 第2行：地点。deck 为 null 时整行不显示（登船/下船）
                         location?.let {
                             Text(
                                 text = it,

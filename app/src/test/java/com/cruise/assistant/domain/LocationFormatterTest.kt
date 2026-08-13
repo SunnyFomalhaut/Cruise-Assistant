@@ -27,7 +27,7 @@ class LocationFormatterTest {
 
     @Test
     fun nullDeck_returnsNull_soTheRowIsHidden() {
-        // 上船/下船事件不设地址，卡片第二行整行不显示
+        // 登船/下船事件不设地址，卡片第二行整行不显示
         assertNull(formatLocation(null, null, null))
         assertNull(formatLocation(null, ShipZone.MID, "花园"))
     }

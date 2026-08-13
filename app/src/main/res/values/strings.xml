@@ -6,8 +6,8 @@
     <string name="onboarding_title">添加航次</string>
     <string name="onboarding_subtitle">填好上下船时间，自动生成时间轴</string>
     <string name="ship_name_label">船名（可选）</string>
-    <string name="board_date_label">上船日期</string>
-    <string name="board_time_label">上船时间</string>
+    <string name="board_date_label">登船日期</string>
+    <string name="board_time_label">登船时间</string>
     <string name="disembark_date_label">下船日期</string>
     <string name="disembark_time_hint">下船时间固定为当天 07:00</string>
     <string name="custom_ship">自定义船名…</string>
@@ -18,7 +18,7 @@
     <string name="dinner_time_late">20:15</string>
     <string name="max_deck_label">最高层数</string>
     <string name="generate_timeline">生成时间轴</string>
-    <string name="error_disembark_before_board">下船日期不能早于上船日期</string>
+    <string name="error_disembark_before_board">下船日期不能早于登船日期</string>
     <string name="preset_shows_dialog_title">已添加预置演出</string>
     <string name="preset_shows_dialog_header">已按迪士尼探险号的演出安排，将以下演出加入日程表第二栏：</string>
     <string name="preset_shows_dialog_footer">长按演出卡片可编辑或删除。</string>
@@ -45,8 +45,8 @@
     <string name="set_active">设为活动</string>
     <string name="cancel">取消</string>
     <string name="confirm">确认</string>
-    <string name="system_event_undeletable">上船/下船不能删除，只能改时间</string>
-    <string name="system_event_time_only">上船/下船只能修改时间</string>
+    <string name="system_event_undeletable">登船/下船不能删除，只能改时间</string>
+    <string name="system_event_time_only">登船/下船只能修改时间</string>
 
     <!-- 事件弹窗 -->
     <string name="select_category">选择事项</string>

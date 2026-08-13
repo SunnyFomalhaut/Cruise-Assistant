@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.LocalTime
 
-/** 上船事件固定时长 15 分钟（需求7） */
+/** 登船事件固定时长 15 分钟（需求7） */
 private const val BOARDING_DURATION_MINUTES = 15
 private const val DISEMBARK_DURATION_MINUTES = 30
 private const val SAFETY_DRILL_DURATION_MINUTES = 35
@@ -59,7 +59,7 @@ class VoyageRepository(
      * 需求7：创建航次并生成初始时间轴。
      * 1) 写 voyage  2) 每天建 DayPlan(finalized=false)
      * 3) 播种内置类别（仅当类别表为空）
-     * 4) 插入上船（boardTime 起 15 分钟，不设地址）与下船（末日 07:00）两个系统事件
+     * 4) 插入登船（boardTime 起 15 分钟，不设地址）与下船（末日 07:00）两个系统事件
      */
     suspend fun createVoyage(
         shipName: String?,
@@ -99,7 +99,7 @@ class VoyageRepository(
                 startTime = boardTime,
                 durationMinutes = BOARDING_DURATION_MINUTES,
                 categoryId = importantId,
-                title = "上船",
+                title = "登船",
                 isSystemGenerated = true,
             ).toEntity(),
             CruiseEvent(
@@ -120,8 +120,8 @@ class VoyageRepository(
 
             val presetEvents = mutableListOf<CruiseEvent>()
 
-            // 安全演习：仅上船日（第一天），15:45–16:20，Deck 6 船中。
-            // lane=1（第二栏）：避免 boardTime 选 16:00 时上船（16:00–16:15）与
+            // 安全演习：仅登船日（第一天），15:45–16:20，Deck 6 船中。
+            // lane=1（第二栏）：避免 boardTime 选 16:00 时登船（16:00–16:15）与
             // 安全演习同栏重叠（冲突检查会标记 App 自己生成的事件）；与预置演出
             // （下午场 14:45–15:15 扩展后 15:15 结束）及晚餐（18:00+）均不冲突。
             presetEvents += CruiseEvent(
@@ -199,7 +199,7 @@ class VoyageRepository(
     }
 
     /**
-     * 修改航次日期/时间：同步 DayPlan 集合，并把上船/下船系统事件挪到新时间。
+     * 修改航次日期/时间：同步 DayPlan 集合，并把登船/下船系统事件挪到新时间。
      * 落在新范围外的普通事件会被删除（调用方负责先提示用户）。
      */
     suspend fun updateVoyage(voyage: Voyage) {
@@ -219,7 +219,7 @@ class VoyageRepository(
         // 只查一次，供下面两步复用。
         val allEvents = eventDao.getAll()
 
-        // 系统事件（上船/下船）必须排除在删除范围外：它们是"挪到新时间"而不是"落在范围外就删掉"。
+        // 系统事件（登船/下船）必须排除在删除范围外：它们是"挪到新时间"而不是"落在范围外就删掉"。
         // 若先把它们删了，下面的 update(entity.copy(...)) 是按 id 匹配的 UPDATE，行已不存在，
         // 会静默影响 0 行、不抛异常——事件永久消失却毫无提示（与 LocationPresetDao 文档警告的
         // 同一类"按 id 更新命中 0 行被静默吞掉"问题）。
@@ -227,13 +227,19 @@ class VoyageRepository(
             .filter { it.date !in validDates && !it.isSystemGenerated }
             .forEach { eventDao.delete(it) }
 
-        // 注意：这里用中文标题 "上船"/"下船" 识别系统事件，与 createVoyage() 中生成时写的标题严格耦合。
+        // 注意：这里用中文标题 "登船"/"下船" 识别系统事件，与 createVoyage() 中生成时写的标题严格耦合。
         // 后续任务如果要改名这两个系统事件的标题，必须同步修改这里的匹配，否则迁移会静默失效。
         allEvents.forEach { entity ->
             if (!entity.isSystemGenerated) return@forEach
             when (entity.title) {
-                "上船" -> eventDao.update(
-                    entity.copy(date = voyage.boardDate, startTime = voyage.boardTime),
+                // 兼容旧版本数据：v1.7.5 前登船事件标题是"上船"——首次编辑航次时
+                // 一并把标题重写为"登船"并移动，避免旧事件卡在旧日期不可修复。
+                "登船", "上船" -> eventDao.update(
+                    entity.copy(
+                        title = "登船",
+                        date = voyage.boardDate,
+                        startTime = voyage.boardTime,
+                    ),
                 )
                 "下船" -> eventDao.update(
                     entity.copy(date = voyage.disembarkDate, startTime = voyage.disembarkTime),

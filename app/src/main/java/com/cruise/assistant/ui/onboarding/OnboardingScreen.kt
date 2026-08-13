@@ -285,7 +285,7 @@ fun OnboardingScreen(
             PickerTarget.BOARD -> state.boardDate
             PickerTarget.DISEMBARK -> state.disembarkDate
         }
-        // 选船期后，上船日只能选船期的登船日（周一/周四），其余日期置灰不可选。
+        // 选船期后，登船日只能选船期的登船日（周一/周四），其余日期置灰不可选。
         val lockedBoardDay = if (target == PickerTarget.BOARD && state.selectedScheduleIndex >= 0) {
             BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)
                 ?.schedules?.getOrNull(state.selectedScheduleIndex)

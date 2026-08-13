@@ -258,7 +258,7 @@ class EventSheetViewModel(
     fun onCustomLocationSelected() = _state.update { it.copy(locationPresetMode = false) }
 
     /**
-     * Fix round 2 防线二：系统事件（上船/下船）没有地点，UI 已经不渲染 LocationPicker，
+     * Fix round 2 防线二：系统事件（登船/下船）没有地点，UI 已经不渲染 LocationPicker，
      * 但如果日后有人重新接上这个回调（或测试直接调用 ViewModel），这里再挡一层——
      * isSystemEvent 时忽略切换，强制保持 noLocation=true/deck=null，避免 save() 写出
      * zone='MID' 的幽灵地点。

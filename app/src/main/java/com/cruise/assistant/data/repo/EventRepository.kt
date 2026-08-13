@@ -120,7 +120,7 @@ class EventRepository(
         }
     }
 
-    /** 删除。系统生成的上船/下船事件不允许删除，静默忽略。 */
+    /** 删除。系统生成的登船/下船事件不允许删除，静默忽略。 */
     suspend fun deleteEvent(event: CruiseEvent, scope: RecurrenceScope) {
         if (event.isSystemGenerated) return
         val groupId = event.recurrenceGroupId
