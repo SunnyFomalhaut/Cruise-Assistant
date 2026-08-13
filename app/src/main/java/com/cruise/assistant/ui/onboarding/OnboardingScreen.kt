@@ -132,49 +132,26 @@ fun OnboardingScreen(
         }
         Spacer(Modifier.height(20.dp))
 
-        // ---- 船期下拉（仅内置船显示）----
+        // ---- 船期按钮（仅内置船显示）----
         if (state.isBuiltInShip) {
             Text(stringResource(R.string.schedule_label), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-            var scheduleMenuExpanded by remember { mutableStateOf(false) }
             val ship = BUILT_IN_SHIPS[state.selectedShipIndex]
-            ExposedDropdownMenuBox(
-                expanded = scheduleMenuExpanded,
-                onExpandedChange = { scheduleMenuExpanded = it },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                OutlinedTextField(
-                    value = if (state.selectedScheduleIndex >= 0)
-                        ship.schedules[state.selectedScheduleIndex].label
-                    else stringResource(R.string.custom_schedule),
-                    onValueChange = { },
-                    label = { Text(stringResource(R.string.schedule_label)) },
-                    singleLine = true,
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = scheduleMenuExpanded) },
-                    modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-                )
-                ExposedDropdownMenu(
-                    expanded = scheduleMenuExpanded,
-                    onDismissRequest = { scheduleMenuExpanded = false },
-                ) {
-                    ship.schedules.forEachIndexed { index, schedule ->
-                        DropdownMenuItem(
-                            text = { Text(schedule.label) },
-                            onClick = {
-                                onScheduleSelected(index)
-                                scheduleMenuExpanded = false
-                            },
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.custom_schedule)) },
-                        onClick = {
-                            onScheduleSelected(-1)
-                            scheduleMenuExpanded = false
-                        },
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                ship.schedules.forEachIndexed { index, schedule ->
+                    FilterChip(
+                        selected = state.selectedScheduleIndex == index,
+                        onClick = { onScheduleSelected(index) },
+                        label = { Text(schedule.label) },
+                        modifier = Modifier.weight(1.4f),
                     )
                 }
+                FilterChip(
+                    selected = state.selectedScheduleIndex < 0,
+                    onClick = { onScheduleSelected(-1) },
+                    label = { Text(stringResource(R.string.custom_schedule)) },
+                    modifier = Modifier.weight(0.6f),
+                )
             }
             Spacer(Modifier.height(20.dp))
         }
