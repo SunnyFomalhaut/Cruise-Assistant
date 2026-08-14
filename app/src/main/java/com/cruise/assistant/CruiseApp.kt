@@ -27,6 +27,7 @@ class CruiseApp : Application() {
             runCatching {
                 val repo = container.voyageRepository
                 repo.seedMissingBuiltInCategories()
+                container.pixieLevelRepository.seedBuiltIns()
             }
         }
         // App 每次启动都补排一次：捡回上次未排上的（超过 100 个上限的部分）、

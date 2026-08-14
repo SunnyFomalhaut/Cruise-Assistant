@@ -6,6 +6,8 @@ import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.CategoryRepository
 import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.data.repo.LocationPresetRepository
+import com.cruise.assistant.data.repo.PixieDustRepository
+import com.cruise.assistant.data.repo.PixieLevelRepository
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.reminder.ReminderScheduler
 
@@ -21,6 +23,8 @@ class AppContainer(context: Context) {
         eventDao = db.eventDao(),
         categoryDao = db.categoryDao(),
         locationPresetDao = db.locationPresetDao(),
+        pixieDustDao = db.pixieDustDao(),
+        pixieLevelDao = db.pixieLevelDao(),
     )
 
     val eventRepository = EventRepository(
@@ -35,6 +39,10 @@ class AppContainer(context: Context) {
     )
 
     val locationPresetRepository = LocationPresetRepository(db.locationPresetDao())
+
+    val pixieDustRepository = PixieDustRepository(db.pixieDustDao())
+
+    val pixieLevelRepository = PixieLevelRepository(db.pixieLevelDao())
 
     val reminderScheduler = ReminderScheduler(
         context = context.applicationContext,

@@ -1,9 +1,12 @@
 package com.cruise.assistant.data.repo
 
 import com.cruise.assistant.data.BUILT_IN_CATEGORIES
+import com.cruise.assistant.data.BUILT_IN_PIXIE_LEVELS
 import com.cruise.assistant.data.db.dao.CategoryDao
 import com.cruise.assistant.data.db.dao.EventDao
 import com.cruise.assistant.data.db.dao.LocationPresetDao
+import com.cruise.assistant.data.db.dao.PixieDustDao
+import com.cruise.assistant.data.db.dao.PixieLevelDao
 import com.cruise.assistant.data.db.dao.VoyageDao
 import com.cruise.assistant.data.db.toDomain
 import com.cruise.assistant.data.db.toEntity
@@ -33,6 +36,8 @@ class VoyageRepository(
     private val eventDao: EventDao,
     private val categoryDao: CategoryDao,
     private val locationPresetDao: LocationPresetDao,
+    private val pixieDustDao: PixieDustDao,
+    private val pixieLevelDao: PixieLevelDao,
 ) {
     fun observeVoyage(): Flow<Voyage?> =
         voyageDao.observeVoyage().map { it?.toDomain() }
@@ -248,12 +253,16 @@ class VoyageRepository(
         }
     }
 
-    /** 设置页"重建航次"：清空一切（类别保留，因为用户可能改过颜色） */
+    /** 设置页"重建航次"：清空一切（类别保留，因为用户可能改过颜色）；
+     *  仙尘记录与等级一并清空并重播默认三级。 */
     suspend fun resetVoyage() {
         eventDao.clearAll()
         voyageDao.clearDayPlans()
         voyageDao.clearVoyage()
         locationPresetDao.clearAll()
+        pixieDustDao.clearAll()
+        pixieLevelDao.clearAll()
+        pixieLevelDao.insertAll(BUILT_IN_PIXIE_LEVELS.map { it.toEntity() })
     }
 
     /** 需求8：标记/取消某天定稿 */

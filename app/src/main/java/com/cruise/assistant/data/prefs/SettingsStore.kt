@@ -27,6 +27,7 @@ data class AppSettings(
     val dinnerTime: LocalTime = LocalTime.of(17, 45),
     val notificationsEnabled: Boolean = true,
     val onboardingCompleted: Boolean = false,
+    val lastPixieDeck: Int? = null,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("cruise_settings")
@@ -45,6 +46,7 @@ class SettingsStore(private val context: Context) {
         val dinnerTime = stringPreferencesKey("dinner_time")
         val notificationsEnabled = booleanPreferencesKey("notifications_enabled")
         val onboardingCompleted = booleanPreferencesKey("onboarding_completed")
+        val lastPixieDeck = intPreferencesKey("last_pixie_deck")
         val armedEventIds = stringSetPreferencesKey("armed_event_ids")
     }
 
@@ -67,6 +69,7 @@ class SettingsStore(private val context: Context) {
                 ?: defaults.dinnerTime,
             notificationsEnabled = prefs[Keys.notificationsEnabled] ?: defaults.notificationsEnabled,
             onboardingCompleted = prefs[Keys.onboardingCompleted] ?: defaults.onboardingCompleted,
+            lastPixieDeck = prefs[Keys.lastPixieDeck],
         )
     }
 
@@ -99,6 +102,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setOnboardingCompleted(completed: Boolean) =
         edit { it[Keys.onboardingCompleted] = completed }
+
+    suspend fun setLastPixieDeck(deck: Int) =
+        edit { it[Keys.lastPixieDeck] = deck }
 
     /**
      * 上一次 rescheduleAll() 实际排上闹钟的事件 id 集合，用于下次重排时精确取消——
