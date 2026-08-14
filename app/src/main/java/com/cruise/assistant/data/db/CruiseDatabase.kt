@@ -1,6 +1,7 @@
 package com.cruise.assistant.data.db
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -10,11 +11,15 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.cruise.assistant.data.db.dao.CategoryDao
 import com.cruise.assistant.data.db.dao.EventDao
 import com.cruise.assistant.data.db.dao.LocationPresetDao
+import com.cruise.assistant.data.db.dao.PixieDustDao
+import com.cruise.assistant.data.db.dao.PixieLevelDao
 import com.cruise.assistant.data.db.dao.VoyageDao
 import com.cruise.assistant.data.db.entity.CategoryEntity
 import com.cruise.assistant.data.db.entity.DayPlanEntity
 import com.cruise.assistant.data.db.entity.EventEntity
 import com.cruise.assistant.data.db.entity.LocationPresetEntity
+import com.cruise.assistant.data.db.entity.PixieDustEntity
+import com.cruise.assistant.data.db.entity.PixieLevelEntity
 import com.cruise.assistant.data.db.entity.VoyageEntity
 
 @Database(
@@ -24,9 +29,12 @@ import com.cruise.assistant.data.db.entity.VoyageEntity
         EventEntity::class,
         DayPlanEntity::class,
         LocationPresetEntity::class,
+        PixieDustEntity::class,
+        PixieLevelEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 4, to = 5)],
 )
 @TypeConverters(Converters::class)
 abstract class CruiseDatabase : RoomDatabase() {
@@ -34,6 +42,8 @@ abstract class CruiseDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun eventDao(): EventDao
     abstract fun locationPresetDao(): LocationPresetDao
+    abstract fun pixieDustDao(): PixieDustDao
+    abstract fun pixieLevelDao(): PixieLevelDao
 
     companion object {
         @Volatile private var instance: CruiseDatabase? = null

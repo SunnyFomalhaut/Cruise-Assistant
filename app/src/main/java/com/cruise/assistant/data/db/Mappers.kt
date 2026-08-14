@@ -4,11 +4,16 @@ import com.cruise.assistant.data.db.entity.CategoryEntity
 import com.cruise.assistant.data.db.entity.DayPlanEntity
 import com.cruise.assistant.data.db.entity.EventEntity
 import com.cruise.assistant.data.db.entity.LocationPresetEntity
+import com.cruise.assistant.data.db.entity.PixieDustEntity
+import com.cruise.assistant.data.db.entity.PixieLevelEntity
 import com.cruise.assistant.data.db.entity.VoyageEntity
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.DayPlan
 import com.cruise.assistant.domain.LocationPreset
+import com.cruise.assistant.domain.PixieDustDirection
+import com.cruise.assistant.domain.PixieDustRecord
+import com.cruise.assistant.domain.PixieLevel
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.Voyage
 
@@ -55,3 +60,19 @@ fun LocationPresetEntity.toDomain() = LocationPreset(
 fun LocationPreset.toEntity() = LocationPresetEntity(
     id, deck, zone.name, placeName, lastUsedEpochMs, useCount,
 )
+
+fun PixieDustEntity.toDomain() = PixieDustRecord(
+    id = id, direction = PixieDustDirection.valueOf(direction), deck = deck, room = room,
+    levelId = levelId, levelNameSnapshot = levelNameSnapshot, replied = replied, note = note,
+    timestamp = timestamp,
+)
+
+fun PixieDustRecord.toEntity() = PixieDustEntity(
+    id = id, direction = direction.name, deck = deck, room = room,
+    levelId = levelId, levelNameSnapshot = levelNameSnapshot, replied = replied, note = note,
+    timestamp = timestamp,
+)
+
+fun PixieLevelEntity.toDomain() = PixieLevel(id, name, colorArgb, iconKey, rank, sortOrder)
+
+fun PixieLevel.toEntity() = PixieLevelEntity(id, name, colorArgb, iconKey, rank, sortOrder)
