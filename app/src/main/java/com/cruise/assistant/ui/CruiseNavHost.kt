@@ -45,6 +45,7 @@ import com.cruise.assistant.ui.pixiedust.PixieDustEditDialog
 import com.cruise.assistant.ui.pixiedust.PixieDustKeypad
 import com.cruise.assistant.ui.pixiedust.PixieDustScreen
 import com.cruise.assistant.ui.pixiedust.PixieDustViewModel
+import com.cruise.assistant.ui.pixiedust.PixieLevelSheet
 import com.cruise.assistant.ui.pixiedust.PixieTab
 import com.cruise.assistant.ui.pixiedust.ReceivedList
 import com.cruise.assistant.ui.settings.DisplayRangePanel
@@ -382,6 +383,7 @@ fun CruiseNavHost(container: AppContainer) {
             val pixieState by vm.state.collectAsState()
             // 编辑弹窗目标（Task 8 消费）；当前无消费者，先留存以待编辑弹窗接入
             var editTarget by remember { mutableStateOf<PixieDustRecord?>(null) }
+            var showLevelSheet by remember { mutableStateOf(false) }
             val context = LocalContext.current
             LaunchedEffect(pixieState?.savedEvent) {
                 pixieState?.savedEvent?.let { rec ->
@@ -399,7 +401,7 @@ fun CruiseNavHost(container: AppContainer) {
                 state = pixieState,
                 onBack = { navController.popBackStack() },
                 onTabChange = vm::onTabChange,
-                onOpenLevelManager = { /* Task 9 接等级管理弹层 */ },
+                onOpenLevelManager = { showLevelSheet = true },
                 content = { s ->
                     Column(Modifier.fillMaxSize()) {
                         if (!s.keypadCollapsed) {
@@ -457,6 +459,18 @@ fun CruiseNavHost(container: AppContainer) {
                         editTarget = null
                     },
                     onDismiss = { editTarget = null },
+                )
+            }
+
+            // ---- 等级管理弹层（Task 9）：齿轮触发 ----
+            if (showLevelSheet) {
+                PixieLevelSheet(
+                    levels = pixieState?.levels ?: emptyList(),
+                    onSave = vm::saveLevel,
+                    onDelete = vm::deleteLevel,
+                    onMove = vm::onMoveLevel,
+                    countByLevel = vm::countByLevel,
+                    onDismiss = { showLevelSheet = false },
                 )
             }
         }
