@@ -57,8 +57,8 @@ data class EventSheetState(
     val builtInShip: Boolean = false,
     /** 是否处于预置地点下拉模式；false = 自由输入 */
     val locationPresetMode: Boolean = false,
-    /** 餐次二级选项（仅餐食类别显示）；null = 全部 */
-    val selectedMealPeriod: MealPeriod? = null,
+    /** 餐次二级选项（仅餐食类别显示）；默认晚餐（餐食事件最常见的预设），null = 全部 */
+    val selectedMealPeriod: MealPeriod? = MealPeriod.DINNER,
     /** 是否餐食类别且内置船（决定是否显示餐次行） */
     val showMealPeriodRow: Boolean = false,
     /** 营业时间冲突待用户决策 */
@@ -373,9 +373,9 @@ class EventSheetViewModel(
             }
         }
 
-        // 空标题允许：选了餐次时兜底为餐次名（主界面直接显示二级标题）；
-        // 无餐次且无标题 → 空着（用户要求不再抄餐厅名/类别名）
-        val fallbackTitle = s.selectedMealPeriod?.label.orEmpty()
+        // 空标题允许：餐食类别的空标题兜底为餐次名（主界面直接显示二级标题）；
+        // 非餐食类别或无餐次 → 空着（用户要求不再抄餐厅名/类别名）
+        val fallbackTitle = if (s.categoryIconKey == "meal") s.selectedMealPeriod?.label.orEmpty() else ""
         val event = CruiseEvent(
             id = s.editingId,
             date = s.date,
