@@ -31,6 +31,7 @@ import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.domain.fullRoom
 import com.cruise.assistant.domain.presetShowsSummary
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.PixieDustDirection
 import com.cruise.assistant.domain.PixieDustRecord
 import com.cruise.assistant.ui.category.CategorySheet
 import com.cruise.assistant.ui.category.CategoryViewModel
@@ -40,6 +41,7 @@ import com.cruise.assistant.ui.event.EventSheetViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
 import com.cruise.assistant.ui.pixiedust.GivenList
+import com.cruise.assistant.ui.pixiedust.PixieDustEditDialog
 import com.cruise.assistant.ui.pixiedust.PixieDustKeypad
 import com.cruise.assistant.ui.pixiedust.PixieDustScreen
 import com.cruise.assistant.ui.pixiedust.PixieDustViewModel
@@ -438,6 +440,25 @@ fun CruiseNavHost(container: AppContainer) {
                     }
                 },
             )
+
+            // ---- 编辑弹窗（Task 8）：列表点击置位 editTarget，这里消费 ----
+            editTarget?.let { target ->
+                PixieDustEditDialog(
+                    initial = target,
+                    isReceived = target.direction == PixieDustDirection.RECEIVED,
+                    deckRange = pixieState?.deckRange ?: 1..20,
+                    levels = pixieState?.levels ?: emptyList(),
+                    onSave = {
+                        vm.saveEdited(it)
+                        editTarget = null
+                    },
+                    onDelete = {
+                        vm.deleteRecord(it)
+                        editTarget = null
+                    },
+                    onDismiss = { editTarget = null },
+                )
+            }
         }
         composable(Routes.SETTINGS) {
             val vm: SettingsViewModel = viewModel(
