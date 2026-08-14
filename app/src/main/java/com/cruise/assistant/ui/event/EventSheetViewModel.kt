@@ -102,7 +102,10 @@ class EventSheetViewModel(
     init {
         viewModelScope.launch {
             val voyage = voyageRepository.getVoyage()
+            // 内置船判定：船名匹配内置列表，或船名为空（老版本引导没有"选船"概念、
+            // 船名留空——本 App 只有一个内置船，老航次视为探险号以启用预置地点）
             val builtIn = voyage?.shipName in com.cruise.assistant.domain.BUILT_IN_SHIPS.map { s -> s.name }
+                || (voyage != null && voyage.shipName.isNullOrBlank())
             _state.update {
                 it.copy(
                     maxDeck = voyage?.maxDeck ?: 20,
