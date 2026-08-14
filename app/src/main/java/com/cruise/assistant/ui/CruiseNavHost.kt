@@ -1,12 +1,14 @@
 package com.cruise.assistant.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,14 +18,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import android.widget.Toast
 import com.cruise.assistant.AppContainer
 import com.cruise.assistant.R
 import com.cruise.assistant.data.repo.RecurrenceScope
+import com.cruise.assistant.domain.fullRoom
 import com.cruise.assistant.domain.presetShowsSummary
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.ui.category.CategorySheet
@@ -33,6 +38,7 @@ import com.cruise.assistant.ui.event.EventSheet
 import com.cruise.assistant.ui.event.EventSheetViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
+import com.cruise.assistant.ui.pixiedust.PixieDustKeypad
 import com.cruise.assistant.ui.pixiedust.PixieDustScreen
 import com.cruise.assistant.ui.pixiedust.PixieDustViewModel
 import com.cruise.assistant.ui.pixiedust.PixieTab
@@ -369,14 +375,48 @@ fun CruiseNavHost(container: AppContainer) {
                 },
             )
             val pixieState by vm.state.collectAsState()
+            val context = LocalContext.current
+            LaunchedEffect(pixieState?.savedEvent) {
+                pixieState?.savedEvent?.let { rec ->
+                    val levelName = pixieState?.levelById?.get(rec.levelId)?.name
+                        ?: rec.levelNameSnapshot
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.pixie_saved_format, rec.fullRoom, levelName),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    vm.onToastShown()
+                }
+            }
             PixieDustScreen(
                 state = pixieState,
                 onBack = { navController.popBackStack() },
                 onTabChange = vm::onTabChange,
                 onOpenLevelManager = { /* Task 9 接等级管理弹层 */ },
                 content = { s ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.pixie_empty_given))
+                    Column(Modifier.fillMaxSize()) {
+                        if (!s.keypadCollapsed) {
+                            PixieDustKeypad(
+                                state = s,
+                                onDeckChange = vm::onDeckChange,
+                                onDigit = vm::onDigit,
+                                onBackspace = vm::onBackspace,
+                                onClearRoom = vm::onClearRoom,
+                                onLevelSelect = vm::onLevelSelect,
+                                onSave = vm::saveRecord,
+                            )
+                        }
+                        TextButton(
+                            onClick = vm::onToggleKeypad,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (s.keypadCollapsed) R.string.pixie_expand_keypad
+                                    else R.string.pixie_collapse_keypad
+                                )
+                            )
+                        }
                     }
                 },
             )
