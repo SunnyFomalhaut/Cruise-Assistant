@@ -168,9 +168,10 @@ class PixieDustViewModel(
         // 房号输满三位且该房间有历史 → 预选上次等级
         if (roomInput.value.length == 3) {
             val s = state.value ?: return
-            lastLevelForRoom(s.given, s.deck, roomInput.value)?.let {
-                selectedLevelId.value = it.levelId
-            }
+            // 等级已删则不再预选（避免记一笔点亮但静默无效）
+            lastLevelForRoom(s.given, s.deck, roomInput.value)
+                ?.takeIf { last -> s.levels.any { it.id == last.levelId } }
+                ?.let { selectedLevelId.value = it.levelId }
         }
     }
 

@@ -136,7 +136,9 @@ fun PixieDustKeypad(
         // ---- 记一笔（房号三位且选了等级才可用） ----
         Button(
             onClick = onSave,
-            enabled = isValidRoomInput(state.roomInput) && state.selectedLevelId != null,
+            enabled = isValidRoomInput(state.roomInput) &&
+                state.selectedLevelId != null &&
+                state.selectedLevelId?.let { state.levelById.containsKey(it) } == true,
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(52.dp),
         ) {
             Text(stringResource(R.string.pixie_save), fontSize = 16.sp)
