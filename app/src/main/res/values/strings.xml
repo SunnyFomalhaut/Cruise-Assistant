@@ -104,6 +104,47 @@
     <string name="collapse_empty_gaps">自动隐藏无事件的空时段</string>
     <string name="error_range_too_short">显示范围至少要 2 小时</string>
 
+    <!-- 仙尘交换 -->
+    <string name="pixie_title">仙尘交换</string>
+    <string name="pixie_tab_given">发出</string>
+    <string name="pixie_tab_received">收到</string>
+    <string name="pixie_manage_levels">等级管理</string>
+    <string name="pixie_open">仙尘交换记录</string>
+    <string name="pixie_back">返回</string>
+    <string name="pixie_deck_label">楼层</string>
+    <string name="pixie_room_hint">房间号</string>
+    <string name="pixie_keypad_clear">清空</string>
+    <string name="pixie_keypad_backspace">退格</string>
+    <string name="pixie_save">记一笔</string>
+    <string name="pixie_saved_format">已记录：%1$s · %2$s</string>
+    <string name="pixie_last_level_format">上次：%1$s ×%2$d</string>
+    <string name="pixie_collapse_keypad">收起键盘</string>
+    <string name="pixie_expand_keypad">展开键盘</string>
+    <string name="pixie_given_count_format">发出 %1$d 件</string>
+    <string name="pixie_received_count_format">收到 %1$d 件</string>
+    <string name="pixie_unreplied_count_format">待回礼 %1$d 件</string>
+    <string name="pixie_view_grouped">按房间</string>
+    <string name="pixie_view_flow">流水</string>
+    <string name="pixie_group_total_format">共 %1$d 次</string>
+    <string name="pixie_replied">已回礼</string>
+    <string name="pixie_edit_title">编辑记录</string>
+    <string name="pixie_delete">删除</string>
+    <string name="pixie_delete_confirm">删除这条记录？</string>
+    <string name="pixie_note_label">备注</string>
+    <string name="pixie_empty_given">还没有发出记录，输入房间号记一笔</string>
+    <string name="pixie_empty_received">还没有收到记录</string>
+    <string name="pixie_add_level">新增等级</string>
+    <string name="pixie_level_name_label">名称</string>
+    <string name="pixie_level_rank_label">贵重程度</string>
+    <string name="pixie_level_rank_hint">数字越大越贵重</string>
+    <string name="pixie_level_delete_used_format">"%1$s" 被 %2$d 条记录使用，删除后这些记录将保留等级名称。仍要删除？</string>
+    <string name="pixie_level_delete_free_format">删除等级"%1$s"？</string>
+    <string name="pixie_level_last_one">至少保留一个等级</string>
+    <string name="pixie_level_save">保存</string>
+    <string name="pixie_level_move_up">上移</string>
+    <string name="pixie_level_move_down">下移</string>
+    <string name="pixie_cancel">取消</string>
+
     <!-- 设置 -->
     <string name="settings">设置</string>
     <string name="reminder_section">提醒</string>

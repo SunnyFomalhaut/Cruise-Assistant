@@ -20,12 +20,14 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,6 +67,7 @@ fun TimelineScreen(
     onSelectDate: (LocalDate) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenDisplayRange: () -> Unit,
+    onOpenPixieDust: () -> Unit,
     onAddEvent: (Int) -> Unit,
     onEditEvent: (CruiseEvent) -> Unit,
     onMoveToLane: (Long, Int) -> Unit,
@@ -89,9 +92,18 @@ fun TimelineScreen(
 
     Scaffold(
         floatingActionButton = {
-            if (!state.isFinalized) {
-                FloatingActionButton(onClick = { onAddEvent(defaultStartMinute(state)) }) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_event))
+            Column(horizontalAlignment = Alignment.End) {
+                SmallFloatingActionButton(onClick = onOpenPixieDust) {
+                    Icon(
+                        Icons.Outlined.AutoAwesome,
+                        contentDescription = stringResource(R.string.pixie_open),
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                if (!state.isFinalized) {
+                    FloatingActionButton(onClick = { onAddEvent(defaultStartMinute(state)) }) {
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_event))
+                    }
                 }
             }
         },
@@ -123,6 +135,12 @@ fun TimelineScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                }
+                IconButton(onClick = onOpenPixieDust) {
+                    Icon(
+                        Icons.Outlined.AutoAwesome,
+                        contentDescription = stringResource(R.string.pixie_open),
+                    )
                 }
                 IconButton(onClick = onOpenDisplayRange) {
                     Icon(Icons.Outlined.Schedule, contentDescription = stringResource(R.string.display_range_title))

@@ -33,6 +33,9 @@ import com.cruise.assistant.ui.event.EventSheet
 import com.cruise.assistant.ui.event.EventSheetViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
+import com.cruise.assistant.ui.pixiedust.PixieDustScreen
+import com.cruise.assistant.ui.pixiedust.PixieDustViewModel
+import com.cruise.assistant.ui.pixiedust.PixieTab
 import com.cruise.assistant.ui.settings.DisplayRangePanel
 import com.cruise.assistant.ui.settings.SettingsScreen
 import com.cruise.assistant.ui.settings.SettingsViewModel
@@ -47,6 +50,7 @@ object Routes {
     const val ONBOARDING = "onboarding"
     const val TIMELINE = "timeline"
     const val SETTINGS = "settings"
+    const val PIXIE_DUST = "pixiedust"
 }
 
 /** 显示范围最小跨度，和 domain 层（TimelineLayout.kt 的 MIN_RANGE_MINUTES）保持一致。 */
@@ -149,6 +153,7 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenDisplayRange = { showRangePanel = true },
+                    onOpenPixieDust = { navController.navigate(Routes.PIXIE_DUST) },
                     onAddEvent = { startMinute ->
                         sheetSeq++
                         sheetRequest = EventSheetRequest(current.selectedDate, startMinute, 0L, sheetSeq)
@@ -351,6 +356,30 @@ fun CruiseNavHost(container: AppContainer) {
                     )
                 }
             }
+        }
+        composable(Routes.PIXIE_DUST) {
+            val vm: PixieDustViewModel = viewModel(
+                factory = viewModelFactory {
+                    PixieDustViewModel(
+                        container.pixieDustRepository,
+                        container.pixieLevelRepository,
+                        container.voyageRepository,
+                        container.settingsStore,
+                    )
+                },
+            )
+            val pixieState by vm.state.collectAsState()
+            PixieDustScreen(
+                state = pixieState,
+                onBack = { navController.popBackStack() },
+                onTabChange = vm::onTabChange,
+                onOpenLevelManager = { /* Task 9 接等级管理弹层 */ },
+                content = { s ->
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.pixie_empty_given))
+                    }
+                },
+            )
         }
         composable(Routes.SETTINGS) {
             val vm: SettingsViewModel = viewModel(
