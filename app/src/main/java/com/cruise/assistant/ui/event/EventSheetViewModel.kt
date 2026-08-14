@@ -433,11 +433,8 @@ class EventSheetViewModel(
         // 否则期间 setCatalog 换 map 时 getValue 可能 KeyNotFound
         val catalog = LocationCatalog.venuesByCategory()
         if (!builtInShip || !catalog.containsKey(iconKey)) return false
-        if (!isEditing) return true
-        val key = iconKey ?: return false
-        val matched = catalog.getValue(key).any { entry ->
-            entry.deck == deck && entry.zone == zone && entry.placeName == placeName
-        }
-        return matched || currentMode
+        // 新建与编辑都默认预置下拉：编辑预置晚餐（无地点）也能直接选餐厅地点，
+        // 而非掉回自由输入。选中高亮由 LocationPicker 按 deck/zone/placeName 匹配。
+        return true
     }
 }
