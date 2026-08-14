@@ -25,12 +25,10 @@ class PixieLevelRepository(private val dao: PixieLevelDao) {
 
     suspend fun count(): Int = dao.count()
 
-    /** 幂等补缺内置等级（按名字匹配），升级用户也能拿到默认三级 */
+    /** 表空时播种默认三级（幂等）。不按名字补缺——用户改名/删除内置等级后不能复活。 */
     suspend fun seedBuiltIns() {
-        val existing = dao.observeAllOnce()
-        val missing = BUILT_IN_PIXIE_LEVELS.filter { builtIn ->
-            existing.none { it.name == builtIn.name }
+        if (dao.count() == 0) {
+            dao.insertAll(BUILT_IN_PIXIE_LEVELS.map { it.toEntity() })
         }
-        if (missing.isNotEmpty()) dao.insertAll(missing.map { it.toEntity() })
     }
 }
