@@ -31,6 +31,7 @@ import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.domain.fullRoom
 import com.cruise.assistant.domain.presetShowsSummary
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.PixieDustRecord
 import com.cruise.assistant.ui.category.CategorySheet
 import com.cruise.assistant.ui.category.CategoryViewModel
 import com.cruise.assistant.ui.common.viewModelFactory
@@ -38,10 +39,12 @@ import com.cruise.assistant.ui.event.EventSheet
 import com.cruise.assistant.ui.event.EventSheetViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
+import com.cruise.assistant.ui.pixiedust.GivenList
 import com.cruise.assistant.ui.pixiedust.PixieDustKeypad
 import com.cruise.assistant.ui.pixiedust.PixieDustScreen
 import com.cruise.assistant.ui.pixiedust.PixieDustViewModel
 import com.cruise.assistant.ui.pixiedust.PixieTab
+import com.cruise.assistant.ui.pixiedust.ReceivedList
 import com.cruise.assistant.ui.settings.DisplayRangePanel
 import com.cruise.assistant.ui.settings.SettingsScreen
 import com.cruise.assistant.ui.settings.SettingsViewModel
@@ -375,6 +378,8 @@ fun CruiseNavHost(container: AppContainer) {
                 },
             )
             val pixieState by vm.state.collectAsState()
+            // 编辑弹窗目标（Task 8 消费）；当前无消费者，先留存以待编辑弹窗接入
+            var editTarget by remember { mutableStateOf<PixieDustRecord?>(null) }
             val context = LocalContext.current
             LaunchedEffect(pixieState?.savedEvent) {
                 pixieState?.savedEvent?.let { rec ->
@@ -415,6 +420,19 @@ fun CruiseNavHost(container: AppContainer) {
                                     if (s.keypadCollapsed) R.string.pixie_expand_keypad
                                     else R.string.pixie_collapse_keypad
                                 )
+                            )
+                        }
+                        if (s.tab == PixieTab.GIVEN) {
+                            GivenList(
+                                state = s,
+                                onToggleViewMode = vm::onToggleViewMode,
+                                onEditRecord = { editTarget = it },
+                            )
+                        } else {
+                            ReceivedList(
+                                state = s,
+                                onEditRecord = { editTarget = it },
+                                onToggleReplied = vm::onToggleReplied,
                             )
                         }
                     }
