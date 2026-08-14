@@ -112,6 +112,7 @@
     <string name="pixie_open">仙尘交换记录</string>
     <string name="pixie_back">返回</string>
     <string name="pixie_deck_label">楼层</string>
+    <string name="pixie_deck_format">Deck %1$d</string>
     <string name="pixie_room_hint">房间号</string>
     <string name="pixie_keypad_clear">清空</string>
     <string name="pixie_keypad_backspace">退格</string>

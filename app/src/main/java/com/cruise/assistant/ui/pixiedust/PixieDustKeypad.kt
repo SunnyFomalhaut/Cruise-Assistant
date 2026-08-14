@@ -149,12 +149,12 @@ private fun DeckDropdown(deck: Int, deckRange: IntRange, onDeckChange: (Int) -> 
     var expanded by remember { mutableStateOf(false) }
     Box {
         OutlinedButton(onClick = { expanded = true }) {
-            Text("Deck $deck")
+            Text(stringResource(R.string.pixie_deck_format, deck))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             deckRange.forEach { d ->
                 DropdownMenuItem(
-                    text = { Text("Deck $d") },
+                    text = { Text(stringResource(R.string.pixie_deck_format, d)) },
                     onClick = {
                         expanded = false
                         onDeckChange(d)
