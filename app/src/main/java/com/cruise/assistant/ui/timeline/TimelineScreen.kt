@@ -1,38 +1,45 @@
 package com.cruise.assistant.ui.timeline
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,14 +50,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LANE_COUNT
 import com.cruise.assistant.domain.minuteToDp
+import com.cruise.assistant.ui.theme.CruiseAzure
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -93,60 +111,123 @@ fun TimelineScreen(
     Scaffold(
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
-                SmallFloatingActionButton(onClick = onOpenPixieDust) {
+                SmallFloatingActionButton(
+                    onClick = onOpenPixieDust,
+                    containerColor = CruiseAzureContainer,
+                    contentColor = CruiseMarine,
+                    shape = RoundedCornerShape(12.dp),
+                ) {
                     Icon(
                         Icons.Outlined.AutoAwesome,
                         contentDescription = stringResource(R.string.pixie_open),
                     )
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(14.dp))
                 if (!state.isFinalized) {
-                    FloatingActionButton(onClick = { onAddEvent(defaultStartMinute(state)) }) {
+                    FloatingActionButton(
+                        onClick = { onAddEvent(defaultStartMinute(state)) },
+                        containerColor = CruiseAzure,
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_event))
                     }
                 }
             }
         },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
+        Column(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             // ---- 顶栏 ----
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            state.selectedDate.format(HEADER_FMT),
+                            text = state.selectedDate.format(HEADER_FMT),
                             style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Slate900,
                         )
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(8.dp))
                         Text(
-                            state.selectedDate.dayOfWeek
-                                .getDisplayName(TextStyle.SHORT, Locale.CHINA),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = state.selectedDate.dayOfWeek
+                                .getDisplayName(TextStyle.FULL, Locale.CHINA),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = Slate500,
                         )
                     }
-                    state.voyage?.dayIndexOf(state.selectedDate)?.let { index ->
-                        Text(
-                            stringResource(R.string.day_index_format, index, state.voyage.dayCount),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    state.voyage?.let { voyage ->
+                        val dayIdx = voyage.dayIndexOf(state.selectedDate)
+                        if (dayIdx != null) {
+                            Spacer(Modifier.height(2.dp))
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Slate100)
+                                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = "🚢 ${voyage.shipName?.ifEmpty { "游轮" } ?: "游轮"} · " +
+                                        stringResource(R.string.day_index_format, dayIdx, voyage.dayCount),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontSize = 11.sp,
+                                    color = CruiseMarine,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
+                        }
                     }
                 }
-                IconButton(onClick = onOpenPixieDust) {
-                    Icon(
-                        Icons.Outlined.AutoAwesome,
-                        contentDescription = stringResource(R.string.pixie_open),
-                    )
-                }
-                IconButton(onClick = onOpenDisplayRange) {
-                    Icon(Icons.Outlined.Schedule, contentDescription = stringResource(R.string.display_range_title))
-                }
-                IconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings))
+
+                // 快捷操作按钮组（微毛玻璃圆角底）
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    IconButton(
+                        onClick = onOpenPixieDust,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Slate100),
+                    ) {
+                        Icon(
+                            Icons.Outlined.AutoAwesome,
+                            contentDescription = stringResource(R.string.pixie_open),
+                            tint = CruiseMarine,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    IconButton(
+                        onClick = onOpenDisplayRange,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Slate100),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Schedule,
+                            contentDescription = stringResource(R.string.display_range_title),
+                            tint = Slate700,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    IconButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Slate100),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Settings,
+                            contentDescription = stringResource(R.string.settings),
+                            tint = Slate700,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                 }
             }
 
@@ -160,46 +241,99 @@ fun TimelineScreen(
                 )
             }
 
-            // ---- 定稿状态条（中间：跳到当前时间，仅航次内显示）----
+            // ---- 定稿状态与操作条 ----
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (state.isFinalized) {
-                    Text(
-                        stringResource(R.string.finalized_badge),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(CruiseAzureContainer)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            tint = CruiseMarine,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            stringResource(R.string.finalized_badge),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = CruiseMarine,
+                        )
+                    }
                 } else {
-                    Spacer(Modifier.weight(1f))
+                    Text(
+                        text = "3 车道规划中",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Slate500,
+                    )
                 }
+
+                Spacer(Modifier.weight(1f))
+
                 if (state.todayInVoyage) {
-                    // 显眼的"跳到当前时间"：主色调填充按钮 + 时钟图标，船上随时看现在
+                    // "跳到当前时间"胶囊按钮
                     FilledTonalButton(
                         onClick = onJumpToNow,
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = if (state.isToday) CruiseAzureContainer else Slate100,
+                            contentColor = if (state.isToday) CruiseMarine else Slate700,
+                        ),
                     ) {
                         Icon(
                             Icons.Outlined.Schedule,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(14.dp),
                         )
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text(
                             stringResource(R.string.jump_to_now),
                             style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
                 }
+
                 Spacer(Modifier.weight(1f))
+
                 if (state.isFinalized) {
-                    TextButton(onClick = onUnlockDay) { Text(stringResource(R.string.unlock)) }
+                    TextButton(
+                        onClick = onUnlockDay,
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.unlock),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = CruiseAzure,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 } else {
-                    TextButton(onClick = onGeneratePlan) {
-                        Text(stringResource(R.string.generate_plan))
+                    Button(
+                        onClick = onGeneratePlan,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = CruiseAzure,
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Text(
+                            stringResource(R.string.generate_plan),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
                     }
                 }
             }
@@ -209,7 +343,7 @@ fun TimelineScreen(
                 NowBanner(state.ongoing, state.next, state.categories)
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = Slate200)
 
             // ---- 范围外提示 ----
             if (state.layout.hiddenBefore > 0) {
@@ -222,24 +356,28 @@ fun TimelineScreen(
             // ---- 时间轴主体 ----
             if (state.events.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.empty_day),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "🗓️",
+                            fontSize = 32.sp,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.empty_day),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Slate500,
+                        )
+                    }
                 }
             } else {
                 Box(Modifier.weight(1f).verticalScroll(scrollState)) {
                     Row(Modifier.fillMaxWidth().height(state.layout.totalHeightDp.dp)) {
                         TimeRuler(state.layout)
-                        // 栏区可横向平移：内容总宽 = 3 × laneWidthDp（≈1.2× 屏宽），
-                        // 默认位置第 1、2 栏全显、第 3 栏露出一半；左右滑动看全各栏。
-                        // 定稿模式单栏满宽、不滚动。
                         BoxWithConstraints(Modifier.weight(1f)) {
                             val laneAreaWidth = if (state.isFinalized) {
                                 maxWidth
                             } else {
-                                maxWidth * LANE_SCROLL_FACTOR // 1.2f
+                                maxWidth * LANE_SCROLL_FACTOR
                             }
                             val laneScrollState = rememberScrollState()
                             Box(
@@ -266,7 +404,6 @@ fun TimelineScreen(
                                     onEventLongClick = { event -> if (!state.isFinalized) menuEvent = event },
                                     menuFor = menuEvent,
                                     menuContent = { event ->
-                                        // 长按菜单：换栏 / 编辑 / 删除（锚定到被按卡片）
                                         DropdownMenu(expanded = true, onDismissRequest = { menuEvent = null }) {
                                             if (!state.isFinalized && !event.isSystemGenerated) {
                                                 DropdownMenuItem(
@@ -307,7 +444,6 @@ fun TimelineScreen(
                                                 DropdownMenuItem(
                                                     text = { Text(stringResource(R.string.delete)) },
                                                     onClick = {
-                                                        // 选"仅本日 / 所有重复项"是 Task 8 的弹窗职责，这里先固定仅本日。
                                                         onDeleteEvent(event, RecurrenceScope.THIS_DAY_ONLY)
                                                         menuEvent = null
                                                     },
@@ -341,13 +477,15 @@ private fun HiddenHint(text: String, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .background(CruiseAzureContainer.copy(alpha = 0.5f))
+            .padding(horizontal = 14.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text, style = MaterialTheme.typography.labelSmall)
-        TextButton(onClick = onClick) { Text(stringResource(R.string.show_full_day)) }
+        Text(text, style = MaterialTheme.typography.labelSmall, color = CruiseMarine)
+        TextButton(onClick = onClick) {
+            Text(stringResource(R.string.show_full_day), style = MaterialTheme.typography.labelSmall, color = CruiseAzure)
+        }
     }
 }
 
@@ -357,12 +495,12 @@ private fun defaultStartMinute(state: TimelineUiState): Int =
         ((state.nowMinute / 15) + 1) * 15
     } else {
         state.layout.rangeStartMinute
-    // 上限 1409（23:29）：默认 30 分钟事件以 ≤23:59 结束，避免一打开就是"结束早于开始"
     }.coerceIn(0, 1409)
 
 @Composable
 fun TimelineLoading() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(color = CruiseAzure)
     }
 }
+
