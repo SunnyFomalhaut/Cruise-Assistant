@@ -1,5 +1,8 @@
 package com.cruise.assistant.ui.pixiedust
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Link
@@ -18,19 +22,33 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.LevelCount
 import com.cruise.assistant.domain.levelCountsOf
+import com.cruise.assistant.ui.theme.CruiseAzure
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 
 /** 顶栏（返回/tab/齿轮）+ 分等级统计条。内容区由 content 槽位填充。 */
 @Composable
@@ -44,36 +62,89 @@ fun PixieDustScreen(
 ) {
     if (state == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = CruiseAzure)
         }
         return
     }
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // ---- 顶栏：返回 / 双 tab / 等级管理齿轮 ----
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.pixie_back))
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Slate100),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.pixie_back),
+                    tint = Slate900,
+                    modifier = Modifier.size(20.dp),
+                )
             }
+
+            Spacer(Modifier.width(8.dp))
+
             TabRow(
                 selectedTabIndex = if (state.tab == PixieTab.GIVEN) 0 else 1,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(14.dp)),
+                containerColor = Slate100,
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[if (state.tab == PixieTab.GIVEN) 0 else 1]),
+                        color = CruiseAzure,
+                        height = 3.dp,
+                    )
+                },
+                divider = {},
             ) {
                 Tab(
                     selected = state.tab == PixieTab.GIVEN,
                     onClick = { if (state.tab != PixieTab.GIVEN) onTabChange(PixieTab.GIVEN) },
-                    text = { Text(stringResource(R.string.pixie_tab_given)) },
+                    text = {
+                        Text(
+                            stringResource(R.string.pixie_tab_given),
+                            fontWeight = if (state.tab == PixieTab.GIVEN) FontWeight.Bold else FontWeight.Normal,
+                            color = if (state.tab == PixieTab.GIVEN) CruiseMarine else Slate500,
+                        )
+                    },
                 )
                 Tab(
                     selected = state.tab == PixieTab.RECEIVED,
                     onClick = { if (state.tab != PixieTab.RECEIVED) onTabChange(PixieTab.RECEIVED) },
-                    text = { Text(stringResource(R.string.pixie_tab_received)) },
+                    text = {
+                        Text(
+                            stringResource(R.string.pixie_tab_received),
+                            fontWeight = if (state.tab == PixieTab.RECEIVED) FontWeight.Bold else FontWeight.Normal,
+                            color = if (state.tab == PixieTab.RECEIVED) CruiseMarine else Slate500,
+                        )
+                    },
                 )
             }
-            IconButton(onClick = onOpenLevelManager) {
-                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.pixie_manage_levels))
+
+            Spacer(Modifier.width(8.dp))
+
+            IconButton(
+                onClick = onOpenLevelManager,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Slate100),
+            ) {
+                Icon(
+                    Icons.Outlined.Settings,
+                    contentDescription = stringResource(R.string.pixie_manage_levels),
+                    tint = Slate700,
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
 
@@ -88,29 +159,55 @@ fun PixieDustScreen(
 /** 发出tab：发出总数+分等级；收到tab：收到总数+待回礼数（未回礼分等级，贵重在前）。末尾联动检视入口。 */
 @Composable
 private fun PixieStatBar(state: PixieDustUiState, onOpenLinkage: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
-        if (state.tab == PixieTab.GIVEN) {
-            Text(
-                stringResource(R.string.pixie_given_count_format, state.given.size),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            LevelCountChips(levelCountsOf(state.given, state.levels))
-        } else {
-            val unreplied = state.received.count { !it.replied }
-            Text(
-                stringResource(R.string.pixie_received_count_format, state.received.size) +
-                    " · " +
-                    stringResource(R.string.pixie_unreplied_count_format, unreplied),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            LevelCountChips(levelCountsOf(state.received.filter { !it.replied }, state.levels))
-        }
-        Spacer(Modifier.weight(1f))
-        IconButton(onClick = onOpenLinkage) {
-            Icon(Icons.Outlined.Link, contentDescription = stringResource(R.string.pixie_linkage_view))
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (state.tab == PixieTab.GIVEN) {
+                Text(
+                    stringResource(R.string.pixie_given_count_format, state.given.size),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Slate900,
+                )
+                LevelCountChips(levelCountsOf(state.given, state.levels))
+            } else {
+                val unreplied = state.received.count { !it.replied }
+                Text(
+                    stringResource(R.string.pixie_received_count_format, state.received.size) +
+                        " · " +
+                        stringResource(R.string.pixie_unreplied_count_format, unreplied),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Slate900,
+                )
+                LevelCountChips(levelCountsOf(state.received.filter { !it.replied }, state.levels))
+            }
+            Spacer(Modifier.weight(1f))
+            IconButton(
+                onClick = onOpenLinkage,
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(CruiseAzureContainer),
+            ) {
+                Icon(
+                    Icons.Outlined.Link,
+                    contentDescription = stringResource(R.string.pixie_linkage_view),
+                    tint = CruiseMarine,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
     }
 }
@@ -120,18 +217,26 @@ private fun PixieStatBar(state: PixieDustUiState, onOpenLinkage: () -> Unit) {
 internal fun LevelCountChips(counts: List<LevelCount>) {
     counts.forEach { c ->
         Spacer(Modifier.width(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(Slate100)
+                .padding(horizontal = 5.dp, vertical = 2.dp),
+        ) {
             Surface(
                 shape = CircleShape,
                 color = Color(c.level.colorArgb),
                 modifier = Modifier.size(8.dp),
             ) {}
-            Spacer(Modifier.width(3.dp))
+            Spacer(Modifier.width(4.dp))
             Text(
                 "${c.count}",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Slate700,
             )
         }
     }
 }
+

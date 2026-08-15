@@ -1,21 +1,30 @@
 package com.cruise.assistant.ui.pixiedust
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,12 +36,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.PixieDustRecord
+import com.cruise.assistant.ui.theme.CruiseAzure
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -58,7 +77,7 @@ fun GivenList(
 ) {
     Column(Modifier.fillMaxSize()) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -66,8 +85,8 @@ fun GivenList(
                     if (state.viewMode == GivenViewMode.GROUPED) R.string.pixie_view_grouped
                     else R.string.pixie_view_flow
                 ),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+                color = Slate500,
                 modifier = Modifier.weight(1f),
             )
             TextButton(onClick = onToggleViewMode) {
@@ -75,7 +94,10 @@ fun GivenList(
                     stringResource(
                         if (state.viewMode == GivenViewMode.GROUPED) R.string.pixie_view_flow
                         else R.string.pixie_view_grouped
-                    )
+                    ),
+                    color = CruiseAzure,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }
@@ -84,14 +106,17 @@ fun GivenList(
         } else if (state.viewMode == GivenViewMode.GROUPED) {
             GroupedView(state, onEditRecord)
         } else {
-            LazyColumn(Modifier.fillMaxSize()) {
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 items(state.given, key = { it.id }) { rec ->
-                    RecordRow(
+                    RecordCard(
                         state = state,
                         record = rec,
                         onClick = { onEditRecord(rec) },
                     )
-                    HorizontalDivider()
                 }
             }
         }
@@ -101,43 +126,62 @@ fun GivenList(
 @Composable
 private fun GroupedView(state: PixieDustUiState, onEditRecord: (PixieDustRecord) -> Unit) {
     var expandedKey by remember { mutableStateOf<String?>(null) }
-    LazyColumn(Modifier.fillMaxSize()) {
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         items(state.grouped, key = { "${it.deck}-${it.room}" }) { group ->
             val key = "${group.deck}-${group.room}"
-            Column(Modifier.fillMaxWidth().clickable {
-                expandedKey = if (expandedKey == key) null else key
-            }) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "${group.deck}${group.room}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        group.levelCounts.joinToString("  ") { "${it.level.name}×${it.count}" },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        formatTs(group.lastTimestamp) + " · " +
-                            stringResource(R.string.pixie_group_total_format, group.total),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (expandedKey == key) {
-                    state.given
-                        .filter { it.deck == group.deck && it.room == group.room }
-                        .forEach { rec ->
-                            RecordRow(state = state, record = rec, onClick = { onEditRecord(rec) })
+            val isExpanded = expandedKey == key
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.fillMaxWidth().clickable {
+                    expandedKey = if (isExpanded) null else key
+                }) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = CruiseAzureContainer,
+                        ) {
+                            Text(
+                                "${group.deck}${group.room}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = CruiseMarine,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            )
                         }
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            group.levelCounts.joinToString("  ") { "${it.level.name}×${it.count}" },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Slate700,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            formatTs(group.lastTimestamp) + " · " +
+                                stringResource(R.string.pixie_group_total_format, group.total),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Slate500,
+                        )
+                    }
+                    if (isExpanded) {
+                        HorizontalDivider(color = Slate200)
+                        state.given
+                            .filter { it.deck == group.deck && it.room == group.room }
+                            .forEach { rec ->
+                                RecordCardRow(state = state, record = rec, onClick = { onEditRecord(rec) })
+                            }
+                    }
                 }
-                HorizontalDivider()
             }
         }
     }
@@ -155,77 +199,135 @@ fun ReceivedList(
         EmptyHint(stringResource(R.string.pixie_empty_received))
         return
     }
-    LazyColumn(Modifier.fillMaxSize()) {
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         items(state.received, key = { it.id }) { rec ->
-            Row(
-                Modifier.fillMaxWidth().clickable { onEditRecord(rec) }.padding(horizontal = 16.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                LevelDot(levelColorOf(state, rec))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "${rec.deck}${rec.room}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            levelNameOf(state, rec) + " · " + formatTs(rec.timestamp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                Row(
+                    Modifier.fillMaxWidth().clickable { onEditRecord(rec) }.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LevelDot(levelColorOf(state, rec))
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "${rec.deck}${rec.room}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Slate900,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(levelColorOf(state, rec).copy(alpha = 0.15f))
+                                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                            ) {
+                                Text(
+                                    levelNameOf(state, rec),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Slate900,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                formatTs(rec.timestamp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Slate500,
+                            )
+                        }
+                        if (rec.note.isNotEmpty()) {
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                rec.note,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Slate700,
+                            )
+                        }
                     }
-                    if (rec.note.isNotEmpty()) {
-                        Text(
-                            rec.note,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    Checkbox(
+                        checked = rec.replied,
+                        onCheckedChange = { checked ->
+                            if (checked) onRequestReply(rec)
+                            else onCancelReply(rec.id)
+                        },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = CruiseAzure,
+                            checkmarkColor = Color.White,
+                        ),
+                    )
                 }
-                Checkbox(
-                    checked = rec.replied,
-                    onCheckedChange = { checked ->
-                        if (checked) onRequestReply(rec)
-                        else onCancelReply(rec.id)
-                    },
-                )
             }
-            HorizontalDivider()
         }
     }
 }
 
-/** 流水行：房号 + 等级 + 日期（+备注） */
+/** 独立流水卡片 */
 @Composable
-private fun RecordRow(state: PixieDustUiState, record: PixieDustRecord, onClick: () -> Unit) {
+private fun RecordCard(state: PixieDustUiState, record: PixieDustRecord, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        RecordCardRow(state = state, record = record, onClick = onClick)
+    }
+}
+
+@Composable
+private fun RecordCardRow(state: PixieDustUiState, record: PixieDustRecord, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 4.dp),
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LevelDot(levelColorOf(state, record))
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "${record.deck}${record.room}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+                    color = Slate900,
                 )
                 Spacer(Modifier.width(8.dp))
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(levelColorOf(state, record).copy(alpha = 0.15f))
+                        .padding(horizontal = 6.dp, vertical = 1.dp),
+                ) {
+                    Text(
+                        levelNameOf(state, record),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Slate900,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Spacer(Modifier.width(6.dp))
                 Text(
-                    levelNameOf(state, record) + " · " + formatTs(record.timestamp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    formatTs(record.timestamp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Slate500,
                 )
             }
             if (record.note.isNotEmpty()) {
+                Spacer(Modifier.height(2.dp))
                 Text(
                     record.note,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Slate700,
                 )
             }
         }
@@ -240,10 +342,15 @@ internal fun LevelDot(color: Color) {
 @Composable
 private fun EmptyHint(text: String) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("✨", fontSize = 32.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate500,
+            )
+        }
     }
 }
+
