@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -38,6 +39,7 @@ fun PixieDustScreen(
     onBack: () -> Unit,
     onTabChange: (PixieTab) -> Unit,
     onOpenLevelManager: () -> Unit,
+    onOpenLinkage: () -> Unit,
     content: @Composable (PixieDustUiState) -> Unit,
 ) {
     if (state == null) {
@@ -76,16 +78,16 @@ fun PixieDustScreen(
         }
 
         // ---- 统计条 ----
-        PixieStatBar(state)
+        PixieStatBar(state, onOpenLinkage)
 
         // ---- 内容（键盘 + 列表）----
         content(state)
     }
 }
 
-/** 发出tab：发出总数+分等级；收到tab：收到总数+待回礼数（未回礼分等级，贵重在前） */
+/** 发出tab：发出总数+分等级；收到tab：收到总数+待回礼数（未回礼分等级，贵重在前）。末尾联动检视入口。 */
 @Composable
-private fun PixieStatBar(state: PixieDustUiState) {
+private fun PixieStatBar(state: PixieDustUiState, onOpenLinkage: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -105,6 +107,10 @@ private fun PixieStatBar(state: PixieDustUiState) {
                 style = MaterialTheme.typography.titleSmall,
             )
             LevelCountChips(levelCountsOf(state.received.filter { !it.replied }, state.levels))
+        }
+        Spacer(Modifier.weight(1f))
+        IconButton(onClick = onOpenLinkage) {
+            Icon(Icons.Outlined.Link, contentDescription = stringResource(R.string.pixie_linkage_view))
         }
     }
 }

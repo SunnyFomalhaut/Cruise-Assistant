@@ -41,6 +41,7 @@ import com.cruise.assistant.ui.event.EventSheetViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
 import com.cruise.assistant.ui.pixiedust.GivenList
+import com.cruise.assistant.ui.pixiedust.LinkageViewDialog
 import com.cruise.assistant.ui.pixiedust.PixieDustEditDialog
 import com.cruise.assistant.ui.pixiedust.PixieDustKeypad
 import com.cruise.assistant.ui.pixiedust.PixieDustScreen
@@ -385,6 +386,7 @@ fun CruiseNavHost(container: AppContainer) {
             // 编辑弹窗目标（Task 8 消费）；当前无消费者，先留存以待编辑弹窗接入
             var editTarget by remember { mutableStateOf<PixieDustRecord?>(null) }
             var showLevelSheet by remember { mutableStateOf(false) }
+            var showLinkage by remember { mutableStateOf(false) }
             val context = LocalContext.current
             LaunchedEffect(pixieState?.savedEvent) {
                 pixieState?.savedEvent?.let { rec ->
@@ -403,6 +405,7 @@ fun CruiseNavHost(container: AppContainer) {
                 onBack = { navController.popBackStack() },
                 onTabChange = vm::onTabChange,
                 onOpenLevelManager = { showLevelSheet = true },
+                onOpenLinkage = { showLinkage = true },
                 content = { s ->
                     Column(Modifier.fillMaxSize()) {
                         if (!s.keypadCollapsed) {
@@ -497,6 +500,13 @@ fun CruiseNavHost(container: AppContainer) {
                     countByLevel = vm::countByLevel,
                     onDismiss = { showLevelSheet = false },
                 )
+            }
+
+            // ---- 联动检视（统计条末尾链接图标触发）：只读展示，pixieState 为空不渲染 ----
+            if (showLinkage) {
+                pixieState?.let { s ->
+                    LinkageViewDialog(state = s, onDismiss = { showLinkage = false })
+                }
             }
         }
         composable(Routes.SETTINGS) {
