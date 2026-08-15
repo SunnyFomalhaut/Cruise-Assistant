@@ -131,6 +131,7 @@ fun PixieDustEditDialog(
                                 if (checked) onRequestReply(build())  // 上报请求，弹窗流程由外层接管
                                 else replied = false
                             },
+                            enabled = isValidRoomInput(room),
                         )
                         Text(stringResource(R.string.pixie_replied))
                     }
