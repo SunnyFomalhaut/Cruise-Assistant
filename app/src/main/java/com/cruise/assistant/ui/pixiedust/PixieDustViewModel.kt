@@ -10,14 +10,18 @@ import com.cruise.assistant.domain.PixieDustDirection
 import com.cruise.assistant.domain.PixieDustRecord
 import com.cruise.assistant.domain.PixieLevel
 import com.cruise.assistant.domain.RoomGroup
-import com.cruise.assistant.domain.isValidRoomInput
+import com.cruise.assistant.domain.RoomPair
+import com.cruise.assistant.domain.autoReplyTarget
 import com.cruise.assistant.domain.groupGivenByRoom
+import com.cruise.assistant.domain.isValidRoomInput
 import com.cruise.assistant.domain.lastLevelForRoom
+import com.cruise.assistant.domain.pairByRoom
 import com.cruise.assistant.domain.sortReceived
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -51,6 +55,12 @@ data class PixieDustUiState(
     val roomHistory: RoomHistory? = null,
     /** 一次性 toast 事件：刚存入的记录。UI 显示后调 onToastShown() 清空 */
     val savedEvent: PixieDustRecord? = null,
+    /** 非 null 时 UI 显示回礼等级弹窗（勾选→弹窗两步流） */
+    val pendingReply: PixieDustRecord? = null,
+    /** 非 null 时 UI toast 提示联动勾选；显示后调 onAutoReplyToastShown() */
+    val autoRepliedRoom: String? = null,
+    /** 联动检视图数据 */
+    val roomPairs: List<RoomPair> = emptyList(),
 )
 
 class PixieDustViewModel(
@@ -68,6 +78,8 @@ class PixieDustViewModel(
     private val roomInput = MutableStateFlow("")
     private val selectedLevelId = MutableStateFlow<Long?>(null)
     private val savedEvent = MutableStateFlow<PixieDustRecord?>(null)
+    private val pendingReply = MutableStateFlow<PixieDustRecord?>(null)
+    private val autoRepliedRoom = MutableStateFlow<String?>(null)
 
     init {
         // 等级列表加载/变化时：无选择 → 默认选第一个；当前选择被删 → 回落到第一个
@@ -81,9 +93,10 @@ class PixieDustViewModel(
         }.launchIn(viewModelScope)
     }
 
-    /** 6 个 UI 输入流打包（combine 类型化重载最多 5 个） */
+    /** 8 个 UI 输入流打包（combine 类型化重载最多 5 个） */
     private val ui = combine(
         tab, viewMode, keypadCollapsed, roomInput, selectedLevelId, deck, savedEvent,
+        pendingReply, autoRepliedRoom,
     ) { arr ->
         UiInputs(
             tab = arr[0] as PixieTab,
@@ -93,6 +106,8 @@ class PixieDustViewModel(
             selectedLevelId = arr[4] as Long?,
             deck = arr[5] as Int?,
             savedEvent = arr[6] as PixieDustRecord?,
+            pendingReply = arr[7] as PixieDustRecord?,
+            autoRepliedRoom = arr[8] as String?,
         )
     }
 
@@ -104,6 +119,8 @@ class PixieDustViewModel(
         val selectedLevelId: Long?,
         val deck: Int?,
         val savedEvent: PixieDustRecord?,
+        val pendingReply: PixieDustRecord?,
+        val autoRepliedRoom: String?,
     )
 
     val state: StateFlow<PixieDustUiState?> = combine(
@@ -148,6 +165,11 @@ class PixieDustViewModel(
             keypadCollapsed = input.keypadCollapsed,
             roomHistory = roomHistory,
             savedEvent = input.savedEvent,
+            pendingReply = input.pendingReply,
+            autoRepliedRoom = input.autoRepliedRoom,
+            roomPairs = pairByRoom(given, dust.filter { it.direction == PixieDustDirection.RECEIVED }) { rec ->
+                levels.firstOrNull { it.id == rec.levelId }?.rank ?: 0
+            },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -206,6 +228,17 @@ class PixieDustViewModel(
             dustRepository.save(record)
             savedEvent.value = record
             roomInput.value = ""
+            // 联动方向一：同房间最早的未回礼收到 → 自动勾选。
+            // 直接从 DAO 拉最新全量（state 可能未刷新）。
+            val all = dustRepository.observeAll().first()
+            val target = autoReplyTarget(
+                all.filter { it.direction == PixieDustDirection.RECEIVED },
+                record.deck, record.room,
+            )
+            if (target != null) {
+                dustRepository.save(target.copy(replied = true))
+                autoRepliedRoom.value = "${record.deck}${record.room}"
+            }
         }
     }
 
@@ -220,7 +253,51 @@ class PixieDustViewModel(
 
     fun onToggleReplied(id: Long, replied: Boolean) {
         val record = state.value?.received?.firstOrNull { it.id == id } ?: return
-        viewModelScope.launch { dustRepository.save(record.copy(replied = replied)) }
+        if (replied) {
+            onRequestReply(record)  // 勾选走弹窗两步流
+        } else {
+            viewModelScope.launch { dustRepository.save(record.copy(replied = false)) }
+        }
+    }
+
+    /** 列表/编辑弹窗勾选"已回礼" → 进入弹窗两步流（不立即写库） */
+    fun onRequestReply(record: PixieDustRecord) {
+        pendingReply.value = record
+    }
+
+    /**
+     * 回礼弹窗确认。level == null 表示"仅勾选"；否则勾选 + 创建一条 GIVEN 记录
+     * （不触发方向一联动——单向无循环）。
+     */
+    fun confirmReply(level: PixieLevel?) {
+        val record = pendingReply.value ?: return
+        pendingReply.value = null
+        viewModelScope.launch {
+            dustRepository.save(record.copy(replied = true))
+            if (level != null) {
+                dustRepository.save(
+                    PixieDustRecord(
+                        direction = PixieDustDirection.GIVEN,
+                        deck = record.deck,
+                        room = record.room,
+                        levelId = level.id,
+                        levelNameSnapshot = level.name,
+                        replied = false,
+                        note = "",
+                        timestamp = nowMs(),
+                    ),
+                )
+            }
+        }
+    }
+
+    /** 回礼弹窗取消：勾选回退，不写库 */
+    fun cancelReply() {
+        pendingReply.value = null
+    }
+
+    fun onAutoReplyToastShown() {
+        autoRepliedRoom.value = null
     }
 
     /** 编辑弹窗保存：保留原 timestamp（copy 自带） */

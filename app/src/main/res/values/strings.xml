@@ -145,6 +145,15 @@
     <string name="pixie_level_move_up">上移</string>
     <string name="pixie_level_move_down">下移</string>
     <string name="pixie_cancel">取消</string>
+    <string name="pixie_auto_replied_format">已自动勾选 %1$s 的回礼</string>
+    <string name="pixie_reply_level_title_format">%1$s · 选择回礼等级</string>
+    <string name="pixie_reply_confirm">确认并记录发出</string>
+    <string name="pixie_reply_only_check">仅勾选</string>
+    <string name="pixie_linkage_view">联动检视</string>
+    <string name="pixie_linkage_empty">还没有仙尘记录</string>
+    <string name="pixie_linkage_given_label">发出 %1$d</string>
+    <string name="pixie_linkage_received_label">收到 %1$d</string>
+    <string name="pixie_linkage_unreplied_format">待回礼 %1$d</string>
 
     <!-- 设置 -->
     <string name="settings">设置</string>
