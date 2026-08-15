@@ -48,6 +48,7 @@ import com.cruise.assistant.ui.pixiedust.PixieDustViewModel
 import com.cruise.assistant.ui.pixiedust.PixieLevelSheet
 import com.cruise.assistant.ui.pixiedust.PixieTab
 import com.cruise.assistant.ui.pixiedust.ReceivedList
+import com.cruise.assistant.ui.pixiedust.ReplyLevelDialog
 import com.cruise.assistant.ui.settings.DisplayRangePanel
 import com.cruise.assistant.ui.settings.SettingsScreen
 import com.cruise.assistant.ui.settings.SettingsViewModel
@@ -436,7 +437,8 @@ fun CruiseNavHost(container: AppContainer) {
                             ReceivedList(
                                 state = s,
                                 onEditRecord = { editTarget = it },
-                                onToggleReplied = vm::onToggleReplied,
+                                onRequestReply = { vm.onRequestReply(it) },
+                                onCancelReply = { vm.onToggleReplied(it, false) },
                             )
                         }
                     }
@@ -450,6 +452,11 @@ fun CruiseNavHost(container: AppContainer) {
                     isReceived = target.direction == PixieDustDirection.RECEIVED,
                     deckRange = pixieState?.deckRange ?: 1..20,
                     levels = pixieState?.levels ?: emptyList(),
+                    onRequestReply = {
+                        val target = target  // 当前编辑对象
+                        editTarget = null    // 先关编辑弹窗
+                        vm.onRequestReply(target)
+                    },
                     onSave = {
                         vm.saveEdited(it)
                         editTarget = null
@@ -460,6 +467,24 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onDismiss = { editTarget = null },
                 )
+            }
+
+            // ---- 回礼等级弹窗（联动方向二）----
+            pixieState?.pendingReply?.let { pending ->
+                ReplyLevelDialog(
+                    record = pending,
+                    levels = pixieState?.levels ?: emptyList(),
+                    onConfirm = { vm.confirmReply(it) },
+                    onDismiss = { vm.cancelReply() },
+                )
+            }
+
+            // ---- 联动自动勾选 toast ----
+            LaunchedEffect(pixieState?.autoRepliedRoom) {
+                pixieState?.autoRepliedRoom?.let { roomLabel ->
+                    Toast.makeText(context, context.getString(R.string.pixie_auto_replied_format, roomLabel), Toast.LENGTH_SHORT).show()
+                    vm.onAutoReplyToastShown()
+                }
             }
 
             // ---- 等级管理弹层（Task 9）：齿轮触发 ----

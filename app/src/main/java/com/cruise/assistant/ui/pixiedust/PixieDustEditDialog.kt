@@ -39,6 +39,7 @@ fun PixieDustEditDialog(
     isReceived: Boolean,
     deckRange: IntRange,
     levels: List<PixieLevel>,
+    onRequestReply: () -> Unit,
     onSave: (PixieDustRecord) -> Unit,
     onDelete: (PixieDustRecord) -> Unit,
     onDismiss: () -> Unit,
@@ -124,7 +125,13 @@ fun PixieDustEditDialog(
                 }
                 if (isReceived) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = replied, onCheckedChange = { replied = it })
+                        Checkbox(
+                            checked = replied,
+                            onCheckedChange = { checked ->
+                                if (checked) onRequestReply()  // 上报请求，弹窗流程由外层接管
+                                else replied = false
+                            },
+                        )
                         Text(stringResource(R.string.pixie_replied))
                     }
                 }

@@ -148,7 +148,8 @@ private fun GroupedView(state: PixieDustUiState, onEditRecord: (PixieDustRecord)
 fun ReceivedList(
     state: PixieDustUiState,
     onEditRecord: (PixieDustRecord) -> Unit,
-    onToggleReplied: (Long, Boolean) -> Unit,
+    onRequestReply: (PixieDustRecord) -> Unit,
+    onCancelReply: (Long) -> Unit,
 ) {
     if (state.received.isEmpty()) {
         EmptyHint(stringResource(R.string.pixie_empty_received))
@@ -186,7 +187,10 @@ fun ReceivedList(
                 }
                 Checkbox(
                     checked = rec.replied,
-                    onCheckedChange = { onToggleReplied(rec.id, it) },
+                    onCheckedChange = { checked ->
+                        if (checked) onRequestReply(rec)
+                        else onCancelReply(rec.id)
+                    },
                 )
             }
             HorizontalDivider()
