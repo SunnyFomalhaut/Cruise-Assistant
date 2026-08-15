@@ -124,9 +124,25 @@ fun NowIndicator(layout: TimelineLayout, nowMinute: Int, modifier: Modifier = Mo
     val y = layout.minuteToDp(nowMinute)
     Box(
         modifier
-            .offset(y = y.dp)
+            .offset(y = y.dp - 4.dp)
             .fillMaxWidth()
-            .height(2.dp)
-            .background(NowRed),
-    )
+            .height(8.dp),
+    ) {
+        // 横贯线
+        Box(
+            Modifier
+                .offset(y = 3.dp)
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(NowRed),
+        )
+        // 头部圆点
+        Box(
+            Modifier
+                .offset(x = 0.dp, y = 0.dp)
+                .width(8.dp)
+                .height(8.dp)
+                .background(NowRed, shape = androidx.compose.foundation.shape.CircleShape),
+        )
+    }
 }

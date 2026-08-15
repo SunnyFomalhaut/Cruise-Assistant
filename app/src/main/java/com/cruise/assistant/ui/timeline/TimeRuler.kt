@@ -12,14 +12,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cruise.assistant.domain.TimelineLayout
 import com.cruise.assistant.domain.hourTicks
 import com.cruise.assistant.domain.minuteToDp
 import com.cruise.assistant.ui.theme.GridLine
 import com.cruise.assistant.ui.theme.GridLineHour
+import com.cruise.assistant.ui.theme.Slate400
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 
-val RULER_WIDTH = 56.dp
+val RULER_WIDTH = 52.dp
 
 /** 左侧时间刻度列。文字基线对齐刻度线；折叠段位置标一个 ⋯。 */
 @Composable
@@ -29,13 +34,10 @@ fun TimeRuler(layout: TimelineLayout, modifier: Modifier = Modifier) {
             Text(
                 text = if (isHalf) "%d:%02d".format(minute / 60, minute % 60) else "%02d:00".format(minute / 60),
                 // 半点用更小更浅的样式，与整点区分
-                style = if (isHalf) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
-                color = if (isHalf) {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                modifier = Modifier.offset(x = 8.dp, y = topDp.dp - 8.dp),
+                style = if (isHalf) MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp) else MaterialTheme.typography.labelMedium,
+                fontWeight = if (isHalf) FontWeight.Normal else FontWeight.SemiBold,
+                color = if (isHalf) Slate400 else Slate700,
+                modifier = Modifier.offset(x = 6.dp, y = topDp.dp - 8.dp),
             )
         }
         // 折叠掉的空时段标个 ⋯，让用户知道这里被压缩了
@@ -43,9 +45,9 @@ fun TimeRuler(layout: TimelineLayout, modifier: Modifier = Modifier) {
             Text(
                 text = "⋯",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = Slate400,
                 modifier = Modifier.offset(
-                    x = 20.dp,
+                    x = 18.dp,
                     y = (segment.topDp + segment.heightDp / 2f).dp - 8.dp,
                 ),
             )
@@ -53,7 +55,7 @@ fun TimeRuler(layout: TimelineLayout, modifier: Modifier = Modifier) {
     }
 }
 
-/** 事件区域背景：水平整点网格线 + 3 栏竖分隔线（截图1 的观感） */
+/** 事件区域背景：水平整点网格线 + 3 栏竖分隔线 */
 @Composable
 fun TimelineGrid(
     layout: TimelineLayout,
@@ -62,8 +64,7 @@ fun TimelineGrid(
 ) {
     val ticks = layout.hourTicks()
     Canvas(modifier.fillMaxSize()) {
-        // 横向网格线：整点 + 半点都画线。整点用更深更粗的线突出，半点用浅线
-        // （hourTicks 仅在 hourHeight >= 90 时包含半点，低于 90 密度不够只有整点）。
+        // 横向网格线：整点 + 半点都画线。整点用更清晰的线，半点用细线
         ticks.forEach { (_, topDp, isHalf) ->
             val y = topDp * density
             drawLine(
@@ -76,7 +77,7 @@ fun TimelineGrid(
         laneBoundaries.forEach { fraction ->
             val x = size.width * fraction
             drawLine(
-                color = GridLine.copy(alpha = 0.6f),
+                color = GridLineHour.copy(alpha = 0.8f),
                 start = Offset(x, 0f),
                 end = Offset(x, size.height),
                 strokeWidth = 1f,
@@ -84,3 +85,4 @@ fun TimelineGrid(
         }
     }
 }
+
