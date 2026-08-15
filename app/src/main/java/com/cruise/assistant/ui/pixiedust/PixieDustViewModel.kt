@@ -12,6 +12,7 @@ import com.cruise.assistant.domain.PixieLevel
 import com.cruise.assistant.domain.RoomGroup
 import com.cruise.assistant.domain.RoomPair
 import com.cruise.assistant.domain.autoReplyTarget
+import com.cruise.assistant.domain.fullRoom
 import com.cruise.assistant.domain.groupGivenByRoom
 import com.cruise.assistant.domain.isValidRoomInput
 import com.cruise.assistant.domain.lastLevelForRoom
@@ -93,7 +94,7 @@ class PixieDustViewModel(
         }.launchIn(viewModelScope)
     }
 
-    /** 8 个 UI 输入流打包（combine 类型化重载最多 5 个） */
+    /** 9 个 UI 输入流打包（combine 类型化重载最多 5 个） */
     private val ui = combine(
         tab, viewMode, keypadCollapsed, roomInput, selectedLevelId, deck, savedEvent,
         pendingReply, autoRepliedRoom,
@@ -228,16 +229,17 @@ class PixieDustViewModel(
             dustRepository.save(record)
             savedEvent.value = record
             roomInput.value = ""
-            // 联动方向一：同房间最早的未回礼收到 → 自动勾选。
-            // 直接从 DAO 拉最新全量（state 可能未刷新）。
-            val all = dustRepository.observeAll().first()
-            val target = autoReplyTarget(
-                all.filter { it.direction == PixieDustDirection.RECEIVED },
-                record.deck, record.room,
-            )
-            if (target != null) {
-                dustRepository.save(target.copy(replied = true))
-                autoRepliedRoom.value = "${record.deck}${record.room}"
+            // 联动方向一：仅发出记录触发（收到 tab 记一笔不该自勾自己）
+            if (record.direction == PixieDustDirection.GIVEN) {
+                val all = dustRepository.observeAll().first()
+                val target = autoReplyTarget(
+                    all.filter { it.direction == PixieDustDirection.RECEIVED },
+                    record.deck, record.room,
+                )
+                if (target != null) {
+                    dustRepository.save(target.copy(replied = true))
+                    autoRepliedRoom.value = record.fullRoom
+                }
             }
         }
     }
