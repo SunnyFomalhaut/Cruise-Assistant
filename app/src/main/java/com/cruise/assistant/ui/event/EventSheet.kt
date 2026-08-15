@@ -43,10 +43,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChipDefaults
 import com.cruise.assistant.R
+import com.cruise.assistant.ui.theme.CruiseAzure
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.locationPresetOptions
@@ -92,11 +104,13 @@ fun EventSheet(
                     if (state.isEditing) R.string.edit_event else R.string.add_event,
                 ),
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Slate900,
             )
             Spacer(Modifier.height(16.dp))
 
             // ---- 选择事项（截图2 的图标网格）----
-            Text(stringResource(R.string.select_category), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.select_category), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
             Spacer(Modifier.height(8.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
@@ -115,7 +129,7 @@ fun EventSheet(
                                     if (selected) {
                                         Color(category.colorArgb)
                                     } else {
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        Slate100
                                     },
                                 )
                                 .then(
@@ -130,32 +144,37 @@ fun EventSheet(
                             Icon(
                                 iconFor(category.iconKey),
                                 contentDescription = category.name,
-                                tint = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (selected) Color.White else Slate700,
                             )
                         }
+                        Spacer(Modifier.height(2.dp))
                         Text(
                             category.name,
                             style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selected) Slate900 else Slate700,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.Center,
                         )
                     }
                 }
-                // 末位"编辑"入口 → 类别弹窗（Task 9 落地内容，这里先只挂 flag）
+                // 末位"编辑"入口 → 类别弹窗
                 item {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
                             Modifier
                                 .size(52.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .background(Slate100)
                                 .clickable(onClick = onManageCategories),
                             contentAlignment = Alignment.Center,
-                        ) { Icon(Icons.Filled.Add, contentDescription = null) }
+                        ) { Icon(Icons.Filled.Add, contentDescription = null, tint = Slate700) }
+                        Spacer(Modifier.height(2.dp))
                         Text(
                             stringResource(R.string.manage_categories),
                             style = MaterialTheme.typography.labelSmall,
+                            color = Slate500,
                         )
                     }
                 }
@@ -167,6 +186,7 @@ fun EventSheet(
                 onValueChange = onTitleChange,
                 label = { Text(stringResource(R.string.event_title_hint)) },
                 singleLine = true,
+                shape = RoundedCornerShape(12.dp),
                 enabled = !state.isSystemEvent,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -176,27 +196,20 @@ fun EventSheet(
                 Text(
                     stringResource(R.string.system_event_time_only),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Slate500,
                 )
             }
 
-            // ---- 地点（新增，需求3）----
-            // 登船/下船按设计没有地点（deck/zone/placeName 均为 NULL），且系统事件规范是
-            // "只能改时间"。Fix round 2: 之前只强制显示值为"不设地点"，但真实 ViewModel 状态
-            // 未被锁定 —— 勾选框仍可被点击并把 state.noLocation 翻成 false，save() 读的是
-            // 真实状态而非显示值，于是登船会被写入 zone='MID' 的幽灵地点。改为整块不渲染，
-            // 结构上排除这条泄漏路径，而不是逐个控件禁用。
             if (!state.isSystemEvent) {
                 Spacer(Modifier.height(16.dp))
-                HorizontalDivider()
+                HorizontalDivider(color = Slate200)
                 Spacer(Modifier.height(16.dp))
 
                 // ---- 餐次二级选项（仅餐食类别且内置船显示）----
                 if (state.showMealPeriodRow) {
                     Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.meal_period_label), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.meal_period_label), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
                     Spacer(Modifier.height(6.dp))
-                    // FlowRow：7 个 chip 在窄屏（360dp）下换行而不是横向溢出裁剪
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -205,12 +218,20 @@ fun EventSheet(
                             selected = state.selectedMealPeriod == null,
                             onClick = { onMealPeriodSelect(null) },
                             label = { Text(stringResource(R.string.meal_period_all)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = CruiseAzureContainer,
+                                selectedLabelColor = CruiseMarine,
+                            ),
                         )
                         MealPeriod.entries.forEach { period ->
                             FilterChip(
                                 selected = state.selectedMealPeriod == period,
                                 onClick = { onMealPeriodSelect(period) },
                                 label = { Text(period.label) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = CruiseAzureContainer,
+                                    selectedLabelColor = CruiseMarine,
+                                ),
                             )
                         }
                     }
@@ -239,40 +260,42 @@ fun EventSheet(
             }
 
             Spacer(Modifier.height(16.dp))
-            HorizontalDivider()
+            HorizontalDivider(color = Slate200)
             Spacer(Modifier.height(16.dp))
 
-            // ---- 开始/结束时间（截图2 的双滚轮）----
+            // ---- 开始/结束时间 ----
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.start_time), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.start_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
                     Spacer(Modifier.height(6.dp))
                     TimeWheel(state.startTime, onStartChange, Modifier.fillMaxWidth())
                 }
                 Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.end_time), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.end_time), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
                     Spacer(Modifier.height(6.dp))
                     TimeWheel(state.endTime, onEndChange, Modifier.fillMaxWidth())
                 }
             }
 
-            // ---- 每日循环开关（新增，需求6）----
+            // ---- 每日循环开关 ----
             if (!state.isEditing) {
                 Spacer(Modifier.height(16.dp))
-                HorizontalDivider()
+                HorizontalDivider(color = Slate200)
                 Spacer(Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(
                             stringResource(R.string.recur_daily),
                             style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Slate900,
                         )
                         state.recurUntil?.let { until ->
                             if (state.recurring) {
                                 Text(
                                     stringResource(R.string.recur_until_format, until.format(RECUR_FMT)),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Slate500,
                                 )
                             }
                         }
@@ -294,8 +317,10 @@ fun EventSheet(
             Button(
                 onClick = onSave,
                 enabled = !state.saving,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = CruiseAzure),
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-            ) { Text(stringResource(R.string.confirm)) }
+            ) { Text(stringResource(R.string.confirm), fontWeight = FontWeight.Bold, fontSize = 16.sp) }
         }
 
         // ---- 营业时间冲突提示（仿 pendingScopeChoice 弹窗模式）----

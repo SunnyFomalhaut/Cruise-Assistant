@@ -25,9 +25,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -48,12 +50,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.data.CATEGORY_PALETTE
 import com.cruise.assistant.ui.common.ColorDot
 import com.cruise.assistant.ui.common.ICON_REGISTRY
 import com.cruise.assistant.ui.common.iconFor
+import com.cruise.assistant.ui.theme.CruiseAzure
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 
 /**
  * 截图3 的"添加图标"弹窗。
@@ -99,6 +111,8 @@ fun CategorySheet(
                     },
                 ),
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Slate900,
             )
             Spacer(Modifier.height(16.dp))
 
@@ -115,11 +129,12 @@ fun CategorySheet(
                             selected = category.id == state.editingId,
                             onClick = { onEditExisting(category.id) },
                             label = { Text(category.name) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = CruiseAzureContainer,
+                                selectedLabelColor = CruiseMarine,
+                            ),
                         )
                     }
-                    // 新建入口：编辑过一个已有类别后，用它切回空白的"新建"状态。
-                    // enabled = !state.saving：跟保存/删除按钮同样的道理——保存正在飞的时候
-                    // 点这个会把 saving 标志一起重置掉，放开保存按钮，跟正在飞的那次保存并发。
                     FilterChip(
                         selected = !state.isEditing,
                         onClick = onNewCategory,
@@ -127,6 +142,10 @@ fun CategorySheet(
                         label = {
                             Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.category_sheet_title_add))
                         },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = CruiseAzureContainer,
+                            selectedLabelColor = CruiseMarine,
+                        ),
                     )
                 }
                 Spacer(Modifier.height(16.dp))
@@ -137,9 +156,11 @@ fun CategorySheet(
                 Text(
                     stringResource(R.string.category_name_label),
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Slate900,
                     modifier = Modifier.weight(1f),
                 )
-                Text(stringResource(R.string.sub_category), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.sub_category), style = MaterialTheme.typography.bodySmall, color = Slate700)
                 Spacer(Modifier.width(4.dp))
                 Switch(checked = state.isSubCategory, onCheckedChange = onSubCategoryToggle)
                 Spacer(Modifier.width(8.dp))
@@ -147,6 +168,10 @@ fun CategorySheet(
                     selected = state.isArchived,
                     onClick = { onArchiveToggle(!state.isArchived) },
                     label = { Text(stringResource(R.string.archive)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = CruiseAzureContainer,
+                        selectedLabelColor = CruiseMarine,
+                    ),
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -155,6 +180,7 @@ fun CategorySheet(
                 onValueChange = onNameChange,
                 label = { Text(stringResource(R.string.category_name_hint)) },
                 singleLine = true,
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -164,11 +190,12 @@ fun CategorySheet(
                 Box {
                     OutlinedButton(
                         onClick = { parentMenuOpen = true },
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         val parentName = state.allCategories
                             .firstOrNull { it.id == state.parentId }?.name
-                        Text(parentName ?: stringResource(R.string.parent_category_label))
+                        Text(parentName ?: stringResource(R.string.parent_category_label), fontWeight = FontWeight.Medium)
                     }
                     DropdownMenu(
                         expanded = parentMenuOpen,
@@ -193,6 +220,8 @@ fun CategorySheet(
             Text(
                 stringResource(R.string.timeline_theme_color),
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Slate900,
             )
             Spacer(Modifier.height(8.dp))
             Row(
@@ -210,7 +239,7 @@ fun CategorySheet(
 
             // ---- 图标网格 ----
             Spacer(Modifier.height(20.dp))
-            Text(stringResource(R.string.select_icon), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.select_icon), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
             Spacer(Modifier.height(8.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
@@ -228,7 +257,7 @@ fun CategorySheet(
                                 if (selected) {
                                     Color(state.colorArgb)
                                 } else {
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    Slate100
                                 },
                             )
                             .clickable { onIconSelect(key) },
@@ -237,7 +266,7 @@ fun CategorySheet(
                         Icon(
                             iconFor(key),
                             contentDescription = key,
-                            tint = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = if (selected) Color.White else Slate700,
                         )
                     }
                 }
@@ -259,7 +288,7 @@ fun CategorySheet(
                     Text(
                         stringResource(R.string.delete_category_warning_format, state.eventCount),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Slate500,
                     )
                 }
                 TextButton(onClick = onDelete, enabled = !state.saving) {
@@ -273,7 +302,7 @@ fun CategorySheet(
                 Text(
                     stringResource(R.string.builtin_undeletable),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Slate500,
                 )
             }
 
@@ -281,8 +310,10 @@ fun CategorySheet(
             Button(
                 onClick = onSave,
                 enabled = !state.saving,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = CruiseAzure),
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-            ) { Text(stringResource(R.string.save_changes)) }
+            ) { Text(stringResource(R.string.save_changes), fontWeight = FontWeight.Bold, fontSize = 16.sp) }
         }
     }
 }

@@ -13,15 +13,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +45,14 @@ import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.ShipZone
+import com.cruise.assistant.ui.theme.CruiseAzure
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 
 /**
  * 需求3：楼层下拉 + 船头/船中/船尾 + 地点名（可输入，也可从历史里选）。
@@ -87,18 +98,13 @@ fun LocationPicker(
     Column(modifier) {
         var presetMenuOpen by remember { mutableStateOf(false) }
         if (presetMode && presetOptions.isNotEmpty()) {
-            Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
             Spacer(Modifier.height(8.dp))
             ExposedDropdownMenuBox(
                 expanded = presetMenuOpen,
                 onExpandedChange = { if (enabled) presetMenuOpen = it },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                // 下拉模式：字段只读展示、点击字段即展开——PrimaryNotEditable 的 menuAnchor
-                // 接管了字段自身的焦点 clickable（此前外层 clickable 抢不过 TextField 内部
-                // 的焦点点击，只有箭头能开菜单）。不受 noLocation 影响（新事件默认
-                // noLocation=true，若用 fieldsEnabled 会把整个下拉禁用，导致无法选择任何
-                // 预置地点；"不设地点"由底部复选框独立控制）。
                 OutlinedTextField(
                     value = placeName.ifEmpty { stringResource(R.string.select_location_hint) },
                     onValueChange = { },
@@ -106,6 +112,7 @@ fun LocationPicker(
                     readOnly = true,
                     singleLine = true,
                     enabled = enabled,
+                    shape = RoundedCornerShape(12.dp),
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = presetMenuOpen) },
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = enabled)
@@ -117,14 +124,12 @@ fun LocationPicker(
                     modifier = Modifier.heightIn(max = 360.dp),
                 ) {
                     presetOptions.forEachIndexed { index, option ->
-                        // 分隔线只在相邻的两个 Entry 之间；Group 标题靠 surfaceVariant
-                        // 底色与首条 Entry 区分
                         if (index > 0 &&
                             option is com.cruise.assistant.domain.LocationPresetOption.Entry &&
                             presetOptions[index - 1] is com.cruise.assistant.domain.LocationPresetOption.Entry
                         ) {
                             HorizontalDivider(
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                color = Slate200,
                             )
                         }
                         when (option) {
@@ -132,14 +137,14 @@ fun LocationPicker(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                        .background(Slate100)
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                 ) {
                                     Text(
                                         option.label,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = CruiseMarine,
                                     )
                                 }
                             }
@@ -155,10 +160,11 @@ fun LocationPicker(
                                                 option.entry.zone?.label,
                                                 option.entry.placeName,
                                             ).joinToString(" "),
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                         )
                                     },
                                     modifier = if (selected) {
-                                        Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                        Modifier.background(CruiseAzureContainer)
                                     } else {
                                         Modifier
                                     },
@@ -170,7 +176,7 @@ fun LocationPicker(
                             }
                             is com.cruise.assistant.domain.LocationPresetOption.Custom -> {
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.custom_location)) },
+                                    text = { Text(stringResource(R.string.custom_location), color = CruiseAzure, fontWeight = FontWeight.SemiBold) },
                                     onClick = {
                                         onCustomLocation()
                                         presetMenuOpen = false
@@ -183,11 +189,16 @@ fun LocationPicker(
             }
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = noLocation, onCheckedChange = onNoLocationToggle, enabled = enabled)
-                Text(stringResource(R.string.no_location), style = MaterialTheme.typography.bodySmall)
+                Checkbox(
+                    checked = noLocation,
+                    onCheckedChange = onNoLocationToggle,
+                    enabled = enabled,
+                    colors = CheckboxDefaults.colors(checkedColor = CruiseAzure),
+                )
+                Text(stringResource(R.string.no_location), style = MaterialTheme.typography.bodySmall, color = Slate700)
             }
         } else {
-            Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
             Spacer(Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -196,7 +207,8 @@ fun LocationPicker(
                     OutlinedButton(
                         onClick = { deckMenuOpen = true },
                         enabled = fieldsEnabled,
-                    ) { Text(if (deck != null) "Deck $deck" else stringResource(R.string.deck_label)) }
+                        shape = RoundedCornerShape(12.dp),
+                    ) { Text(if (deck != null) "Deck $deck" else stringResource(R.string.deck_label), fontWeight = FontWeight.Medium) }
                     DropdownMenu(
                         expanded = deckMenuOpen,
                         onDismissRequest = { deckMenuOpen = false },
@@ -213,7 +225,7 @@ fun LocationPicker(
                         }
                     }
                 }
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(10.dp))
                 // 区域三选一
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     ShipZone.entries.forEach { z ->
@@ -222,6 +234,10 @@ fun LocationPicker(
                             onClick = { onZoneChange(z) },
                             enabled = fieldsEnabled,
                             label = { Text(z.label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = CruiseAzureContainer,
+                                selectedLabelColor = CruiseMarine,
+                            ),
                         )
                     }
                 }
@@ -235,6 +251,7 @@ fun LocationPicker(
                     label = { Text(stringResource(R.string.place_name_hint)) },
                     enabled = fieldsEnabled,
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     trailingIcon = {
                         if (suggestions.isNotEmpty()) {
                             IconButton(
@@ -271,8 +288,13 @@ fun LocationPicker(
 
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = noLocation, onCheckedChange = onNoLocationToggle, enabled = enabled)
-                Text(stringResource(R.string.no_location), style = MaterialTheme.typography.bodySmall)
+                Checkbox(
+                    checked = noLocation,
+                    onCheckedChange = onNoLocationToggle,
+                    enabled = enabled,
+                    colors = CheckboxDefaults.colors(checkedColor = CruiseAzure),
+                )
+                Text(stringResource(R.string.no_location), style = MaterialTheme.typography.bodySmall, color = Slate700)
             }
         }
     }
