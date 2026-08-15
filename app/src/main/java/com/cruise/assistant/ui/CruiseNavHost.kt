@@ -455,10 +455,9 @@ fun CruiseNavHost(container: AppContainer) {
                     isReceived = target.direction == PixieDustDirection.RECEIVED,
                     deckRange = pixieState?.deckRange ?: 1..20,
                     levels = pixieState?.levels ?: emptyList(),
-                    onRequestReply = {
-                        val target = target  // 当前编辑对象
+                    onRequestReply = { edited ->
                         editTarget = null    // 先关编辑弹窗
-                        vm.onRequestReply(target)
+                        vm.onRequestReply(edited)
                     },
                     onSave = {
                         vm.saveEdited(it)
