@@ -2,7 +2,10 @@
 
 package com.cruise.assistant.ui.onboarding
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,9 +14,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.DirectionsBoat
+import androidx.compose.material.icons.outlined.Layers
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -22,11 +35,13 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -37,11 +52,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.BUILT_IN_SHIPS
 import com.cruise.assistant.domain.boardingSlots
+import com.cruise.assistant.ui.theme.CruiseAzure
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate900
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -63,228 +90,400 @@ fun OnboardingScreen(
     onSubmit: () -> Unit,
 ) {
     var pickerTarget by remember { mutableStateOf<PickerTarget?>(null) }
+    val cardShape = RoundedCornerShape(16.dp)
 
     Column(
         Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(horizontal = 16.dp, vertical = 20.dp),
     ) {
-        Text(stringResource(R.string.onboarding_title), style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            stringResource(R.string.onboarding_subtitle),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(24.dp))
-
-        // ---- 船名下拉 ----
-        Text(stringResource(R.string.ship_name_label), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        var shipMenuExpanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-            expanded = shipMenuExpanded,
-            onExpandedChange = { shipMenuExpanded = it },
-            modifier = Modifier.fillMaxWidth(),
+        // ---- Hero Banner ----
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(cardShape)
+                .background(CruiseAzureContainer)
+                .padding(20.dp),
         ) {
-            OutlinedTextField(
-                value = if (state.isBuiltInShip) state.shipName
-                    else if (state.shipName.isEmpty()) stringResource(R.string.custom_ship)
-                    else state.shipName,
-                onValueChange = { },
-                label = { Text(stringResource(R.string.ship_name_label)) },
-                singleLine = true,
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shipMenuExpanded) },
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-            )
-            ExposedDropdownMenu(
-                expanded = shipMenuExpanded,
-                onDismissRequest = { shipMenuExpanded = false },
-            ) {
-                BUILT_IN_SHIPS.forEachIndexed { index, ship ->
-                    DropdownMenuItem(
-                        text = { Text(ship.name) },
-                        onClick = {
-                            onShipSelected(index)
-                            shipMenuExpanded = false
-                        },
-                    )
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(CruiseAzure),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Outlined.DirectionsBoat,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = stringResource(R.string.onboarding_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = CruiseMarine,
+                        )
+                        Text(
+                            text = stringResource(R.string.onboarding_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Slate700,
+                        )
+                    }
                 }
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.custom_ship)) },
-                    onClick = {
-                        onShipSelected(-1)
-                        shipMenuExpanded = false
-                    },
-                )
             }
         }
-        // 自定义船名时显示输入框
-        if (!state.isBuiltInShip) {
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = state.shipName,
-                onValueChange = onShipNameChange,
-                label = { Text(stringResource(R.string.ship_name_label)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        Spacer(Modifier.height(20.dp))
 
-        // ---- 船期按钮（仅内置船显示）----
-        if (state.isBuiltInShip) {
-            Text(stringResource(R.string.schedule_label), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            val ship = BUILT_IN_SHIPS[state.selectedShipIndex]
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                ship.schedules.forEachIndexed { index, schedule ->
-                    FilterChip(
-                        selected = state.selectedScheduleIndex == index,
-                        onClick = { onScheduleSelected(index) },
-                        label = { Text(schedule.label, maxLines = 1) },
-                        // 中间的五天四夜给很淡的暖底色，与默认选中色（淡紫）区分
-                        colors = if (index == 1) {
-                            FilterChipDefaults.filterChipColors(
-                                containerColor = Color(0xFFF7EFE0),
+        Spacer(Modifier.height(16.dp))
+
+        // ---- 卡片 1：船只与船期 ----
+        Surface(
+            shape = cardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.DirectionsBoat,
+                        contentDescription = null,
+                        tint = CruiseAzure,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.ship_name_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Slate900,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+
+                var shipMenuExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = shipMenuExpanded,
+                    onExpandedChange = { shipMenuExpanded = it },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    OutlinedTextField(
+                        value = if (state.isBuiltInShip) state.shipName
+                            else if (state.shipName.isEmpty()) stringResource(R.string.custom_ship)
+                            else state.shipName,
+                        onValueChange = { },
+                        label = { Text(stringResource(R.string.ship_name_label)) },
+                        singleLine = true,
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shipMenuExpanded) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = shipMenuExpanded,
+                        onDismissRequest = { shipMenuExpanded = false },
+                    ) {
+                        BUILT_IN_SHIPS.forEachIndexed { index, ship ->
+                            DropdownMenuItem(
+                                text = { Text(ship.name, fontWeight = FontWeight.Medium) },
+                                onClick = {
+                                    onShipSelected(index)
+                                    shipMenuExpanded = false
+                                },
                             )
-                        } else {
-                            FilterChipDefaults.filterChipColors()
-                        },
-                        modifier = Modifier.weight(1.4f),
+                        }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.custom_ship)) },
+                            onClick = {
+                                onShipSelected(-1)
+                                shipMenuExpanded = false
+                            },
+                        )
+                    }
+                }
+
+                if (!state.isBuiltInShip) {
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = state.shipName,
+                        onValueChange = onShipNameChange,
+                        label = { Text(stringResource(R.string.ship_name_label)) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                FilterChip(
-                    selected = state.selectedScheduleIndex < 0,
-                    onClick = { onScheduleSelected(-1) },
-                    label = { Text(stringResource(R.string.custom_schedule), style = MaterialTheme.typography.labelSmall, maxLines = 1) },
-                    modifier = Modifier.weight(0.6f),
-                )
-            }
-            Spacer(Modifier.height(20.dp))
-        }
 
-        // ---- 晚餐时段（仅内置船 + 选中了预置船期时显示）----
-        if (state.isBuiltInShip && state.selectedScheduleIndex >= 0) {
-            Text(stringResource(R.string.dinner_time_label), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(
-                    java.time.LocalTime.of(17, 45) to R.string.dinner_time_early,
-                    java.time.LocalTime.of(20, 15) to R.string.dinner_time_late,
-                ).forEach { (time, labelRes) ->
-                    FilterChip(
-                        selected = state.dinnerTime == time,
-                        onClick = { onDinnerTimeChange(time) },
-                        label = { Text(stringResource(labelRes)) },
-                    )
+                if (state.isBuiltInShip) {
+                    Spacer(Modifier.height(16.dp))
+                    Text(stringResource(R.string.schedule_label), style = MaterialTheme.typography.titleSmall, color = Slate700)
+                    Spacer(Modifier.height(8.dp))
+                    val ship = BUILT_IN_SHIPS[state.selectedShipIndex]
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        ship.schedules.forEachIndexed { index, schedule ->
+                            FilterChip(
+                                selected = state.selectedScheduleIndex == index,
+                                onClick = { onScheduleSelected(index) },
+                                label = { Text(schedule.label, maxLines = 1) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = CruiseAzureContainer,
+                                    selectedLabelColor = CruiseMarine,
+                                ),
+                                modifier = Modifier.weight(1.4f),
+                            )
+                        }
+                        FilterChip(
+                            selected = state.selectedScheduleIndex < 0,
+                            onClick = { onScheduleSelected(-1) },
+                            label = { Text(stringResource(R.string.custom_schedule), style = MaterialTheme.typography.labelSmall, maxLines = 1) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = CruiseAzureContainer,
+                                selectedLabelColor = CruiseMarine,
+                            ),
+                            modifier = Modifier.weight(0.7f),
+                        )
+                    }
                 }
-            }
-            Spacer(Modifier.height(20.dp))
-        }
 
-        Text(stringResource(R.string.board_date_label), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(
-            onClick = { pickerTarget = PickerTarget.BOARD },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(state.boardDate.format(DATE_FMT)) }
-
-        Spacer(Modifier.height(20.dp))
-        Text(stringResource(R.string.board_time_label), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        var boardMenuExpanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-            expanded = boardMenuExpanded,
-            onExpandedChange = { boardMenuExpanded = it },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            OutlinedTextField(
-                value = "%02d:%02d-%02d:%02d".format(
-                    state.boardTime.hour, state.boardTime.minute,
-                    (state.boardTime.plusMinutes(15).hour + 24) % 24,
-                    state.boardTime.plusMinutes(15).minute,
-                ),
-                onValueChange = { },
-                label = { Text(stringResource(R.string.board_time_label)) },
-                readOnly = true,
-                singleLine = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = boardMenuExpanded) },
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
-            )
-            ExposedDropdownMenu(
-                expanded = boardMenuExpanded,
-                onDismissRequest = { boardMenuExpanded = false },
-                modifier = Modifier.heightIn(max = 320.dp),
-            ) {
-                boardingSlots().forEach { slot ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                "%02d:%02d-%02d:%02d".format(
-                                    slot.hour, slot.minute,
-                                    (slot.plusMinutes(15).hour + 24) % 24,
-                                    slot.plusMinutes(15).minute,
+                if (state.isBuiltInShip && state.selectedScheduleIndex >= 0) {
+                    Spacer(Modifier.height(16.dp))
+                    Text(stringResource(R.string.dinner_time_label), style = MaterialTheme.typography.titleSmall, color = Slate700)
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            java.time.LocalTime.of(17, 45) to R.string.dinner_time_early,
+                            java.time.LocalTime.of(20, 15) to R.string.dinner_time_late,
+                        ).forEach { (time, labelRes) ->
+                            FilterChip(
+                                selected = state.dinnerTime == time,
+                                onClick = { onDinnerTimeChange(time) },
+                                label = { Text(stringResource(labelRes)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = CruiseAzureContainer,
+                                    selectedLabelColor = CruiseMarine,
                                 ),
                             )
-                        },
-                        onClick = {
-                            onBoardTimeChange(slot)
-                            boardMenuExpanded = false
-                        },
-                    )
+                        }
+                    }
                 }
             }
         }
 
-        Spacer(Modifier.height(20.dp))
-        Text(stringResource(R.string.disembark_date_label), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(
-            onClick = { pickerTarget = PickerTarget.DISEMBARK },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(state.disembarkDate.format(DATE_FMT)) }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            stringResource(R.string.disembark_time_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Spacer(Modifier.height(14.dp))
 
-        Spacer(Modifier.height(20.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.max_deck_label),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f),
-            )
-            // 内置船带 maxDeck 时锁定（隐藏 +/- 调节器，仅显示范围），
-            // 自定义船或无 maxDeck 的内置船保留调节器。
-            val lockedDeck = state.isBuiltInShip &&
-                BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)?.maxDeck != null
-            if (lockedDeck) {
-                Text(
-                    "Deck ${state.minDeck}-${state.maxDeck}",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
+        // ---- 卡片 2：航程时间与登船 ----
+        Surface(
+            shape = cardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.CalendarMonth,
+                        contentDescription = null,
+                        tint = CruiseAzure,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.board_date_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Slate900,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
                 OutlinedButton(
-                    onClick = { onMaxDeckChange(state.maxDeck - 1) },
-                    enabled = state.maxDeck > 1,
-                ) { Text("−") }
-                Text(
-                    "Deck ${state.maxDeck}",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+                    onClick = { pickerTarget = PickerTarget.BOARD },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(state.boardDate.format(DATE_FMT), fontWeight = FontWeight.SemiBold)
+                }
+
+                Spacer(Modifier.height(14.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Schedule,
+                        contentDescription = null,
+                        tint = CruiseAzure,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.board_time_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Slate900,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                var boardMenuExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = boardMenuExpanded,
+                    onExpandedChange = { boardMenuExpanded = it },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    OutlinedTextField(
+                        value = "%02d:%02d-%02d:%02d".format(
+                            state.boardTime.hour, state.boardTime.minute,
+                            (state.boardTime.plusMinutes(15).hour + 24) % 24,
+                            state.boardTime.plusMinutes(15).minute,
+                        ),
+                        onValueChange = { },
+                        label = { Text(stringResource(R.string.board_time_label)) },
+                        readOnly = true,
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = boardMenuExpanded) },
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = boardMenuExpanded,
+                        onDismissRequest = { boardMenuExpanded = false },
+                        modifier = Modifier.heightIn(max = 320.dp),
+                    ) {
+                        boardingSlots().forEach { slot ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "%02d:%02d-%02d:%02d".format(
+                                            slot.hour, slot.minute,
+                                            (slot.plusMinutes(15).hour + 24) % 24,
+                                            slot.plusMinutes(15).minute,
+                                        ),
+                                    )
+                                },
+                                onClick = {
+                                    onBoardTimeChange(slot)
+                                    boardMenuExpanded = false
+                                },
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.CalendarMonth,
+                        contentDescription = null,
+                        tint = CruiseAzure,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.disembark_date_label),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Slate900,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
                 OutlinedButton(
-                    onClick = { onMaxDeckChange(state.maxDeck + 1) },
-                    enabled = state.maxDeck < 30,
-                ) { Text("+") }
+                    onClick = { pickerTarget = PickerTarget.DISEMBARK },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(state.disembarkDate.format(DATE_FMT), fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.disembark_time_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Slate500,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        // ---- 卡片 3：甲板配置 ----
+        Surface(
+            shape = cardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Outlined.Layers,
+                    contentDescription = null,
+                    tint = CruiseAzure,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.max_deck_label),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Slate900,
+                    modifier = Modifier.weight(1f),
+                )
+
+                val lockedDeck = state.isBuiltInShip &&
+                    BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)?.maxDeck != null
+                if (lockedDeck) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(CruiseAzureContainer)
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            "Deck ${state.minDeck}–${state.maxDeck}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = CruiseMarine,
+                        )
+                    }
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        IconButton(
+                            onClick = { onMaxDeckChange(state.maxDeck - 1) },
+                            enabled = state.maxDeck > 1,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Slate100),
+                        ) {
+                            Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Slate700)
+                        }
+                        Text(
+                            "Deck ${state.maxDeck}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Slate900,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        )
+                        IconButton(
+                            onClick = { onMaxDeckChange(state.maxDeck + 1) },
+                            enabled = state.maxDeck < 30,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Slate100),
+                        ) {
+                            Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Slate700)
+                        }
+                    }
+                }
             }
         }
 
@@ -297,12 +496,22 @@ fun OnboardingScreen(
             )
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(28.dp))
         Button(
             onClick = onSubmit,
             enabled = !state.saving,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-        ) { Text(stringResource(R.string.generate_timeline)) }
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = CruiseAzure),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp),
+        ) {
+            Text(
+                stringResource(R.string.generate_timeline),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         Spacer(Modifier.height(24.dp))
     }
 
@@ -311,7 +520,6 @@ fun OnboardingScreen(
             PickerTarget.BOARD -> state.boardDate
             PickerTarget.DISEMBARK -> state.disembarkDate
         }
-        // 选船期后，登船日只能选船期的登船日（周一/周四），其余日期置灰不可选。
         val lockedBoardDay = if (target == PickerTarget.BOARD && state.selectedScheduleIndex >= 0) {
             BUILT_IN_SHIPS.getOrNull(state.selectedShipIndex)
                 ?.schedules?.getOrNull(state.selectedScheduleIndex)
@@ -347,11 +555,11 @@ fun OnboardingScreen(
                         }
                     }
                     pickerTarget = null
-                }) { Text(stringResource(R.string.confirm)) }
+                }) { Text(stringResource(R.string.confirm), color = CruiseAzure) }
             },
             dismissButton = {
                 TextButton(onClick = { pickerTarget = null }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(R.string.cancel), color = Slate500)
                 }
             },
         ) {
@@ -364,7 +572,7 @@ fun OnboardingScreen(
                 Text(
                     "已按船期锁定，仅可选择 $dowLabel 登船",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = CruiseMarine,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
                 )
             }
@@ -374,3 +582,4 @@ fun OnboardingScreen(
 }
 
 private enum class PickerTarget { BOARD, DISEMBARK }
+
