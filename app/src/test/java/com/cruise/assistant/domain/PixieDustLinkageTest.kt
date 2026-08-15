@@ -1,6 +1,7 @@
 package com.cruise.assistant.domain
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -134,5 +135,25 @@ class PixieDustLinkageTest {
     @Test
     fun `pair by room empty inputs returns empty`() {
         assertTrue(pairByRoom(emptyList(), emptyList()).isEmpty())
+    }
+
+    // ---- hasGivenForRoom ----
+
+    @Test
+    fun `has given for room true when same deck and room given exists`() {
+        val list = listOf(given(1, 11, "550", 1, 100))
+        assertTrue(hasGivenForRoom(list, 11, "550"))
+    }
+
+    @Test
+    fun `has given for room false when no given for room`() {
+        val list = listOf(given(1, 11, "551", 1, 100), given(2, 12, "550", 1, 100))
+        assertFalse(hasGivenForRoom(list, 11, "550"))
+    }
+
+    @Test
+    fun `has given for room ignores received records`() {
+        val list = listOf(received(1, 11, "550", 1, 100))
+        assertFalse(hasGivenForRoom(list, 11, "550"))
     }
 }

@@ -14,6 +14,7 @@ import com.cruise.assistant.domain.RoomPair
 import com.cruise.assistant.domain.autoReplyTarget
 import com.cruise.assistant.domain.fullRoom
 import com.cruise.assistant.domain.groupGivenByRoom
+import com.cruise.assistant.domain.hasGivenForRoom
 import com.cruise.assistant.domain.isValidRoomInput
 import com.cruise.assistant.domain.lastLevelForRoom
 import com.cruise.assistant.domain.pairByRoom
@@ -226,7 +227,7 @@ class PixieDustViewModel(
             timestamp = nowMs(),
         )
         viewModelScope.launch {
-            dustRepository.save(record)
+            val newId = dustRepository.save(record)
             savedEvent.value = record
             roomInput.value = ""
             // 联动方向一：仅发出记录触发（收到 tab 记一笔不该自勾自己）
@@ -238,6 +239,18 @@ class PixieDustViewModel(
                 )
                 if (target != null) {
                     dustRepository.save(target.copy(replied = true))
+                    autoRepliedRoom.value = record.fullRoom
+                }
+            }
+            // 联动方向一镜像：登记收到时该房间已有发出 → 刚登记的这条直接已回礼
+            if (record.direction == PixieDustDirection.RECEIVED) {
+                val all = dustRepository.observeAll().first()
+                val hasGiven = hasGivenForRoom(
+                    all.filter { it.direction == PixieDustDirection.GIVEN },
+                    record.deck, record.room,
+                )
+                if (hasGiven) {
+                    dustRepository.save(record.copy(id = newId, replied = true))
                     autoRepliedRoom.value = record.fullRoom
                 }
             }
