@@ -3,12 +3,29 @@ package com.cruise.assistant.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
-    primary = CruiseBlue,
-    secondary = CruiseBlueLight,
-    background = SurfaceGray,
-    surface = androidx.compose.ui.graphics.Color.White,
+    primary = CruiseAzure,
+    onPrimary = Color.White,
+    primaryContainer = CruiseAzureContainer,
+    onPrimaryContainer = CruiseMarine,
+    secondary = CruiseMarine,
+    onSecondary = Color.White,
+    secondaryContainer = CruiseAzureContainer,
+    onSecondaryContainer = CruiseMarine,
+    background = SurfaceContainer,
+    onBackground = Slate900,
+    surface = SurfaceCard,
+    onSurface = Slate900,
+    surfaceVariant = Slate100,
+    onSurfaceVariant = Slate500,
+    surfaceContainer = SurfaceContainer,
+    surfaceContainerHigh = Color.White,
+    outline = Slate200,
+    outlineVariant = Slate100,
+    error = NowRed,
+    onError = Color.White,
 )
 
 /**
@@ -24,3 +41,4 @@ fun CruiseTheme(content: @Composable () -> Unit) {
         content = content,
     )
 }
+
