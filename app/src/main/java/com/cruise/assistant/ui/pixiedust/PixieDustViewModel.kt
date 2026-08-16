@@ -19,6 +19,7 @@ import com.cruise.assistant.domain.isValidRoomInput
 import com.cruise.assistant.domain.lastLevelForRoom
 import com.cruise.assistant.domain.pairByRoom
 import com.cruise.assistant.domain.sortReceived
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -34,8 +35,10 @@ enum class PixieTab { GIVEN, RECEIVED }
 enum class GivenViewMode { GROUPED, FLOW }
 
 /** 键盘下方"上次：豪华 ×2"的数据 */
+@Immutable
 data class RoomHistory(val levelName: String, val count: Int)
 
+@Immutable
 data class PixieDustUiState(
     val loading: Boolean = true,
     val tab: PixieTab = PixieTab.GIVEN,

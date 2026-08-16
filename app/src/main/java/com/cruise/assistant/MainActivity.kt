@@ -29,6 +29,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        configureHighRefreshRate()
+
         // 应用固定浅色主题（见 CruiseTheme 注释），状态栏图标需保持深色才能在浅色背景上可见
         WindowCompat.getInsetsController(window, window.decorView)
             .isAppearanceLightStatusBars = true
@@ -52,4 +54,31 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    /**
+     * 主动配置 120Hz 高刷新率：
+     * 1. API 23+ (Android 6.0+) 设置 preferredRefreshRate = 120f；
+     * 2. 遍历 Display.supportedModes 优先选取 >= 120Hz 的显示模式（preferredDisplayModeId）。
+     */
+    private fun configureHighRefreshRate() {
+        val win = window ?: return
+        val lp = win.attributes
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            lp.preferredRefreshRate = 120f
+            val disp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display
+            } else {
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay
+            }
+            val bestMode = disp?.supportedModes
+                ?.filter { it.refreshRate >= 119f }
+                ?.maxByOrNull { it.refreshRate }
+            if (bestMode != null) {
+                lp.preferredDisplayModeId = bestMode.modeId
+            }
+        }
+        win.attributes = lp
+    }
 }
+

@@ -17,6 +17,7 @@ import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.isOpenAt
 import com.cruise.assistant.domain.isOpenFor
 import com.cruise.assistant.reminder.ReminderScheduler
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 
+@Immutable
 data class EventSheetState(
     val editingId: Long = 0,
     val date: LocalDate,

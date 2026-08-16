@@ -10,6 +10,7 @@ import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.domain.Voyage
 import java.time.LocalTime
 import com.cruise.assistant.reminder.ReminderScheduler
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@Immutable
 data class SettingsUiState(
     val settings: AppSettings,
     val voyage: Voyage?,

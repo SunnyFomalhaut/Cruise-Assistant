@@ -27,11 +27,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 
+@Immutable
 data class TimelineUiState(
     val voyage: Voyage?,
     val selectedDate: LocalDate,

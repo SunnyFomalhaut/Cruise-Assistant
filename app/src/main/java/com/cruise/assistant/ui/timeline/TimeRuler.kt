@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -29,8 +30,11 @@ val RULER_WIDTH = 52.dp
 /** 左侧时间刻度列。文字基线对齐刻度线；折叠段位置标一个 ⋯。 */
 @Composable
 fun TimeRuler(layout: TimelineLayout, modifier: Modifier = Modifier) {
+    val ticks = remember(layout) { layout.hourTicks() }
+    val collapsedSegments = remember(layout) { layout.segments.filter { it.collapsed } }
+
     Box(modifier.width(RULER_WIDTH).height(layout.totalHeightDp.dp)) {
-        layout.hourTicks().forEach { (minute, topDp, isHalf) ->
+        ticks.forEach { (minute, topDp, isHalf) ->
             Text(
                 text = if (isHalf) "%d:%02d".format(minute / 60, minute % 60) else "%02d:00".format(minute / 60),
                 // 半点用更小更浅的样式，与整点区分
@@ -41,7 +45,7 @@ fun TimeRuler(layout: TimelineLayout, modifier: Modifier = Modifier) {
             )
         }
         // 折叠掉的空时段标个 ⋯，让用户知道这里被压缩了
-        layout.segments.filter { it.collapsed }.forEach { segment ->
+        collapsedSegments.forEach { segment ->
             Text(
                 text = "⋯",
                 style = MaterialTheme.typography.bodySmall,
@@ -62,27 +66,33 @@ fun TimelineGrid(
     laneBoundaries: List<Float>,
     modifier: Modifier = Modifier,
 ) {
-    val ticks = layout.hourTicks()
+    val ticks = remember(layout) { layout.hourTicks() }
+    val boundaries = remember(laneBoundaries) { laneBoundaries }
+
     Canvas(modifier.fillMaxSize()) {
+        val width = size.width
+        val height = size.height
+
         // 横向网格线：整点 + 半点都画线。整点用更清晰的线，半点用细线
         ticks.forEach { (_, topDp, isHalf) ->
             val y = topDp * density
             drawLine(
                 color = if (isHalf) GridLine else GridLineHour,
                 start = Offset(0f, y),
-                end = Offset(size.width, y),
+                end = Offset(width, y),
                 strokeWidth = if (isHalf) 1f else 1.5f,
             )
         }
-        laneBoundaries.forEach { fraction ->
-            val x = size.width * fraction
+        boundaries.forEach { fraction ->
+            val x = width * fraction
             drawLine(
                 color = GridLineHour.copy(alpha = 0.8f),
                 start = Offset(x, 0f),
-                end = Offset(x, size.height),
+                end = Offset(x, height),
                 strokeWidth = 1f,
             )
         }
     }
 }
+
 

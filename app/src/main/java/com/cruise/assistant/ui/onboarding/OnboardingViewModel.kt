@@ -6,6 +6,7 @@ import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.domain.BUILT_IN_SHIPS
 import com.cruise.assistant.reminder.ReminderScheduler
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 
+@Immutable
 data class OnboardingState(
     val shipName: String = BUILT_IN_SHIPS[0].name,
     val selectedShipIndex: Int = 0,
