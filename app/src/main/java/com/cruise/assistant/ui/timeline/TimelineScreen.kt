@@ -84,7 +84,6 @@ fun TimelineScreen(
     state: TimelineUiState,
     onSelectDate: (LocalDate) -> Unit,
     onOpenSettings: () -> Unit,
-    onOpenDisplayRange: () -> Unit,
     onOpenPixieDust: () -> Unit,
     onAddEvent: (Int) -> Unit,
     onEditEvent: (CruiseEvent) -> Unit,
@@ -111,19 +110,19 @@ fun TimelineScreen(
     Scaffold(
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
-                SmallFloatingActionButton(
+                FloatingActionButton(
                     onClick = onOpenPixieDust,
                     containerColor = CruiseAzureContainer,
                     contentColor = CruiseMarine,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                 ) {
                     Icon(
                         Icons.Outlined.AutoAwesome,
                         contentDescription = stringResource(R.string.pixie_open),
                     )
                 }
-                Spacer(Modifier.height(14.dp))
                 if (!state.isFinalized) {
+                    Spacer(Modifier.height(14.dp))
                     FloatingActionButton(
                         onClick = { onAddEvent(defaultStartMinute(state)) },
                         containerColor = CruiseAzure,
@@ -184,12 +183,12 @@ fun TimelineScreen(
                     }
                 }
 
-                // 快捷操作按钮组（微毛玻璃圆角底）
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // 快捷操作按钮组（仙尘与设置）
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconButton(
                         onClick = onOpenPixieDust,
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(Slate100),
                     ) {
@@ -197,27 +196,13 @@ fun TimelineScreen(
                             Icons.Outlined.AutoAwesome,
                             contentDescription = stringResource(R.string.pixie_open),
                             tint = CruiseMarine,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                    IconButton(
-                        onClick = onOpenDisplayRange,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Slate100),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Schedule,
-                            contentDescription = stringResource(R.string.display_range_title),
-                            tint = Slate700,
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(Slate100),
                     ) {
@@ -225,7 +210,7 @@ fun TimelineScreen(
                             Icons.Outlined.Settings,
                             contentDescription = stringResource(R.string.settings),
                             tint = Slate700,
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }

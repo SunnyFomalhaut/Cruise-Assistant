@@ -50,7 +50,6 @@ import com.cruise.assistant.ui.pixiedust.PixieLevelSheet
 import com.cruise.assistant.ui.pixiedust.PixieTab
 import com.cruise.assistant.ui.pixiedust.ReceivedList
 import com.cruise.assistant.ui.pixiedust.ReplyLevelDialog
-import com.cruise.assistant.ui.settings.DisplayRangePanel
 import com.cruise.assistant.ui.settings.SettingsScreen
 import com.cruise.assistant.ui.settings.SettingsViewModel
 import com.cruise.assistant.ui.timeline.ConflictDialog
@@ -143,8 +142,6 @@ fun CruiseNavHost(container: AppContainer) {
             // saveable：旋转后 sheetSeq 从 0 重新递增会撞上 ViewModelStore 里旋转前的
             // 旧 VM（key "event-sheet-1" 复用）→ 编辑状态残留，可能覆盖错误的事件。
             var sheetSeq by rememberSaveable { mutableStateOf(0L) }
-            var showRangePanel by remember { mutableStateOf(false) }
-            var rangeErrorResId by remember { mutableStateOf<Int?>(null) }
             val coroutineScope = rememberCoroutineScope()
 
             // ---- 需求8：定稿冲突检查。conflictCheck 控制弹窗显隐，highlightIds 在
@@ -166,7 +163,6 @@ fun CruiseNavHost(container: AppContainer) {
                         vm.selectDate(date)
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                    onOpenDisplayRange = { showRangePanel = true },
                     onOpenPixieDust = { navController.navigate(Routes.PIXIE_DUST) },
                     onAddEvent = { startMinute ->
                         sheetSeq++
@@ -227,41 +223,6 @@ fun CruiseNavHost(container: AppContainer) {
                         conflictCheck = null
                     },
                     onDismiss = { conflictCheck = null },
-                )
-            }
-
-            // ---- 显示范围面板（需求2）----
-            if (showRangePanel && current != null) {
-                DisplayRangePanel(
-                    startMinute = current.settings.displayStartMinute,
-                    endMinute = current.settings.displayEndMinute,
-                    hourHeightDp = current.settings.hourHeightDp,
-                    collapseEmptyGaps = current.settings.collapseEmptyGaps,
-                    errorResId = rangeErrorResId,
-                    onRangeChange = { start, end ->
-                        if (end - start < MIN_DISPLAY_RANGE_MINUTES) {
-                            rangeErrorResId = R.string.error_range_too_short
-                        } else {
-                            rangeErrorResId = null
-                            coroutineScope.launch {
-                                container.settingsStore.setDisplayRange(start, end)
-                            }
-                        }
-                    },
-                    onHourHeightChange = { dp ->
-                        coroutineScope.launch {
-                            container.settingsStore.setHourHeight(dp.coerceIn(60, 180))
-                        }
-                    },
-                    onCollapseToggle = { enabled ->
-                        coroutineScope.launch {
-                            container.settingsStore.setCollapseEmptyGaps(enabled)
-                        }
-                    },
-                    onDismiss = {
-                        showRangePanel = false
-                        rangeErrorResId = null
-                    },
                 )
             }
 

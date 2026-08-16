@@ -54,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
+import com.cruise.assistant.ui.common.TimeWheel
 import com.cruise.assistant.ui.theme.CruiseAzure
 import com.cruise.assistant.ui.theme.CruiseAzureContainer
 import com.cruise.assistant.ui.theme.CruiseMarine
@@ -62,6 +63,7 @@ import com.cruise.assistant.ui.theme.Slate200
 import com.cruise.assistant.ui.theme.Slate500
 import com.cruise.assistant.ui.theme.Slate700
 import com.cruise.assistant.ui.theme.Slate900
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 private val DATE_FMT = DateTimeFormatter.ofPattern("yyyy年M月d日")
@@ -126,31 +128,50 @@ fun SettingsScreen(
                     color = CruiseMarine,
                 )
             }
-            Spacer(Modifier.height(10.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                listOf(
-                    7 * 60 to 24 * 60,
-                    8 * 60 to 23 * 60,
-                    6 * 60 to 24 * 60,
-                    0 to 24 * 60,
-                ).forEach { (from, to) ->
-                    FilterChip(
-                        selected = state.settings.displayStartMinute == from &&
-                            state.settings.displayEndMinute == to,
-                        onClick = { onRangeChange(from, to) },
-                        label = { Text("%02d–%02d".format(from / 60, to / 60)) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = CruiseAzureContainer,
-                            selectedLabelColor = CruiseMarine,
-                        ),
+            Spacer(Modifier.height(12.dp))
+
+            // 范围时间滚轮
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.range_from),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Slate700,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    TimeWheel(
+                        value = minuteToTime(state.settings.displayStartMinute),
+                        onValueChange = { onRangeChange(it.hour * 60 + it.minute, state.settings.displayEndMinute) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minuteStep = 30,
+                    )
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.range_to),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Slate700,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    TimeWheel(
+                        value = minuteToTime(state.settings.displayEndMinute),
+                        onValueChange = {
+                            val minutes = it.hour * 60 + it.minute
+                            onRangeChange(
+                                state.settings.displayStartMinute,
+                                if (minutes >= 23 * 60 + 30) 1440 else minutes,
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        minuteStep = 30,
                     )
                 }
             }
+
             state.rangeErrorResId?.let { resId ->
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(8.dp))
                 Text(
                     stringResource(resId),
                     color = MaterialTheme.colorScheme.error,
@@ -433,4 +454,10 @@ private fun SettingsCard(
         }
     }
 }
+
+private fun minuteToTime(minute: Int): LocalTime {
+    val clamped = minute.coerceIn(0, 1439)
+    return LocalTime.of(clamped / 60, clamped % 60)
+}
+
 
