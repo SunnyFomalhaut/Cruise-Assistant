@@ -163,9 +163,10 @@ fun EventSheet(
                     )
                     Spacer(Modifier.height(10.dp))
 
+                    val rowCount = ((state.categories.size + 1) + 3) / 4
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(5),
-                        modifier = Modifier.height(if (state.categories.size > 5) 176.dp else 90.dp),
+                        columns = GridCells.Fixed(4),
+                        modifier = Modifier.height((rowCount * 80).dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -188,7 +189,7 @@ fun EventSheet(
                                         if (state.isSystemEvent) Modifier
                                         else Modifier.clickable { onCategorySelect(category.id) }
                                     )
-                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    .padding(vertical = 8.dp, horizontal = 2.dp),
                             ) {
                                 Icon(
                                     iconFor(category.iconKey),
@@ -201,7 +202,7 @@ fun EventSheet(
                                     category.name,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontSize = 11.sp,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (selected) Slate900 else Slate700,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
@@ -218,7 +219,7 @@ fun EventSheet(
                                     .background(Slate100)
                                     .border(1.dp, Slate200, tileShape)
                                     .clickable(onClick = onManageCategories)
-                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    .padding(vertical = 8.dp, horizontal = 2.dp),
                             ) {
                                 Icon(
                                     Icons.Filled.Add,
@@ -356,7 +357,7 @@ fun EventSheet(
                 Column(Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         SectionHeader(
-                            title = stringResource(R.string.start_time) + " / " + stringResource(R.string.end_time),
+                            title = "起止时间",
                             icon = Icons.Outlined.Schedule,
                         )
                         Spacer(Modifier.weight(1f))
