@@ -39,12 +39,9 @@ import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.formatLocation
+import com.cruise.assistant.domain.formatWaitStart
 import com.cruise.assistant.domain.startMinute
 import com.cruise.assistant.ui.common.CategoryChip
-import com.cruise.assistant.ui.theme.Slate400
-import com.cruise.assistant.ui.theme.Slate500
-import com.cruise.assistant.ui.theme.Slate700
-import com.cruise.assistant.ui.theme.Slate900
 import com.cruise.assistant.ui.theme.cardBackgroundFor
 import com.cruise.assistant.ui.theme.cardTextColorFor
 
@@ -54,8 +51,6 @@ private val COMPACT_THRESHOLD = 44.dp
 /** 贪心分级阈值：本体（演出段）能显示 2 行 / 3 行内容的最小高度（第 1 行按 bodySmall 20dp 行高计，+4dp 修正边界裁剪） */
 private val TWO_LINE_MIN_DP = 42.dp
 private val THREE_LINE_MIN_DP = 58.dp
-/** 候场段低于此高度时只显示"候场"，避免单行文本被裁剪 */
-private val WAIT_TEXT_MIN_DP = 20.dp
 
 /**
  * 需求3：事件卡片。
@@ -90,25 +85,18 @@ fun EventCard(
     val waitTwoLineMinDp = with(LocalDensity.current) {
         (labelLineHeight * 2).toDp() + 4.dp
     }
-    // 候场区是否够显示两行（tier 4 用）
-    val waitTwoLines = waitSegmentHeightDp >= waitTwoLineMinDp
-    val showTier = when {
-        !hasWaitSegment -> 0
-        bodyHeightDp >= THREE_LINE_MIN_DP -> 3
-        bodyHeightDp >= TWO_LINE_MIN_DP -> 2
-        waitTwoLines -> 4
+    val waitThreeLineMinDp = with(LocalDensity.current) {
+        (labelLineHeight * 3).toDp() + 6.dp
+    }
+    val waitLines = when {
+        waitSegmentHeightDp >= waitThreeLineMinDp -> 3
+        waitSegmentHeightDp >= waitTwoLineMinDp -> 2
         else -> 1
     }
-    // 候场段右侧文案随 tier 与段高自适应
-    val waitText = when {
-        showTier == 0 || waitSegmentHeightDp < WAIT_TEXT_MIN_DP -> "候场"
-        showTier == 3 -> "候场"
-        showTier == 2 -> "候场 · ${formatStart(event)}"
-        else -> buildString {
-            append("候场")
-            location?.let { append(" · ").append(it) }
-            append(" · ").append(formatStart(event))
-        }
+    val bodyLines = when {
+        bodyHeightDp >= THREE_LINE_MIN_DP -> 3
+        bodyHeightDp >= TWO_LINE_MIN_DP -> 2
+        else -> 1
     }
 
     Row(
@@ -139,7 +127,7 @@ fun EventCard(
                 .weight(1f)
                 .padding(horizontal = if (compact) 3.dp else 5.dp, vertical = 2.dp),
         ) {
-            // 等待段：淡色斜纹 + 随分级自适应的 waitText（"候场" / "候场 · 时间" / "候场 · 地点 · 时间"）
+            // 等待段：淡色斜纹 + 随分级自适应的文案与排版
             if (hasWaitSegment) {
                 Column(
                     Modifier
@@ -150,41 +138,93 @@ fun EventCard(
                         .padding(horizontal = 4.dp, vertical = 2.dp),
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    if (showTier == 4) {
-                        Text(
-                            text = "候场 · ${formatStart(event)}",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontStyle = FontStyle.Italic,
-                            fontWeight = FontWeight.Bold,
-                            color = textColor.copy(alpha = 0.9f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        location?.let {
+                    when {
+                        bodyLines == 3 -> {
+                            // Case 1: 候场段 1 行
                             Text(
-                                text = it,
+                                text = "${formatWaitStart(event)} 候场",
                                 style = MaterialTheme.typography.labelSmall,
+                                fontStyle = FontStyle.Italic,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor.copy(alpha = 0.9f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        bodyLines == 1 && waitLines >= 3 -> {
+                            // Case 2: 候场段 3 行
+                            Text(
+                                text = "${formatWaitStart(event)} 候场",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontStyle = FontStyle.Italic,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor.copy(alpha = 0.9f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            location?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor.copy(alpha = 0.75f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            Text(
+                                text = formatTimeRange(event),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                 fontStyle = FontStyle.Italic,
                                 color = textColor.copy(alpha = 0.75f),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                    } else {
-                        Text(
-                            text = waitText,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontStyle = FontStyle.Italic,
-                            fontWeight = FontWeight.Bold,
-                            color = textColor.copy(alpha = 0.9f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        waitLines >= 2 -> {
+                            // Case 3 & 过渡态 (waitLines == 2): 候场段 2 行
+                            Text(
+                                text = "${formatWaitStart(event)} 候场",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontStyle = FontStyle.Italic,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor.copy(alpha = 0.9f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            location?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontStyle = FontStyle.Italic,
+                                    color = textColor.copy(alpha = 0.75f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                        else -> {
+                            // Case 4 & 过渡态 (waitLines == 1): 候场段 1 行
+                            val singleLineText = if (location != null) {
+                                "${formatWaitStart(event)} 候场 · $location"
+                            } else {
+                                "${formatWaitStart(event)} 候场"
+                            }
+                            Text(
+                                text = singleLineText,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontStyle = FontStyle.Italic,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor.copy(alpha = 0.9f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.height(2.dp))
             }
-            if (showTier == 0) {
+            if (!hasWaitSegment) {
                 if (compact) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -230,7 +270,46 @@ fun EventCard(
                         }
                     }
                     // 第2/3行：地点与时间
-                    if (!hasWaitSegment) {
+                    location?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = textColor.copy(alpha = 0.85f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Text(
+                        text = formatTimeRange(event),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = textColor.copy(alpha = 0.75f),
+                        maxLines = 1,
+                    )
+                }
+            } else {
+                when (bodyLines) {
+                    3 -> {
+                        // Case 1: 本体 3 行
+                        // Line 1: CategoryChip + event.title + ConflictBadge
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            category?.let {
+                                CategoryChip(it.name, colorArgb)
+                                Spacer(Modifier.width(4.dp))
+                            }
+                            Text(
+                                text = event.title,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (hasConflict) {
+                                ConflictBadge()
+                            }
+                        }
+                        // Line 2: location
                         location?.let {
                             Text(
                                 text = it,
@@ -240,6 +319,7 @@ fun EventCard(
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
+                        // Line 3: formatTimeRange(event)
                         Text(
                             text = formatTimeRange(event),
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
@@ -247,57 +327,75 @@ fun EventCard(
                             maxLines = 1,
                         )
                     }
-                }
-            } else if (showTier == 1 || showTier == 4) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = event.title,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = textColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (hasConflict) {
-                        ConflictBadge()
+                    2 -> {
+                        // Case 3 & 过渡态 (bodyLines >= 2): 本体 2 行
+                        // Line 1: CategoryChip + event.title + ConflictBadge
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            category?.let {
+                                CategoryChip(it.name, colorArgb)
+                                Spacer(Modifier.width(4.dp))
+                            }
+                            Text(
+                                text = event.title,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (hasConflict) {
+                                ConflictBadge()
+                            }
+                        }
+                        // Line 2: formatTimeRange(event)
+                        Text(
+                            text = formatTimeRange(event),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = textColor.copy(alpha = 0.75f),
+                            maxLines = 1,
+                        )
                     }
-                }
-            } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    category?.let {
-                        CategoryChip(it.name, colorArgb)
-                        Spacer(Modifier.width(4.dp))
+                    else -> {
+                        // bodyLines == 1
+                        if (waitLines >= 3) {
+                            // Case 2: 候场区已放了时间段，本体单行显示 CategoryChip + event.title + ConflictBadge
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                category?.let {
+                                    CategoryChip(it.name, colorArgb)
+                                    Spacer(Modifier.width(4.dp))
+                                }
+                                Text(
+                                    text = event.title,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = textColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                if (hasConflict) {
+                                    ConflictBadge()
+                                }
+                            }
+                        } else {
+                            // Case 4 & 过渡态 (waitLines < 3): 候场区未放时间段，本体单行显示开场时间 + event.title + ConflictBadge
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${formatStart(event)} ${event.title}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = textColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                if (hasConflict) {
+                                    ConflictBadge()
+                                }
+                            }
+                        }
                     }
-                    Text(
-                        text = event.title,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (hasConflict) {
-                        ConflictBadge()
-                    }
-                }
-                location?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = textColor.copy(alpha = 0.85f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (showTier == 3) {
-                    Text(
-                        text = formatTimeRange(event),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = textColor.copy(alpha = 0.75f),
-                        maxLines = 1,
-                    )
                 }
             }
         }
