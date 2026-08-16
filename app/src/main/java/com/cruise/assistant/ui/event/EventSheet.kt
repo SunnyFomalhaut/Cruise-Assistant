@@ -189,7 +189,7 @@ fun EventSheet(
                                         if (state.isSystemEvent) Modifier
                                         else Modifier.clickable { onCategorySelect(category.id) }
                                     )
-                                    .padding(vertical = 8.dp, horizontal = 2.dp),
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
                             ) {
                                 Icon(
                                     iconFor(category.iconKey),
@@ -202,7 +202,7 @@ fun EventSheet(
                                     category.name,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontSize = 11.sp,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                     color = if (selected) Slate900 else Slate700,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
@@ -219,7 +219,7 @@ fun EventSheet(
                                     .background(Slate100)
                                     .border(1.dp, Slate200, tileShape)
                                     .clickable(onClick = onManageCategories)
-                                    .padding(vertical = 8.dp, horizontal = 2.dp),
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
                             ) {
                                 Icon(
                                     Icons.Filled.Add,
@@ -357,7 +357,7 @@ fun EventSheet(
                 Column(Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         SectionHeader(
-                            title = "起止时间",
+                            title = stringResource(R.string.time_label),
                             icon = Icons.Outlined.Schedule,
                         )
                         Spacer(Modifier.weight(1f))
@@ -373,6 +373,8 @@ fun EventSheet(
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = CruiseMarine,
+                                maxLines = 1,
+                                softWrap = false,
                             )
                         }
                     }
