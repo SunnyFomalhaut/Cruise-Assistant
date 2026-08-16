@@ -44,6 +44,7 @@
     <string name="edit">编辑</string>
     <string name="set_inactive">设为非活动</string>
     <string name="set_active">设为活动</string>
+    <string name="keep_only_this_show">只看本场</string>
     <string name="cancel">取消</string>
     <string name="confirm">确认</string>
     <string name="system_event_undeletable">登船/下船不能删除，只能改时间</string>

@@ -278,4 +278,52 @@ class ShowPresetTest {
         // 常规 4 天航程不受影响
         assertEquals(listOf(boardMonday.plusDays(1)), lionKing.resolveDates(boardMonday, dayCount = 4))
     }
+
+    @Test
+    fun isSameShowAs_matchesWhenOnlyTimeAndDateDiffer() {
+        val showSession1 = CruiseEvent(
+            id = 10,
+            date = LocalDate.of(2026, 8, 16),
+            startTime = LocalTime.of(9, 30),
+            durationMinutes = 15,
+            categoryId = 2,
+            title = "海洋奇缘 Moana: Call of the Sea",
+            deck = 10,
+            zone = ShipZone.STERN,
+            placeName = "寻路者湾 Wayfinder Bay",
+        )
+        val showSession2 = CruiseEvent(
+            id = 15,
+            date = LocalDate.of(2026, 8, 17),
+            startTime = LocalTime.of(10, 30),
+            durationMinutes = 15,
+            categoryId = 2,
+            title = "海洋奇缘 Moana: Call of the Sea",
+            deck = 10,
+            zone = ShipZone.STERN,
+            placeName = "寻路者湾 Wayfinder Bay",
+        )
+        assertTrue(showSession1.isSameShowAs(showSession2))
+    }
+
+    @Test
+    fun isSameShowAs_differentTitleOrLocation_returnsFalse() {
+        val showSession1 = CruiseEvent(
+            id = 10,
+            date = LocalDate.of(2026, 8, 16),
+            startTime = LocalTime.of(9, 30),
+            durationMinutes = 15,
+            categoryId = 2,
+            title = "海洋奇缘 Moana: Call of the Sea",
+            deck = 10,
+            zone = ShipZone.STERN,
+            placeName = "寻路者湾 Wayfinder Bay",
+        )
+        val differentTitle = showSession1.copy(title = "扬帆起航 Let's Set Sail")
+        val differentDeck = showSession1.copy(deck = 6)
+        val differentCategory = showSession1.copy(categoryId = 3)
+        assertEquals(false, showSession1.isSameShowAs(differentTitle))
+        assertEquals(false, showSession1.isSameShowAs(differentDeck))
+        assertEquals(false, showSession1.isSameShowAs(differentCategory))
+    }
 }

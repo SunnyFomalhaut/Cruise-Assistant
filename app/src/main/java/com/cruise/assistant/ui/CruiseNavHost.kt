@@ -174,6 +174,7 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onMoveToLane = vm::moveToLane,
                     onToggleActive = vm::toggleActive,
+                    onKeepOnlyThisShow = vm::keepOnlyThisShow,
                     onDeleteEvent = vm::deleteEvent,
                     onGeneratePlan = {
                         val date = current.selectedDate

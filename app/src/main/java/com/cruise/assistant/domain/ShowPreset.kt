@@ -151,3 +151,14 @@ fun showEffectiveRange(event: CruiseEvent, isShow: Boolean): Pair<Int, Int> =
 fun showRangeOf(showCategoryIds: Set<Long>): (CruiseEvent) -> Pair<Int, Int> = { e ->
     showEffectiveRange(e, isShow = e.categoryId in showCategoryIds)
 }
+
+/**
+ * 判断两个事件是否属于同一个演出的不同场次（同类别、同标题、同甲板、同区域、同地点名）。
+ */
+fun CruiseEvent.isSameShowAs(other: CruiseEvent): Boolean =
+    categoryId == other.categoryId &&
+        title == other.title &&
+        deck == other.deck &&
+        zone == other.zone &&
+        placeName == other.placeName
+

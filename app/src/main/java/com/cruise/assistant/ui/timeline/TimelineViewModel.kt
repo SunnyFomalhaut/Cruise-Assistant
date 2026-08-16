@@ -184,6 +184,14 @@ class TimelineViewModel(
         }
     }
 
+    /** 只看本场：设置同一演出全航次中其他场次为非活动 */
+    fun keepOnlyThisShow(event: CruiseEvent) {
+        viewModelScope.launch {
+            eventRepository.keepOnlyThisShow(event)
+            reminderScheduler.rescheduleAll()
+        }
+    }
+
     fun deleteEvent(event: CruiseEvent, scope: RecurrenceScope) {
         viewModelScope.launch {
             eventRepository.deleteEvent(event, scope)

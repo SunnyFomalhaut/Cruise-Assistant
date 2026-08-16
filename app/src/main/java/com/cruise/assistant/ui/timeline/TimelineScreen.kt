@@ -89,6 +89,7 @@ fun TimelineScreen(
     onEditEvent: (CruiseEvent) -> Unit,
     onMoveToLane: (Long, Int) -> Unit,
     onToggleActive: (Long, Boolean) -> Unit,
+    onKeepOnlyThisShow: (CruiseEvent) -> Unit,
     onDeleteEvent: (CruiseEvent, RecurrenceScope) -> Unit,
     onGeneratePlan: () -> Unit,
     onUnlockDay: () -> Unit,
@@ -390,6 +391,16 @@ fun TimelineScreen(
                                     menuFor = menuEvent,
                                     menuContent = { event ->
                                         DropdownMenu(expanded = true, onDismissRequest = { menuEvent = null }) {
+                                            val isShow = state.categories[event.categoryId]?.iconKey == "show"
+                                            if (!state.isFinalized && isShow) {
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(R.string.keep_only_this_show)) },
+                                                    onClick = {
+                                                        onKeepOnlyThisShow(event)
+                                                        menuEvent = null
+                                                    },
+                                                )
+                                            }
                                             if (!state.isFinalized && !event.isSystemGenerated) {
                                                 DropdownMenuItem(
                                                     text = {

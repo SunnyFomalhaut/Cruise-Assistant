@@ -11,6 +11,7 @@ import com.cruise.assistant.domain.assignLane
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.expandRecurrence
 import com.cruise.assistant.domain.findConflicts
+import com.cruise.assistant.domain.isSameShowAs
 import com.cruise.assistant.domain.pickDinnerLinkedTime
 import com.cruise.assistant.domain.showEffectiveRange
 import com.cruise.assistant.domain.showRangeOf
@@ -153,6 +154,26 @@ class EventRepository(
         } else {
             // 停用：保留原车道仅供显示
             eventDao.setActive(eventId, false)
+        }
+    }
+
+    /**
+     * 只看本场：将全航次中与 [target] 同一演出的其他场次全部设为非活动（isActive=false），并将 [target] 设为活动（isActive=true）。
+     * 同一演出判断条件：除时间（startTime/durationMinutes/date）外其他一致（categoryId, title, deck, zone, placeName）。
+     */
+    suspend fun keepOnlyThisShow(target: CruiseEvent) {
+        val allEvents = eventDao.getAll().map { it.toDomain() }
+        val matches = allEvents.filter { it.isSameShowAs(target) }
+        matches.forEach { match ->
+            if (match.id == target.id) {
+                if (!match.isActive) {
+                    setActive(match.id, true)
+                }
+            } else {
+                if (match.isActive) {
+                    setActive(match.id, false)
+                }
+            }
         }
     }
 
