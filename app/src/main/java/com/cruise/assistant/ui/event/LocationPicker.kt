@@ -98,8 +98,6 @@ fun LocationPicker(
     Column(modifier) {
         var presetMenuOpen by remember { mutableStateOf(false) }
         if (presetMode && presetOptions.isNotEmpty()) {
-            Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
-            Spacer(Modifier.height(8.dp))
             ExposedDropdownMenuBox(
                 expanded = presetMenuOpen,
                 onExpandedChange = { if (enabled) presetMenuOpen = it },
@@ -198,9 +196,6 @@ fun LocationPicker(
                 Text(stringResource(R.string.no_location), style = MaterialTheme.typography.bodySmall, color = Slate700)
             }
         } else {
-            Text(stringResource(R.string.location_label), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Slate900)
-            Spacer(Modifier.height(8.dp))
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // 楼层下拉
                 Box {

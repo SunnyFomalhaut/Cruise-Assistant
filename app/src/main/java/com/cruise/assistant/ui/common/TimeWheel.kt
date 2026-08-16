@@ -1,6 +1,7 @@
 package com.cruise.assistant.ui.common
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,12 +31,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cruise.assistant.ui.theme.CruiseAzureContainer
+import com.cruise.assistant.ui.theme.CruiseMarine
+import com.cruise.assistant.ui.theme.Slate100
+import com.cruise.assistant.ui.theme.Slate200
+import com.cruise.assistant.ui.theme.Slate400
+import com.cruise.assistant.ui.theme.Slate900
 import java.time.LocalTime
 import kotlin.math.roundToInt
 
 private val ROW_HEIGHT = 44.dp
 
-/** 截图2 的时间滚轮：小时列 + 分钟列，中间行为选中值 */
+/** 时间滚轮：小时列 + 分钟列，中间行为选中值 */
 @Composable
 fun TimeWheel(
     value: LocalTime,
@@ -44,35 +51,41 @@ fun TimeWheel(
     minuteStep: Int = 5,
 ) {
     val minuteValues = remember(minuteStep) { (0 until 60 step minuteStep).toList() }
+    val shape = RoundedCornerShape(14.dp)
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+            .clip(shape)
+            .background(Slate100)
+            .border(1.dp, Slate200, shape),
         contentAlignment = Alignment.Center,
     ) {
-        // 中间高亮条
+        // 中间高亮胶囊视窗
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(ROW_HEIGHT)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .padding(horizontal = 6.dp)
+                .height(ROW_HEIGHT - 6.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(CruiseAzureContainer),
         )
         Row(
             Modifier.padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             WheelColumn(
                 items = (0..23).toList(),
                 selected = value.hour,
                 onSelect = { onValueChange(value.withHour(it)) },
                 format = { "%02d".format(it) },
-                modifier = Modifier.width(72.dp),
+                modifier = Modifier.width(64.dp),
             )
             Text(
                 ":",
-                fontSize = 22.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
+                color = CruiseMarine,
                 modifier = Modifier.align(Alignment.CenterVertically),
             )
             WheelColumn(
@@ -81,7 +94,7 @@ fun TimeWheel(
                     ?: 0,
                 onSelect = { onValueChange(value.withMinute(it)) },
                 format = { "%02d".format(it) },
-                modifier = Modifier.width(72.dp),
+                modifier = Modifier.width(64.dp),
             )
         }
     }
@@ -95,13 +108,8 @@ private fun WheelColumn(
     format: (Int) -> String,
     modifier: Modifier = Modifier,
 ) {
-    // 循环滚动：用大倍数假装无限列表，下标对 items.size 取模即可首尾相接。
-    // REPEAT 选 Int.MAX_VALUE 让用户怎么滚都摸不到边界；
-    // 初始 startPosition 居中落在一个远离边界的 chunk，避免滚动到 list 末端触底。
     val realSize = items.size
     val initialLogicalIndex = remember(selected, realSize) {
-        // 把初始位置定位到"中间附近且映射回 selected"的地方：
-        // 用一个固定的大偏移 (1_000_000 * realSize) + selected，确保物理下标远离 0/MaxValue 边界。
         val base = 1_000_000L * realSize
         (base + items.indexOf(selected).coerceAtLeast(0)).toInt()
     }
@@ -109,20 +117,12 @@ private fun WheelColumn(
     val density = LocalDensity.current
     val rowHeightPx = remember(density) { with(density) { ROW_HEIGHT.toPx() } }
 
-    // rememberUpdatedState 保证 LaunchedEffect(state) 长期协程里读到的
-    // selected / onSelect 始终是最新值，而非首次组合时的旧快照。
-    // 之前 onSelect 捕获了旧的 value(LocalTime)，导致先改小时再滚分钟时
-    // withMinute(it) 把小时回退成旧值（如无法选择 11:45）。
     val currentSelected = rememberUpdatedState(selected)
     val currentOnSelect = rememberUpdatedState(onSelect)
 
-    // 外部值变化时同步滚动到对齐该值的最近 logical index（保持在当前可视区附近，
-    // 不跳到 1_000_000 那个远端 chunk，避免视觉跳变）。
     LaunchedEffect(selected) {
         if (realSize == 0) return@LaunchedEffect
         val targetRealIndex = items.indexOf(selected).coerceAtLeast(0)
-        // 计算当前可视区中心对应的目标 real index 与可视中心 raw 的差距，
-        // 选一个最近的等价 raw 去 scrollToItem。
         val centeredRawApprox = state.firstVisibleItemIndex +
             (state.firstVisibleItemScrollOffset / rowHeightPx).roundToInt()
         val centeredRealApprox = ((centeredRawApprox % realSize) + realSize) % realSize
@@ -131,7 +131,6 @@ private fun WheelColumn(
         if (state.firstVisibleItemIndex != targetRaw) state.scrollToItem(targetRaw)
     }
 
-    // 当前对准中间行的条目：raw index 对 realSize 取模得到真实 item 下标。
     val centeredIndex by remember(items) {
         derivedStateOf {
             val rawCentered = state.firstVisibleItemIndex +
@@ -140,7 +139,6 @@ private fun WheelColumn(
         }
     }
 
-    // 滚动停止后回调选中值
     LaunchedEffect(state) {
         snapshotFlow { state.isScrollInProgress to centeredIndex }
             .collect { (scrolling, index) ->
@@ -163,16 +161,13 @@ private fun WheelColumn(
             ) {
                 Text(
                     text = format(items[index]),
-                    fontSize = if (isSelected) 24.sp else 18.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    },
+                    fontSize = if (isSelected) 22.sp else 16.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isSelected) CruiseMarine else Slate400,
                     textAlign = TextAlign.Center,
                 )
             }
         }
     }
 }
+
