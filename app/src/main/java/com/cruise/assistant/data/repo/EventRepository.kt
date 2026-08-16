@@ -8,6 +8,7 @@ import com.cruise.assistant.data.db.toEntity
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
 import com.cruise.assistant.domain.assignLane
+import com.cruise.assistant.domain.assignLanePreserving
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.expandRecurrence
 import com.cruise.assistant.domain.findConflicts
@@ -164,16 +165,30 @@ class EventRepository(
     suspend fun keepOnlyThisShow(target: CruiseEvent) {
         val allEvents = eventDao.getAll().map { it.toDomain() }
         val matches = allEvents.filter { it.isSameShowAs(target) }
-        matches.forEach { match ->
-            if (match.id == target.id) {
-                if (!match.isActive) {
-                    setActive(match.id, true)
-                }
-            } else {
-                if (match.isActive) {
-                    setActive(match.id, false)
-                }
-            }
+        // 先停用其他场次（释放它们的栏位，供目标场复活时判断冲突）
+        matches.filter { it.id != target.id && it.isActive }.forEach {
+            eventDao.setActive(it.id, false)
+        }
+        // 再激活目标场：优先保留原栏位（assignLanePreserving），
+        // 只有原栏位与同日其他活动事件冲突时才重算——避免复活后跳到空着的栏 0。
+        val targetEntity = eventDao.getById(target.id) ?: return
+        if (!targetEntity.isActive) {
+            val event = targetEntity.toDomain()
+            val showIds = showCategoryIds()
+            val rangeOf = showRangeOf(showIds)
+            val (start, end) = rangeOf(event)
+            val sameDay = eventDao.getByDate(event.date)
+                .map { it.toDomain() }
+                .filter { it.isActive }
+            val lane = assignLanePreserving(
+                start,
+                end,
+                sameDay,
+                preferredLane = event.lane,
+                excludeId = event.id,
+                rangeOf = rangeOf,
+            )
+            eventDao.update(targetEntity.copy(isActive = true, lane = lane))
         }
     }
 

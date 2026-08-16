@@ -110,4 +110,30 @@ class LaneAssignerTest {
         val occupied = listOf(Triple(1, 540, 700), Triple(2, 540, 700))
         assertEquals(0, assignShowLane(600, 645, occupied))
     }
+
+    @Test
+    fun assignLanePreserving_keepsPreferredLane_whenItIsFree() {
+        // 原栏位（1）没有冲突，即使栏 0 也空着，也应保留原栏位 1
+        val existing = listOf(ev(1, 15, 0, 60, lane = 2))
+        assertEquals(1, assignLanePreserving(780, 840, existing, preferredLane = 1))
+    }
+
+    @Test
+    fun assignLanePreserving_emptyDay_returnsPreferredLane() {
+        assertEquals(2, assignLanePreserving(780, 840, emptyList(), preferredLane = 2))
+    }
+
+    @Test
+    fun assignLanePreserving_fallsBack_whenPreferredLaneBusy() {
+        // 原栏位 1 被 13:00-14:00 占据，13:15-13:45 与之重叠 → 回退到栏 0
+        val existing = listOf(ev(1, 13, 0, 60, lane = 1))
+        assertEquals(0, assignLanePreserving(795, 825, existing, preferredLane = 1))
+    }
+
+    @Test
+    fun assignLanePreserving_excludesSelf_whenCheckingPreferredLane() {
+        // 检查自己原栏位时应排除自身（编辑/复活场景传入 excludeId）
+        val existing = listOf(ev(7, 13, 0, 60, lane = 1))
+        assertEquals(1, assignLanePreserving(780, 840, existing, preferredLane = 1, excludeId = 7L))
+    }
 }

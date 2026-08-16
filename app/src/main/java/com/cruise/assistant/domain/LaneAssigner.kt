@@ -34,6 +34,31 @@ fun assignLane(
 }
 
 /**
+ * 重新激活事件时优先保留原栏位（preferredLane）——原栏位与同日其他活动事件
+ * 不重叠就直接沿用；只有原栏位已被占才回退到普通 assignLane（0→1→2 找空栏）。
+ * "只看本场"复活的演出期望留在原来的栏位，而不是因为栏 0 空着就跳过去。
+ */
+fun assignLanePreserving(
+    startMinute: Int,
+    endMinute: Int,
+    existing: List<CruiseEvent>,
+    preferredLane: Int,
+    excludeId: Long? = null,
+    rangeOf: (CruiseEvent) -> Pair<Int, Int> = { it.startMinute to it.endMinute },
+): Int {
+    val candidates = existing.filter { it.id != excludeId }
+    val preferredBusy = candidates.any { other ->
+        val (oStart, oEnd) = rangeOf(other)
+        other.lane == preferredLane && overlaps(startMinute, endMinute, oStart, oEnd)
+    }
+    return if (!preferredBusy) {
+        preferredLane
+    } else {
+        assignLane(startMinute, endMinute, existing, excludeId, rangeOf)
+    }
+}
+
+/**
  * 预置演出生成时的栏位分配：优先第二栏（1），冲突则第三栏（2），再冲突回退第一栏（0）。
  * occupied 为已分配演出（按扩展区间）的 (lane, effStart, effEnd) 列表。
  */
