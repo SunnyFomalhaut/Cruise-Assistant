@@ -142,15 +142,23 @@ class EventRepository(
     /** 切换事件活动/非活动状态（仅本日，不影响循环组其他成员） */
     suspend fun setActive(eventId: Long, active: Boolean) {
         if (active) {
-            // 重新激活：重算车道，避免与激活期间新增的事件撞栏
+            // 重新激活：优先保留原栏位；只有原栏位与激活期间新增/变动的事件冲突时才重算
             val entity = eventDao.getById(eventId) ?: return
             val sameDay = eventDao.getByDate(entity.date)
                 .map { it.toDomain() }
                 .filter { it.isActive && it.id != eventId }
             val event = entity.toDomain()
             val showIds = showCategoryIds()
-            val range = showEffectiveRange(event, isShow = event.categoryId in showIds)
-            val lane = assignLane(range.first, range.second, sameDay, rangeOf = showRangeOf(showIds))
+            val rangeOf = showRangeOf(showIds)
+            val (start, end) = rangeOf(event)
+            val lane = assignLanePreserving(
+                start,
+                end,
+                sameDay,
+                preferredLane = event.lane,
+                excludeId = event.id,
+                rangeOf = rangeOf,
+            )
             eventDao.update(entity.copy(isActive = true, lane = lane))
         } else {
             // 停用：保留原车道仅供显示
@@ -169,27 +177,8 @@ class EventRepository(
         matches.filter { it.id != target.id && it.isActive }.forEach {
             eventDao.setActive(it.id, false)
         }
-        // 再激活目标场：优先保留原栏位（assignLanePreserving），
-        // 只有原栏位与同日其他活动事件冲突时才重算——避免复活后跳到空着的栏 0。
-        val targetEntity = eventDao.getById(target.id) ?: return
-        if (!targetEntity.isActive) {
-            val event = targetEntity.toDomain()
-            val showIds = showCategoryIds()
-            val rangeOf = showRangeOf(showIds)
-            val (start, end) = rangeOf(event)
-            val sameDay = eventDao.getByDate(event.date)
-                .map { it.toDomain() }
-                .filter { it.isActive }
-            val lane = assignLanePreserving(
-                start,
-                end,
-                sameDay,
-                preferredLane = event.lane,
-                excludeId = event.id,
-                rangeOf = rangeOf,
-            )
-            eventDao.update(targetEntity.copy(isActive = true, lane = lane))
-        }
+        // 再激活目标场：统一走 setActive（内含"优先保留原栏位"逻辑）
+        setActive(target.id, true)
     }
 
     /**
