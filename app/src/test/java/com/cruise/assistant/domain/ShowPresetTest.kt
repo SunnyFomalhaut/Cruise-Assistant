@@ -326,4 +326,40 @@ class ShowPresetTest {
         assertEquals(false, showSession1.isSameShowAs(differentDeck))
         assertEquals(false, showSession1.isSameShowAs(differentCategory))
     }
+
+    @Test
+    fun formatWaitStart_regularShow_subtracts30Minutes() {
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(20, 30),
+            durationMinutes = 60,
+            categoryId = 1,
+            title = "晚间大秀",
+        )
+        assertEquals("20:00", formatWaitStart(event))
+    }
+
+    @Test
+    fun formatWaitStart_morningShow_formatsLeadingZeros() {
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(9, 30),
+            durationMinutes = 30,
+            categoryId = 1,
+            title = "早间演出",
+        )
+        assertEquals("09:00", formatWaitStart(event))
+    }
+
+    @Test
+    fun formatWaitStart_midnightCrossing_wrapsAroundCleanly() {
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(0, 15),
+            durationMinutes = 30,
+            categoryId = 1,
+            title = "午夜派对",
+        )
+        assertEquals("23:45", formatWaitStart(event))
+    }
 }

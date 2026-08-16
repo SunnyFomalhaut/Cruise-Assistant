@@ -162,3 +162,14 @@ fun CruiseEvent.isSameShowAs(other: CruiseEvent): Boolean =
         zone == other.zone &&
         placeName == other.placeName
 
+/**
+ * 格式化演出开始前的候场时间（默认提前 SHOW_WAIT_MINUTES = 30 分钟）。
+ * 例如 20:30 演出返回 "20:00"，09:30 演出返回 "09:00"。
+ */
+fun formatWaitStart(event: CruiseEvent, waitMinutes: Int = SHOW_WAIT_MINUTES): String {
+    val waitMin = ((event.startMinute - waitMinutes) % 1440 + 1440) % 1440
+    val hour = waitMin / 60
+    val minute = waitMin % 60
+    return "%02d:%02d".format(hour, minute)
+}
+
