@@ -56,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
@@ -325,50 +326,54 @@ fun OnboardingScreen(
                         color = Slate900,
                     )
                 }
-                Spacer(Modifier.height(10.dp))
-                var boardMenuExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = boardMenuExpanded,
-                    onExpandedChange = { boardMenuExpanded = it },
-                    modifier = Modifier.fillMaxWidth(),
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(CruiseAzureContainer)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    OutlinedTextField(
-                        value = "%02d:%02d-%02d:%02d".format(
+                    Text(
+                        text = "登船批次：%02d:%02d – %02d:%02d".format(
                             state.boardTime.hour, state.boardTime.minute,
                             (state.boardTime.plusMinutes(15).hour + 24) % 24,
                             state.boardTime.plusMinutes(15).minute,
                         ),
-                        onValueChange = { },
-                        label = { Text(stringResource(R.string.board_time_label)) },
-                        readOnly = true,
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = boardMenuExpanded) },
-                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = CruiseMarine,
                     )
-                    ExposedDropdownMenu(
-                        expanded = boardMenuExpanded,
-                        onDismissRequest = { boardMenuExpanded = false },
-                        modifier = Modifier.heightIn(max = 320.dp),
+                }
+                Spacer(Modifier.height(8.dp))
+                boardingSlots().chunked(3).forEach { rowSlots ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        boardingSlots().forEach { slot ->
-                            DropdownMenuItem(
-                                text = {
+                        rowSlots.forEach { slot ->
+                            FilterChip(
+                                selected = state.boardTime == slot,
+                                onClick = { onBoardTimeChange(slot) },
+                                label = {
                                     Text(
-                                        "%02d:%02d-%02d:%02d".format(
-                                            slot.hour, slot.minute,
-                                            (slot.plusMinutes(15).hour + 24) % 24,
-                                            slot.plusMinutes(15).minute,
-                                        ),
+                                        text = "%02d:%02d".format(slot.hour, slot.minute),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = if (state.boardTime == slot) FontWeight.Bold else FontWeight.Medium,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth(),
                                     )
                                 },
-                                onClick = {
-                                    onBoardTimeChange(slot)
-                                    boardMenuExpanded = false
-                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = CruiseAzureContainer,
+                                    selectedLabelColor = CruiseMarine,
+                                ),
+                                modifier = Modifier.weight(1f),
                             )
                         }
                     }
+                    Spacer(Modifier.height(4.dp))
                 }
 
                 Spacer(Modifier.height(14.dp))

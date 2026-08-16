@@ -62,16 +62,12 @@ class ShipPresetTest {
     }
 
     @Test
-    fun boardingSlots_62Slots_from1145to0300() {
+    fun boardingSlots_15Slots_from1145to1515() {
         val slots = boardingSlots()
-        // 11:45-23:45 共 49 段 + 次日 0:00-3:00 共 13 段 = 62 段（设计文档 "60 段" 为笔误，
-        // 枚举 11:45…3:00 的实际段数是 62；首末窗口 11:45-12:00 / 3:00-3:15 以设计为准）
-        assertEquals(62, slots.size)
+        assertEquals(15, slots.size)
         assertEquals(LocalTime.of(11, 45), slots.first())
-        assertEquals(LocalTime.of(3, 0), slots.last())
-        // 跨午夜连续：23:45 后是 0:00
-        assertTrue(slots.contains(LocalTime.of(23, 45)))
-        assertTrue(slots.contains(LocalTime.of(0, 0)))
-        assertEquals(LocalTime.of(0, 0), slots[slots.indexOf(LocalTime.of(23, 45)) + 1])
+        assertEquals(LocalTime.of(15, 15), slots.last())
+        assertEquals(LocalTime.of(12, 0), slots[1])
+        assertEquals(LocalTime.of(15, 0), slots[13])
     }
 }
