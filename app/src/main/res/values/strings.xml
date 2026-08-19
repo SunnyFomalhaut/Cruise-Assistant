@@ -194,4 +194,14 @@
     <string name="facility_guide_see_schedule">以演出时刻表为准</string>
     <string name="facility_guide_count_format">共 %d 处设施</string>
     <string name="facility_guide_empty_search">未找到符合条件的设施</string>
+
+    <!-- 甲板地图 -->
+    <string name="deck_map_title">甲板地图</string>
+    <string name="deck_map_screen_title_format">Deck %d 甲板平面图</string>
+    <string name="deck_map_entrance_subtitle">查看全船各层甲板平面分布图</string>
+    <string name="deck_map_no_map_title">Deck %d 图纸正在采集中</string>
+    <string name="deck_map_no_map_desc">该层平面图将在后续版本更新中上线，敬请期待</string>
+    <string name="deck_map_bow">船首 ↑</string>
+    <string name="deck_map_stern">船尾 ↓</string>
+    <string name="deck_map_reset_zoom">复位</string>
 </resources>
