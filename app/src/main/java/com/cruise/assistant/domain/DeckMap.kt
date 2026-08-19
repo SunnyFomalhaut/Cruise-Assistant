@@ -12,18 +12,20 @@ data class DeckInfo(
 /** 全船甲板地图管理仓储 */
 object DeckMapRepository {
 
-    /** 目前已拥有 SVG 图纸的甲板集合 */
-    val AVAILABLE_DECKS = setOf(5, 6, 7, 8, 9)
+    /** 目前已拥有 SVG 图纸的甲板集合（1~4为轮机舱/船员舱不开放，14层不存在） */
+    val AVAILABLE_DECKS = setOf(5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19)
+
+    /** 乘客开放甲板列表（从高层到低层降序排列，排除 1~4 层与不存在的 14 层） */
+    val PASSENGER_DECKS = listOf(19, 18, 17, 16, 15, 13, 12, 11, 10, 9, 8, 7, 6, 5)
 
     /** 默认最大甲板层数 */
     const val DEFAULT_MAX_DECK = 19
 
     /**
-     * 获取全船甲板列表（从高层到低层降序排列，如 D19 -> D1）
+     * 获取全船对客开放甲板列表（从高层到低层降序排列，如 D19 -> D5，排除 14 层）
      */
     fun getDecks(maxDeck: Int = DEFAULT_MAX_DECK): List<DeckInfo> {
-        val validMax = maxDeck.coerceAtLeast(1)
-        return (validMax downTo 1).map { deck ->
+        return PASSENGER_DECKS.filter { it <= maxDeck }.map { deck ->
             val hasMap = hasDeckMap(deck)
             DeckInfo(
                 deckNumber = deck,
