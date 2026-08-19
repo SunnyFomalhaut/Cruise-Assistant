@@ -194,7 +194,7 @@ private fun DeckRail(
     val listState = rememberLazyListState()
 
     // 自动滑动到选中项
-    LaunchedEffect(selectedDeck) {
+    LaunchedEffect(selectedDeck, decks) {
         val index = decks.indexOfFirst { it.deckNumber == selectedDeck }
         if (index >= 0) {
             listState.animateScrollToItem((index - 2).coerceAtLeast(0))
@@ -286,6 +286,9 @@ private fun SvgMapView(
         update = { webView ->
             val html = DeckMapRepository.htmlWrapperFor(assetUrl)
             webView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "UTF-8", null)
+        },
+        onRelease = { webView ->
+            webView.destroy()
         },
         modifier = modifier,
     )

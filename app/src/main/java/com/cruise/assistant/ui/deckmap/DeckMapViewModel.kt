@@ -42,7 +42,16 @@ class DeckMapViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DeckMapUiState(),
+        initialValue = run {
+            val initialSelected = if (DeckMapRepository.hasDeckMap(initialDeck)) initialDeck else 5
+            val initialDecks = DeckMapRepository.getDecks(maxDeck)
+            DeckMapUiState(
+                selectedDeck = initialSelected,
+                decks = initialDecks,
+                hasMap = DeckMapRepository.hasDeckMap(initialSelected),
+                assetUrl = DeckMapRepository.assetUrlFor(initialSelected),
+            )
+        },
     )
 
     fun onSelectDeck(deckNumber: Int) {
