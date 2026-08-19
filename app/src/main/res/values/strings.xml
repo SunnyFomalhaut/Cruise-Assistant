@@ -181,4 +181,17 @@
     <string name="notification_channel_name">行程提醒</string>
     <string name="notification_channel_desc">事件开始前提醒</string>
     <string name="notification_title_format">%1$s · %2$s</string>
+
+    <!-- 设施指南 (v1.9.6) -->
+    <string name="facility_guide_title">船上设施指南</string>
+    <string name="facility_guide_subtitle">查询全船餐饮、泳池、商店、活动中心等运营时间与位置</string>
+    <string name="facility_guide_search_placeholder">搜索设施名称、甲板 (如 Deck 6) 或区域...</string>
+    <string name="facility_guide_all_categories">全部</string>
+    <string name="facility_guide_filter_open_now">仅看营业中</string>
+    <string name="facility_guide_status_open">营业中</string>
+    <string name="facility_guide_status_closed">休息中</string>
+    <string name="facility_guide_24_hours">24小时全天开放</string>
+    <string name="facility_guide_see_schedule">以演出时刻表为准</string>
+    <string name="facility_guide_count_format">共 %d 处设施</string>
+    <string name="facility_guide_empty_search">未找到符合条件的设施</string>
 </resources>
