@@ -1,6 +1,7 @@
 package com.cruise.assistant.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.DirectionsBoat
 import androidx.compose.material.icons.outlined.Notifications
@@ -83,6 +85,7 @@ fun SettingsScreen(
     onResetVoyage: () -> Unit,
     onManageCategories: () -> Unit,
     exactAlarmAvailable: Boolean,
+    onNavigateToFacilities: () -> Unit = {},
 ) {
     var confirmReset by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(16.dp)
@@ -101,6 +104,62 @@ fun SettingsScreen(
             color = Slate900,
         )
         Spacer(Modifier.height(16.dp))
+
+        // ---- 顶部特色入口：船上设施指南 ----
+        Surface(
+            shape = cardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, CruiseAzure.copy(alpha = 0.5f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onNavigateToFacilities() },
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(CruiseAzureContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.DirectionsBoat,
+                        contentDescription = null,
+                        tint = CruiseMarine,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.facility_guide_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Slate900,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        stringResource(R.string.facility_guide_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Slate500,
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = CruiseAzure,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
 
         // ---- 卡片 1：时间轴显示范围 ----
         SettingsCard(

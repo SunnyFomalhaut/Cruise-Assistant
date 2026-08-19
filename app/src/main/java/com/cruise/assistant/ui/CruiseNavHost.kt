@@ -64,6 +64,7 @@ object Routes {
     const val TIMELINE = "timeline"
     const val SETTINGS = "settings"
     const val PIXIE_DUST = "pixiedust"
+    const val FACILITIES = "facilities"
 }
 
 /** 显示范围最小跨度，和 domain 层（TimelineLayout.kt 的 MIN_RANGE_MINUTES）保持一致。 */
@@ -505,6 +506,7 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onManageCategories = { showCategorySheet = true },
                     exactAlarmAvailable = container.reminderScheduler.canScheduleExact(),
+                    onNavigateToFacilities = { navController.navigate(Routes.FACILITIES) },
                 )
             }
 
@@ -532,6 +534,18 @@ fun CruiseNavHost(container: AppContainer) {
                     onDismiss = { showCategorySheet = false },
                 )
             }
+        }
+        composable(Routes.FACILITIES) {
+            val vm: com.cruise.assistant.ui.facilities.FacilityGuideViewModel = viewModel()
+            val state by vm.state.collectAsState()
+            com.cruise.assistant.ui.facilities.FacilityGuideScreen(
+                state = state,
+                categories = vm.categories,
+                onBack = { navController.popBackStack() },
+                onSearchChange = vm::onSearchQueryChange,
+                onCategorySelect = vm::onCategorySelect,
+                onToggleOnlyOpenNow = vm::onToggleOnlyOpenNow,
+            )
         }
     }
 }
