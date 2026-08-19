@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,7 +71,14 @@ fun DeckMapScreen(
     onBack: () -> Unit,
     onSelectDeck: (Int) -> Unit,
 ) {
+    val context = LocalContext.current
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    val htmlContent = remember(state.selectedDeck) {
+        val svg = runCatching {
+            context.assets.open("decks/deck_${state.selectedDeck}.svg").bufferedReader().use { it.readText() }
+        }.getOrDefault("")
+        DeckMapRepository.inlineHtmlWrapperFor(svg)
+    }
 
     Scaffold(
         topBar = {
@@ -95,10 +103,7 @@ fun DeckMapScreen(
                 actions = {
                     if (state.hasMap) {
                         IconButton(onClick = {
-                            webViewRef?.let { webView ->
-                                val html = DeckMapRepository.htmlWrapperFor(state.assetUrl)
-                                webView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "UTF-8", null)
-                            }
+                            webViewRef?.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
                         }) {
                             Icon(
                                 imageVector = Icons.Outlined.CenterFocusStrong,
@@ -140,7 +145,7 @@ fun DeckMapScreen(
                 if (state.hasMap) {
                     // 硬件加速矢量地图容器
                     SvgMapView(
-                        assetUrl = state.assetUrl,
+                        htmlContent = htmlContent,
                         onWebViewReady = { webViewRef = it },
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -259,7 +264,7 @@ private fun DeckRail(
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 private fun SvgMapView(
-    assetUrl: String,
+    htmlContent: String,
     onWebViewReady: (WebView) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -278,14 +283,12 @@ private fun SvgMapView(
                     useWideViewPort = true
                     loadWithOverviewMode = true
                     setSupportZoom(true)
-                    allowFileAccess = true
                 }
                 onWebViewReady(this)
             }
         },
         update = { webView ->
-            val html = DeckMapRepository.htmlWrapperFor(assetUrl)
-            webView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "UTF-8", null)
+            webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
         },
         onRelease = { webView ->
             webView.destroy()

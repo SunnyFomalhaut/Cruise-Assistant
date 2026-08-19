@@ -46,6 +46,51 @@ object DeckMapRepository {
     fun assetUrlFor(deckNumber: Int): String = "file:///android_asset/decks/deck_$deckNumber.svg"
 
     /**
+     * 将 SVG 字符串内联到响应式 HTML 容器中，免受安全沙箱限制
+     */
+    fun inlineHtmlWrapperFor(svgContent: String): String {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
+                <style>
+                    * { box-sizing: border-box; }
+                    html, body {
+                        margin: 0;
+                        padding: 0;
+                        width: 100%;
+                        min-height: 100%;
+                        background-color: transparent;
+                        display: flex;
+                        justify-content: center;
+                        align-items: flex-start;
+                        overflow: auto;
+                    }
+                    #svg-wrapper {
+                        width: 100%;
+                        padding: 12px 4px;
+                        display: flex;
+                        justify-content: center;
+                    }
+                    svg {
+                        width: 100%;
+                        max-width: 588px;
+                        height: auto;
+                        display: block;
+                    }
+                </style>
+            </head>
+            <body>
+                <div id="svg-wrapper">
+                    $svgContent
+                </div>
+            </body>
+            </html>
+        """.trimIndent()
+    }
+
+    /**
      * 获取 HTML 包装内容，以实现响应式缩放与透明背景渲染
      */
     fun htmlWrapperFor(svgUrl: String): String {
