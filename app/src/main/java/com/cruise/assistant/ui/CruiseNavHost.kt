@@ -36,6 +36,8 @@ import com.cruise.assistant.domain.PixieDustRecord
 import com.cruise.assistant.ui.category.CategorySheet
 import com.cruise.assistant.ui.category.CategoryViewModel
 import com.cruise.assistant.ui.common.viewModelFactory
+import com.cruise.assistant.ui.deckmap.DeckMapScreen
+import com.cruise.assistant.ui.deckmap.DeckMapViewModel
 import com.cruise.assistant.ui.event.EventSheet
 import com.cruise.assistant.ui.event.EventSheetViewModel
 import com.cruise.assistant.ui.facilities.FacilityGuideScreen
@@ -67,6 +69,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val PIXIE_DUST = "pixiedust"
     const val FACILITIES = "facilities"
+    const val DECK_MAP = "deck_map"
 }
 
 /** 显示范围最小跨度，和 domain 层（TimelineLayout.kt 的 MIN_RANGE_MINUTES）保持一致。 */
@@ -167,6 +170,7 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenPixieDust = { navController.navigate(Routes.PIXIE_DUST) },
+                    onOpenDeckMap = { navController.navigate(Routes.DECK_MAP) },
                     onAddEvent = { startMinute ->
                         sheetSeq++
                         sheetRequest = EventSheetRequest(current.selectedDate, startMinute, 0L, sheetSeq)
@@ -509,6 +513,7 @@ fun CruiseNavHost(container: AppContainer) {
                     onManageCategories = { showCategorySheet = true },
                     exactAlarmAvailable = container.reminderScheduler.canScheduleExact(),
                     onNavigateToFacilities = { navController.navigate(Routes.FACILITIES) },
+                    onNavigateToDeckMap = { navController.navigate(Routes.DECK_MAP) },
                 )
             }
 
@@ -544,9 +549,19 @@ fun CruiseNavHost(container: AppContainer) {
                 state = state,
                 categories = vm.categories,
                 onBack = { navController.popBackStack() },
+                onOpenDeckMap = { navController.navigate(Routes.DECK_MAP) },
                 onSearchChange = vm::onSearchQueryChange,
                 onCategorySelect = vm::onCategorySelect,
                 onToggleOnlyOpenNow = vm::onToggleOnlyOpenNow,
+            )
+        }
+        composable(Routes.DECK_MAP) {
+            val vm: DeckMapViewModel = viewModel()
+            val state by vm.state.collectAsState()
+            DeckMapScreen(
+                state = state,
+                onBack = { navController.popBackStack() },
+                onSelectDeck = vm::onSelectDeck,
             )
         }
     }

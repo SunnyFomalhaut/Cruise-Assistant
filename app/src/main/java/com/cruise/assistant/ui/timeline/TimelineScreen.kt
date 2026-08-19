@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
@@ -89,6 +90,7 @@ fun TimelineScreen(
     onSelectDate: (LocalDate) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenPixieDust: () -> Unit,
+    onOpenDeckMap: () -> Unit = {},
     onAddEvent: (Int) -> Unit,
     onEditEvent: (CruiseEvent) -> Unit,
     onMoveToLane: (Long, Int) -> Unit,
@@ -197,7 +199,7 @@ fun TimelineScreen(
                     }
                 }
 
-                // 快捷操作按钮组（仙尘与设置）
+                // 快捷操作按钮组（仙尘、甲板地图与设置）
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconButton(
                         onClick = onOpenPixieDust,
@@ -209,6 +211,20 @@ fun TimelineScreen(
                         Icon(
                             Icons.Outlined.AutoAwesome,
                             contentDescription = stringResource(R.string.pixie_open),
+                            tint = CruiseMarine,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    IconButton(
+                        onClick = onOpenDeckMap,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Slate100),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Map,
+                            contentDescription = stringResource(R.string.deck_map_title),
                             tint = CruiseMarine,
                             modifier = Modifier.size(20.dp),
                         )

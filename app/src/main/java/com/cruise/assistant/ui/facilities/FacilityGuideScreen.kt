@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -74,6 +75,7 @@ fun FacilityGuideScreen(
     state: FacilityGuideUiState,
     categories: List<CategoryFilterOption>,
     onBack: () -> Unit,
+    onOpenDeckMap: () -> Unit = {},
     onSearchChange: (String) -> Unit,
     onCategorySelect: (String) -> Unit,
     onToggleOnlyOpenNow: (Boolean) -> Unit,
@@ -104,6 +106,15 @@ fun FacilityGuideScreen(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cancel),
                             tint = Slate700,
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenDeckMap) {
+                        Icon(
+                            imageVector = Icons.Outlined.Map,
+                            contentDescription = stringResource(R.string.deck_map_title),
+                            tint = CruiseMarine,
                         )
                     }
                 },

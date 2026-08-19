@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.DirectionsBoat
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Schedule
@@ -86,6 +87,7 @@ fun SettingsScreen(
     onManageCategories: () -> Unit,
     exactAlarmAvailable: Boolean,
     onNavigateToFacilities: () -> Unit = {},
+    onNavigateToDeckMap: () -> Unit = {},
 ) {
     var confirmReset by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(16.dp)
@@ -145,6 +147,62 @@ fun SettingsScreen(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         stringResource(R.string.facility_guide_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Slate500,
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = CruiseAzure,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        // ---- 顶部特色入口 2：全船甲板地图 ----
+        Surface(
+            shape = cardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onNavigateToDeckMap() },
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(CruiseAzureContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Map,
+                        contentDescription = null,
+                        tint = CruiseMarine,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.deck_map_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Slate900,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        stringResource(R.string.deck_map_entrance_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = Slate500,
                     )
