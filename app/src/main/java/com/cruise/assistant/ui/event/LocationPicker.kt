@@ -106,6 +106,7 @@ fun LocationPicker(
                 OutlinedTextField(
                     value = placeName.ifEmpty { stringResource(R.string.select_location_hint) },
                     onValueChange = { },
+                    label = { Text(stringResource(R.string.location_label)) },
                     readOnly = true,
                     singleLine = true,
                     enabled = enabled,

@@ -181,3 +181,11 @@ fun TimelineLayout.hourTicks(): List<Triple<Int, Float, Boolean>> {
         if (inCollapsed) null else Triple(minute, minuteToDp(minute), withHalves && minute % 60 != 0)
     }
 }
+
+/**
+ * 计算距离给定 dp 偏移最近的整点（以从当天 00:00 起算的分钟数表示，范围 0..1380 即 00:00..23:00）。
+ */
+fun TimelineLayout.nearestHourAtDp(dp: Float): Int {
+    val minute = dpToMinute(dp)
+    return (((minute + 30) / 60) * 60).coerceIn(0, 23 * 60)
+}

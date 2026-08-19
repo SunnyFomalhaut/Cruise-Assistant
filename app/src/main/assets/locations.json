@@ -1087,6 +1087,13 @@
       "slots": []
     },
     {
+      "name": "大白剧院 Baymax Cinemas",
+      "deck": 7,
+      "zone": "stern",
+      "category": "show",
+      "slots": []
+    },
+    {
       "name": "寻路者湾 Wayfinder Bay",
       "deck": 10,
       "zone": "stern",
@@ -1096,7 +1103,7 @@
     {
       "name": "花园舞台 Garden Stage",
       "deck": 10,
-      "zone": "stern",
+      "zone": "mid",
       "category": "show",
       "slots": []
     },

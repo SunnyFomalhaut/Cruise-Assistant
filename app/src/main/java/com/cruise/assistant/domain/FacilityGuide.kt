@@ -42,7 +42,7 @@ fun LocationCatalogEntry.toFacilityItemUiModel(currentTime: LocalTime = LocalTim
         it.start == LocalTime.of(0, 0) && (it.end == LocalTime.of(23, 59) || it.end == LocalTime.of(0, 0))
     }
     val hasHours = hours?.isConfigured == true
-    val open = isOpenAt(currentTime)
+    val open = if (is24H) true else isOpenAt(currentTime)
 
     val locationStr = formatLocation(deck, zone, null, compact = false) ?: if (deck == null) "全船/Dial 0" else "Deck $deck"
 

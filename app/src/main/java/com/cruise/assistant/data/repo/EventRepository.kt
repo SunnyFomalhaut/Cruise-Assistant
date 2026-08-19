@@ -7,8 +7,10 @@ import com.cruise.assistant.data.db.toDomain
 import com.cruise.assistant.data.db.toEntity
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
+import com.cruise.assistant.domain.SHOW_WAIT_MINUTES
 import com.cruise.assistant.domain.assignLane
 import com.cruise.assistant.domain.assignLanePreserving
+import com.cruise.assistant.domain.assignShowLane
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.expandRecurrence
 import com.cruise.assistant.domain.findConflicts
@@ -202,11 +204,32 @@ class EventRepository(
         val target = pickDinnerLinkedTime(dinnerTime)
         val dinnerLinkedShows = DISNEY_ADVENTURE_SHOWS.filter { it.dinnerLinked }
         val knownShowTimes = dinnerLinkedShows.flatMap { it.startTimes }.toSet()
+        val affectedDates = mutableSetOf<LocalDate>()
         dinnerLinkedShows.map { it.key }.forEach { key ->
             eventDao.getByPresetKey(key).forEach { entity ->
                 if (entity.startTime in knownShowTimes) {
                     eventDao.update(entity.copy(startTime = target))
+                    affectedDates += entity.date
                 }
+            }
+        }
+        val presetKeyOrder = DISNEY_ADVENTURE_SHOWS.mapIndexed { idx, s -> s.key to idx }.toMap()
+        for (date in affectedDates) {
+            val dayEvents = eventDao.getByDate(date)
+            val showPresetsOnDay = dayEvents
+                .filter { it.presetKey != null && it.presetKey in presetKeyOrder }
+                .sortedWith(compareBy({ presetKeyOrder[it.presetKey] ?: Int.MAX_VALUE }, { it.startTime }))
+            if (showPresetsOnDay.isNotEmpty()) {
+                val occupied = mutableListOf<Triple<Int, Int, Int>>()
+                val updated = showPresetsOnDay.map { entity ->
+                    val startMin = entity.startTime.hour * 60 + entity.startTime.minute
+                    val effStart = startMin - SHOW_WAIT_MINUTES
+                    val effEnd = startMin + entity.durationMinutes
+                    val newLane = assignShowLane(effStart, effEnd, occupied)
+                    occupied += Triple(newLane, effStart, effEnd)
+                    entity.copy(lane = newLane)
+                }
+                eventDao.updateAll(updated)
             }
         }
     }

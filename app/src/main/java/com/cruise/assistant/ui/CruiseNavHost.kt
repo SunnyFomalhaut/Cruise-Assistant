@@ -38,6 +38,8 @@ import com.cruise.assistant.ui.category.CategoryViewModel
 import com.cruise.assistant.ui.common.viewModelFactory
 import com.cruise.assistant.ui.event.EventSheet
 import com.cruise.assistant.ui.event.EventSheetViewModel
+import com.cruise.assistant.ui.facilities.FacilityGuideScreen
+import com.cruise.assistant.ui.facilities.FacilityGuideViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
 import com.cruise.assistant.ui.pixiedust.GivenList
@@ -536,9 +538,9 @@ fun CruiseNavHost(container: AppContainer) {
             }
         }
         composable(Routes.FACILITIES) {
-            val vm: com.cruise.assistant.ui.facilities.FacilityGuideViewModel = viewModel()
+            val vm: FacilityGuideViewModel = viewModel()
             val state by vm.state.collectAsState()
-            com.cruise.assistant.ui.facilities.FacilityGuideScreen(
+            FacilityGuideScreen(
                 state = state,
                 categories = vm.categories,
                 onBack = { navController.popBackStack() },

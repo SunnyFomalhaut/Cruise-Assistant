@@ -237,4 +237,22 @@ class TimelineLayoutTest {
         )
         assertEquals(listOf(300, 360, 420), layout.hourTicks().map { it.first })
     }
+
+    @Test
+    fun nearestHourAtDp_roundsToNearestWholeHour() {
+        // 420..1440 (07:00..24:00), 60dp/hr -> 1dp = 1min, topDp of 07:00 is 0dp
+        val layout = buildTimelineLayout(420, 1440, 60, emptyList(), false)
+        // 07:00 is minute 420 -> dp 0
+        assertEquals(7 * 60, layout.nearestHourAtDp(0f))
+        // 15:29 is minute 929 -> minuteToDp(929) -> nearest 15:00 (900)
+        assertEquals(15 * 60, layout.nearestHourAtDp(layout.minuteToDp(15 * 60 + 29)))
+        // 15:30 is minute 930 -> minuteToDp(930) -> nearest 16:00 (960)
+        assertEquals(16 * 60, layout.nearestHourAtDp(layout.minuteToDp(15 * 60 + 30)))
+        // 16:00 is minute 960 -> minuteToDp(960) -> nearest 16:00 (960)
+        assertEquals(16 * 60, layout.nearestHourAtDp(layout.minuteToDp(16 * 60)))
+        // 16:29 is minute 989 -> minuteToDp(989) -> nearest 16:00 (960)
+        assertEquals(16 * 60, layout.nearestHourAtDp(layout.minuteToDp(16 * 60 + 29)))
+        // 23:45 is minute 1425 -> clamped to 23:00 (1380)
+        assertEquals(23 * 60, layout.nearestHourAtDp(layout.minuteToDp(23 * 60 + 45)))
+    }
 }

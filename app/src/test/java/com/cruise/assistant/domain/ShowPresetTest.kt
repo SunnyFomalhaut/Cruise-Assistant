@@ -74,7 +74,7 @@ class ShowPresetTest {
                 key = "show_set_sail",
                 title = "扬帆起航 Let's Set Sail",
                 deck = 10,
-                zone = ShipZone.STERN,
+                zone = ShipZone.MID,
                 placeName = "花园舞台",
                 durationMinutes = 30,
                 dayOffsets = listOf(1),
@@ -130,13 +130,25 @@ class ShowPresetTest {
                 startTimes = listOf(LocalTime.of(9, 30), LocalTime.of(10, 0), LocalTime.of(10, 30)),
                 dinnerLinked = false,
             ),
+            ShowPreset(
+                key = "show_avengers",
+                title = "复仇者集结 Avengers Assemble!",
+                deck = 10,
+                zone = ShipZone.MID,
+                placeName = "花园舞台",
+                durationMinutes = 40,
+                dayOffsets = listOf(2),
+                dailyRangeTo = 4,
+                startTimes = listOf(LocalTime.of(18, 15), LocalTime.of(20, 45)),
+                dinnerLinked = false,
+            ),
         )
         assertEquals(expected, DISNEY_ADVENTURE_SHOWS)
     }
 
     @Test
-    fun catalog_containsFiveShows_withUniqueKeysAndValidDecks() {
-        assertEquals(5, DISNEY_ADVENTURE_SHOWS.size)
+    fun catalog_containsSixShows_withUniqueKeysAndValidDecks() {
+        assertEquals(6, DISNEY_ADVENTURE_SHOWS.size)
         val keys = DISNEY_ADVENTURE_SHOWS.map { it.key }
         assertEquals(keys.size, keys.distinct().size)
         // 迪士尼探险号客用甲板 Deck 5-19
@@ -152,6 +164,7 @@ class ShowPresetTest {
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_set_sail" }.dinnerLinked)
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_lion_king" }.dinnerLinked)
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_moana" }.dinnerLinked)
+        assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_avengers" }.dinnerLinked)
     }
 
     @Test
@@ -168,7 +181,7 @@ class ShowPresetTest {
     fun presetShowsSummary_listsAllShowsWithDayAndCount() {
         val summary = presetShowsSummary()
         val lines = summary.split("\n")
-        assertEquals(5, lines.size)
+        assertEquals(6, lines.size)
         assertTrue("line0=$lines", lines[0].contains("扬帆起航 Let's Set Sail"))
         assertTrue(lines[0].contains("第1天"))
         assertTrue(lines[0].contains("3场"))
@@ -180,47 +193,63 @@ class ShowPresetTest {
         assertTrue(lines[4].contains("海洋奇缘"))
         assertTrue(lines[4].contains("第2天起每天"))
         assertTrue(lines[4].contains("3场"))
+        assertTrue(lines[5].contains("复仇者集结 Avengers Assemble!"))
+        assertTrue(lines[5].contains("第2天起每天"))
+        assertTrue(lines[5].contains("2场"))
     }
 
     @Test
-    fun catalog_hasNoTimeOverlapOnSharedDays() {
-        // 规格 §1/§3f：每个出现演出的天，场次区间两两不重叠（不同天的演出允许同时段——
-        // 海洋奇遇与回忆场次相同但分别在第 1/第 2 天，不能做全局两两比较）。
-        // 固定天取 dayOffsets；范围天取 dayOffsets.first()..dailyRangeTo。
-        // dinner-linked 的两个候选场次都参与检查（候选间本身不重叠，不会误报）。
-        val daysPresent = DISNEY_ADVENTURE_SHOWS.flatMap { show ->
-            if (show.dailyRangeTo != null) {
-                show.dayOffsets.first()..show.dailyRangeTo
-            } else {
-                show.dayOffsets
-            }
-        }.distinct()
+    fun day2_showsLaneAssignment_earlyDinner_avengersAdaptsToLane2() {
+        val boardDate = LocalDate.of(2026, 8, 10)
+        val dinnerTime = LocalTime.of(17, 45) // Remember is 20:30
+        val day2 = boardDate.plusDays(1)
+        val occupied = mutableListOf<Triple<Int, Int, Int>>()
+        val day2Events = mutableListOf<Pair<String, Int>>()
 
-        daysPresent.forEach { day ->
-            val intervals = DISNEY_ADVENTURE_SHOWS.filter { show ->
-                val days = if (show.dailyRangeTo != null) {
-                    show.dayOffsets.first()..show.dailyRangeTo
-                } else {
-                    show.dayOffsets
-                }
-                day in days
-            }.flatMap { show ->
-                show.startTimes.map { time ->
-                    val start = time.hour * 60 + time.minute
-                    start to (start + show.durationMinutes)
-                }
-            }
-            for (i in intervals.indices) {
-                for (j in i + 1 until intervals.size) {
-                    val (aStart, aEnd) = intervals[i]
-                    val (bStart, bEnd) = intervals[j]
-                    assertTrue(
-                        "day $day: [$aStart,$aEnd) overlaps [$bStart,$bEnd)",
-                        aStart >= bEnd || bStart >= aEnd,
-                    )
+        DISNEY_ADVENTURE_SHOWS.forEach { show ->
+            if (day2 in show.resolveDates(boardDate, 4)) {
+                val times = if (show.dinnerLinked) listOf(pickDinnerLinkedTime(dinnerTime)) else show.startTimes
+                times.forEach { startTime ->
+                    val startMin = startTime.hour * 60 + startTime.minute
+                    val effStart = startMin - SHOW_WAIT_MINUTES
+                    val effEnd = startMin + show.durationMinutes
+                    val lane = assignShowLane(effStart, effEnd, occupied)
+                    occupied += Triple(lane, effStart, effEnd)
+                    day2Events += show.key to lane
                 }
             }
         }
+
+        val avengersLanes = day2Events.filter { it.first == "show_avengers" }.map { it.second }
+        // 18:15 进第 2 栏 (lane=1)，20:45 与《回忆》(20:30) 冲突进第 3 栏 (lane=2)
+        assertEquals(listOf(1, 2), avengersLanes)
+    }
+
+    @Test
+    fun day2_showsLaneAssignment_lateDinner_avengersAdaptsToLane2() {
+        val boardDate = LocalDate.of(2026, 8, 10)
+        val dinnerTime = LocalTime.of(20, 15) // Remember is 18:00
+        val day2 = boardDate.plusDays(1)
+        val occupied = mutableListOf<Triple<Int, Int, Int>>()
+        val day2Events = mutableListOf<Pair<String, Int>>()
+
+        DISNEY_ADVENTURE_SHOWS.forEach { show ->
+            if (day2 in show.resolveDates(boardDate, 4)) {
+                val times = if (show.dinnerLinked) listOf(pickDinnerLinkedTime(dinnerTime)) else show.startTimes
+                times.forEach { startTime ->
+                    val startMin = startTime.hour * 60 + startTime.minute
+                    val effStart = startMin - SHOW_WAIT_MINUTES
+                    val effEnd = startMin + show.durationMinutes
+                    val lane = assignShowLane(effStart, effEnd, occupied)
+                    occupied += Triple(lane, effStart, effEnd)
+                    day2Events += show.key to lane
+                }
+            }
+        }
+
+        val avengersLanes = day2Events.filter { it.first == "show_avengers" }.map { it.second }
+        // 18:15 与《回忆》(18:00) 冲突进第 3 栏 (lane=2)，20:45 进第 2 栏 (lane=1)
+        assertEquals(listOf(2, 1), avengersLanes)
     }
 
     @Test

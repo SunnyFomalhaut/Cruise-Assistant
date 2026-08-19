@@ -52,15 +52,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LANE_COUNT
+import com.cruise.assistant.domain.TimelineLayout
 import com.cruise.assistant.domain.minuteToDp
+import com.cruise.assistant.domain.nearestHourAtDp
 import com.cruise.assistant.ui.theme.CruiseAzure
 import com.cruise.assistant.ui.theme.CruiseAzureContainer
 import com.cruise.assistant.ui.theme.CruiseMarine
@@ -97,6 +101,7 @@ fun TimelineScreen(
     onToggleFullDay: () -> Unit,
     conflictIds: Set<Long>,
 ) {
+    val density = LocalDensity.current
     val scrollState = rememberScrollState()
     var menuEvent by remember { mutableStateOf<CruiseEvent?>(null) }
 
@@ -125,7 +130,15 @@ fun TimelineScreen(
                 if (!state.isFinalized) {
                     Spacer(Modifier.height(14.dp))
                     FloatingActionButton(
-                        onClick = { onAddEvent(defaultStartMinute(state)) },
+                        onClick = {
+                            val startMin = defaultStartMinute(
+                                layout = state.layout,
+                                scrollPx = scrollState.value,
+                                viewportHeightPx = scrollState.viewportSize,
+                                density = density,
+                            )
+                            onAddEvent(startMin)
+                        },
                         containerColor = CruiseAzure,
                         contentColor = Color.White,
                         shape = RoundedCornerShape(16.dp),
@@ -485,13 +498,19 @@ private fun HiddenHint(text: String, onClick: () -> Unit) {
     }
 }
 
-/** FAB 默认开始时间：当天用下一个整刻，其他天用显示范围起点 */
-private fun defaultStartMinute(state: TimelineUiState): Int =
-    if (state.isToday) {
-        ((state.nowMinute / 15) + 1) * 15
-    } else {
-        state.layout.rangeStartMinute
-    }.coerceIn(0, 1409)
+/** FAB 默认开始时间：就近屏幕可视区域中心点的整点时间 */
+fun defaultStartMinute(
+    layout: TimelineLayout,
+    scrollPx: Int,
+    viewportHeightPx: Int,
+    density: Density,
+): Int {
+    if (viewportHeightPx <= 0) {
+        return (((layout.rangeStartMinute + 30) / 60) * 60).coerceIn(0, 23 * 60)
+    }
+    val centerDp = with(density) { (scrollPx + viewportHeightPx / 2f).toDp().value }
+    return layout.nearestHourAtDp(centerDp)
+}
 
 @Composable
 fun TimelineLoading() {

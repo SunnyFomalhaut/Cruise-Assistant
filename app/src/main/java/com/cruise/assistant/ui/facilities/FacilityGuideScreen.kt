@@ -1,7 +1,6 @@
 package com.cruise.assistant.ui.facilities
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -32,8 +31,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -58,7 +55,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.FacilityItemUiModel
 import com.cruise.assistant.domain.OperatingSlot
@@ -111,7 +107,7 @@ fun FacilityGuideScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
             )

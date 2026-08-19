@@ -34,6 +34,28 @@ class FacilityGuideTest {
     }
 
     @Test
+    fun `test 24 hours facility evaluated at 2359 returns isOpenNow true`() {
+        val entry = LocationCatalogEntry(
+            deck = 6,
+            zone = ShipZone.MID,
+            placeName = "宾客服务台 Guest Services",
+            category = "chore",
+            hours = OperatingHours(
+                listOf(
+                    OperatingSlot(
+                        start = LocalTime.of(0, 0),
+                        end = LocalTime.of(23, 59),
+                    )
+                )
+            ),
+        )
+
+        val modelAt2359 = entry.toFacilityItemUiModel(currentTime = LocalTime.of(23, 59))
+        assertTrue(modelAt2359.is24Hours)
+        assertTrue(modelAt2359.isOpenNow)
+    }
+
+    @Test
     fun `test operating hours and status for specific slot`() {
         val entry = LocationCatalogEntry(
             deck = 10,

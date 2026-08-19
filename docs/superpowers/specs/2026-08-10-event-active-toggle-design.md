@@ -78,7 +78,6 @@ Add an active/inactive state toggle to each event. Inactive events remain visibl
 ## Testing Strategy
 - `ConflictDetectorTest`: add tests verifying inactive events are excluded from conflict detection
 - `LaneAssignerTest`: no change (assignLane itself unchanged; filtering is at call sites)
-- Unit test for `setActive` reactivation lane reassignment behavior (requires a fake DAO)
 
 ## Out of Scope
 - Bulk activate/deactivate (toggle all events of a day)
