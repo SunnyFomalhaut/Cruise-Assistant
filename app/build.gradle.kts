@@ -20,8 +20,8 @@ android {
         applicationId = "com.cruise.assistant"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "1.9.4"
+        versionCode = 22
+        versionName = "1.9.6"
     }
 
     signingConfigs {
