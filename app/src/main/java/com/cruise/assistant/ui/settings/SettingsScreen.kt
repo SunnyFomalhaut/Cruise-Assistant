@@ -118,53 +118,66 @@ fun SettingsScreen(
             icon = Icons.Outlined.Palette,
             cardShape = cardShape,
         ) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                AppColorTheme.entries.forEach { theme ->
-                    val isSelected = state.settings.colorTheme == theme
-                    val palette = paletteFor(theme)
-                    Surface(
-                        onClick = { onColorThemeChange(theme) },
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (isSelected) palette.primaryContainer else Slate100,
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = if (isSelected) 1.5.dp else 1.dp,
-                            color = if (isSelected) palette.primary else Slate200,
-                        ),
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppColorTheme.entries.chunked(4).forEach { rowThemes ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .clip(CircleShape),
+                        rowThemes.forEach { theme ->
+                            val isSelected = state.settings.colorTheme == theme
+                            val palette = paletteFor(theme)
+                            Surface(
+                                onClick = { onColorThemeChange(theme) },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) palette.primaryContainer else Slate100,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) palette.primary else Slate200,
+                                ),
+                                modifier = Modifier.weight(1f),
                             ) {
-                                Row(Modifier.fillMaxSize()) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                ) {
                                     Box(
-                                        Modifier
-                                            .fillMaxHeight()
-                                            .weight(1f)
-                                            .background(palette.primary)
-                                    )
-                                    Box(
-                                        Modifier
-                                            .fillMaxHeight()
-                                            .weight(1f)
-                                            .background(palette.secondary)
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .clip(CircleShape),
+                                    ) {
+                                        Row(Modifier.fillMaxSize()) {
+                                            Box(
+                                                Modifier
+                                                    .fillMaxHeight()
+                                                    .weight(1f)
+                                                    .background(palette.primary)
+                                            )
+                                            Box(
+                                                Modifier
+                                                    .fillMaxHeight()
+                                                    .weight(1f)
+                                                    .background(palette.secondary)
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.width(5.dp))
+                                    Text(
+                                        text = stringResource(theme.displayNameRes),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 11.5.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) palette.secondary else Slate700,
+                                        maxLines = 1,
                                     )
                                 }
                             }
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(theme.displayNameRes),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) palette.secondary else Slate700,
-                            )
+                        }
+                        if (rowThemes.size < 4) {
+                            repeat(4 - rowThemes.size) {
+                                Spacer(Modifier.weight(1f))
+                            }
                         }
                     }
                 }
