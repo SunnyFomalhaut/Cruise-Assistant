@@ -510,23 +510,7 @@
         },
         {
           "start": "17:45",
-          "end": "19:45",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:15",
-          "end": "22:15",
-          "meal": "dinner",
-          "lateNight": true
-        },
-        {
-          "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
+          "end": "22:00",
           "meal": "dinner",
           "lateNight": true
         }
@@ -551,23 +535,7 @@
         },
         {
           "start": "17:45",
-          "end": "19:45",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:15",
-          "end": "22:15",
-          "meal": "dinner",
-          "lateNight": true
-        },
-        {
-          "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
+          "end": "22:00",
           "meal": "dinner",
           "lateNight": true
         }
@@ -592,12 +560,7 @@
         },
         {
           "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
+          "end": "22:15",
           "meal": "dinner",
           "lateNight": true
         }
@@ -622,12 +585,7 @@
         },
         {
           "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
+          "end": "22:15",
           "meal": "dinner",
           "lateNight": true
         }
@@ -696,23 +654,7 @@
       "slots": [
         {
           "start": "17:45",
-          "end": "19:45",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:15",
-          "end": "22:15",
-          "meal": "dinner",
-          "lateNight": true
-        },
-        {
-          "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
+          "end": "22:00",
           "meal": "dinner",
           "lateNight": true
         }
@@ -727,23 +669,7 @@
       "slots": [
         {
           "start": "17:45",
-          "end": "19:45",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:15",
-          "end": "22:15",
-          "meal": "dinner",
-          "lateNight": true
-        },
-        {
-          "start": "18:00",
-          "end": "20:00",
-          "meal": "dinner"
-        },
-        {
-          "start": "20:30",
-          "end": "22:30",
+          "end": "22:00",
           "meal": "dinner",
           "lateNight": true
         }
