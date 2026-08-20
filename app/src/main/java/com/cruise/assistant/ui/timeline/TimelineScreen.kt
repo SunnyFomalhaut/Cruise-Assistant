@@ -1,5 +1,6 @@
 package com.cruise.assistant.ui.timeline
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
@@ -90,6 +92,7 @@ fun TimelineScreen(
     onSelectDate: (LocalDate) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenPixieDust: () -> Unit,
+    onOpenFacilities: () -> Unit = {},
     onOpenDeckMap: () -> Unit = {},
     onAddEvent: (Int) -> Unit,
     onEditEvent: (CruiseEvent) -> Unit,
@@ -199,49 +202,61 @@ fun TimelineScreen(
                     }
                 }
 
-                // 快捷操作按钮组（仙尘、甲板地图与设置）
+                // 快捷操作按钮组（设施指南、甲板地图与设置）
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    IconButton(
-                        onClick = onOpenPixieDust,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Slate100),
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Slate100,
+                        border = BorderStroke(1.dp, Slate200),
+                        modifier = Modifier.size(38.dp),
                     ) {
-                        Icon(
-                            Icons.Outlined.AutoAwesome,
-                            contentDescription = stringResource(R.string.pixie_open),
-                            tint = CruiseMarine,
-                            modifier = Modifier.size(20.dp),
-                        )
+                        IconButton(
+                            onClick = onOpenFacilities,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            Icon(
+                                Icons.Outlined.Explore,
+                                contentDescription = stringResource(R.string.facility_guide_title),
+                                tint = CruiseMarine,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
-                    IconButton(
-                        onClick = onOpenDeckMap,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Slate100),
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Slate100,
+                        border = BorderStroke(1.dp, Slate200),
+                        modifier = Modifier.size(38.dp),
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Map,
-                            contentDescription = stringResource(R.string.deck_map_title),
-                            tint = CruiseMarine,
-                            modifier = Modifier.size(20.dp),
-                        )
+                        IconButton(
+                            onClick = onOpenDeckMap,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Map,
+                                contentDescription = stringResource(R.string.deck_map_title),
+                                tint = CruiseMarine,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
-                    IconButton(
-                        onClick = onOpenSettings,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Slate100),
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Slate100,
+                        border = BorderStroke(1.dp, Slate200),
+                        modifier = Modifier.size(38.dp),
                     ) {
-                        Icon(
-                            Icons.Outlined.Settings,
-                            contentDescription = stringResource(R.string.settings),
-                            tint = Slate700,
-                            modifier = Modifier.size(20.dp),
-                        )
+                        IconButton(
+                            onClick = onOpenSettings,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            Icon(
+                                Icons.Outlined.Settings,
+                                contentDescription = stringResource(R.string.settings),
+                                tint = Slate700,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 }
             }

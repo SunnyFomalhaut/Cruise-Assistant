@@ -170,6 +170,7 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenPixieDust = { navController.navigate(Routes.PIXIE_DUST) },
+                    onOpenFacilities = { navController.navigate(Routes.FACILITIES) },
                     onOpenDeckMap = { navController.navigate(Routes.DECK_MAP) },
                     onAddEvent = { startMinute ->
                         sheetSeq++
