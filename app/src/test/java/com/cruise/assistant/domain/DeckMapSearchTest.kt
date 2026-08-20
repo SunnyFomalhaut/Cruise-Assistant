@@ -75,4 +75,70 @@ class DeckMapSearchTest {
         assertEquals(DeckSearchResultType.RESTROOM, results.first().type)
         assertEquals(7, results.first().deckNumber)
     }
+
+    @Test
+    fun `test searchDeckMap with prefix 11 prioritizes facilities and lists rooms in order`() {
+        val sampleFacilities = listOf(
+            FacilityItemUiModel(
+                placeName = "城堡典藏 Castle Collection",
+                categoryKey = "shop",
+                categoryLabel = "商店",
+                deck = 11,
+                allDecks = listOf(11),
+                primaryDeck = 11,
+                zone = ShipZone.MID,
+                formattedLocation = "Deck 11 船中",
+                slots = emptyList(),
+                is24Hours = false,
+                isOpenNow = true,
+                hasOperatingHours = true,
+            )
+        )
+        val sampleRooms = listOf(
+            StateroomEntry("11220", 11),
+            StateroomEntry("11200", 11),
+            StateroomEntry("11216", 11),
+        )
+
+        val results = searchDeckMap(
+            query = "11",
+            currentDeck = 11,
+            facilities = sampleFacilities,
+            stateroomSearcher = { sampleRooms.sortedBy { it.roomNumber.toInt() } },
+        )
+
+        assertTrue(results.size >= 4)
+        // Facilities should be at the top
+        assertEquals(DeckSearchResultType.FACILITY, results[0].type)
+        assertEquals("城堡典藏 Castle Collection", results[0].title)
+
+        // Staterooms should follow, sorted numerically
+        assertEquals(DeckSearchResultType.STATEROOM, results[1].type)
+        assertEquals("客房 11200", results[1].title)
+        assertEquals("客房 11216", results[2].title)
+        assertEquals("客房 11220", results[3].title)
+    }
+
+    @Test
+    fun `test searchDeckMap with prefix 112 returns sorted staterooms`() {
+        val sampleRooms = listOf(
+            StateroomEntry("11230", 11),
+            StateroomEntry("11200", 11),
+            StateroomEntry("11216", 11),
+            StateroomEntry("11220", 11),
+        )
+
+        val results = searchDeckMap(
+            query = "112",
+            currentDeck = 11,
+            facilities = emptyList(),
+            stateroomSearcher = { sampleRooms.filter { it.roomNumber.startsWith("112") }.sortedBy { it.roomNumber.toInt() } },
+        )
+
+        assertEquals(4, results.size)
+        assertEquals("客房 11200", results[0].title)
+        assertEquals("客房 11216", results[1].title)
+        assertEquals("客房 11220", results[2].title)
+        assertEquals("客房 11230", results[3].title)
+    }
 }

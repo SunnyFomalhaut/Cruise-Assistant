@@ -36,12 +36,13 @@ fun parseStateroomDeck(roomStr: String): Int? {
 }
 
 /**
- * 全船甲板智能检索：支持设施名称、客房号解析、洗手间快捷检索
+ * 全船甲板智能检索：支持设施名称、客房号前缀联想、洗手间快捷检索
  */
 fun searchDeckMap(
     query: String,
     currentDeck: Int,
     facilities: List<FacilityItemUiModel> = getAllFacilityItems(),
+    stateroomSearcher: (String) -> List<StateroomEntry> = StateroomCatalog::search,
 ): List<DeckSearchResult> {
     val trimmed = query.trim()
     if (trimmed.isEmpty()) {
@@ -78,23 +79,65 @@ fun searchDeckMap(
     }
 
     val results = mutableListOf<DeckSearchResult>()
+    val lowerQuery = trimmed.lowercase()
+    val isNumeric = trimmed.all { it.isDigit() }
+    val numericDeck = if (isNumeric) trimmed.toIntOrNull() else null
 
-    // 1. 房间号解析匹配（如 11770, 6012）
-    parseStateroomDeck(trimmed)?.let { deck ->
-        results.add(
-            DeckSearchResult(
-                title = "客房 $trimmed",
-                subtitle = "Deck $deck · 客房区域",
-                deckNumber = deck,
-                highlightQuery = trimmed,
-                type = DeckSearchResultType.STATEROOM,
+    // 1. 设施匹配（优先展示在最上方）
+    facilities.filter {
+        it.placeName.lowercase().contains(lowerQuery) ||
+            it.formattedLocation.lowercase().contains(lowerQuery) ||
+            it.categoryLabel.lowercase().contains(lowerQuery) ||
+            (numericDeck != null && (it.allDecks.contains(numericDeck) || it.deck == numericDeck))
+    }.forEach { fac ->
+        fac.primaryDeck?.let { deck ->
+            results.add(
+                DeckSearchResult(
+                    title = fac.placeName,
+                    subtitle = fac.formattedLocation,
+                    deckNumber = deck,
+                    highlightQuery = fac.placeName,
+                    type = DeckSearchResultType.FACILITY,
+                    categoryKey = fac.categoryKey,
+                )
             )
-        )
+        }
     }
 
-    // 2. 洗手间/厕所关键词检索
+    // 2. 客房前缀与数值模糊检索（排在设施之后，严格按数值升序呈现）
+    if (isNumeric) {
+        val matchedRooms = stateroomSearcher(trimmed)
+        if (matchedRooms.isNotEmpty()) {
+            matchedRooms.forEach { room ->
+                results.add(
+                    DeckSearchResult(
+                        title = "客房 ${room.roomNumber}",
+                        subtitle = "Deck ${room.deck} · 客房区域",
+                        deckNumber = room.deck,
+                        highlightQuery = room.roomNumber,
+                        type = DeckSearchResultType.STATEROOM,
+                    )
+                )
+            }
+        } else {
+            // 如果静态目录暂未包含该房间，但符合甲板房号规则，允许单独解析
+            parseStateroomDeck(trimmed)?.let { deck ->
+                results.add(
+                    DeckSearchResult(
+                        title = "客房 $trimmed",
+                        subtitle = "Deck $deck · 客房区域",
+                        deckNumber = deck,
+                        highlightQuery = trimmed,
+                        type = DeckSearchResultType.STATEROOM,
+                    )
+                )
+            }
+        }
+    }
+
+    // 3. 洗手间/厕所关键词检索
     val restroomKeywords = listOf("厕所", "洗手间", "卫生间", "restroom", "wc", "toilet", "washroom")
-    if (restroomKeywords.any { trimmed.lowercase().contains(it) }) {
+    if (restroomKeywords.any { lowerQuery.contains(it) }) {
         results.add(
             DeckSearchResult(
                 title = "洗手间 Restroom",
@@ -112,27 +155,6 @@ fun searchDeckMap(
                     deckNumber = d,
                     highlightQuery = "Restroom",
                     type = DeckSearchResultType.RESTROOM,
-                )
-            )
-        }
-    }
-
-    // 3. 船上设施匹配（名称、甲板、类别）
-    val lowerQuery = trimmed.lowercase()
-    facilities.filter {
-        it.placeName.lowercase().contains(lowerQuery) ||
-            it.formattedLocation.lowercase().contains(lowerQuery) ||
-            it.categoryLabel.lowercase().contains(lowerQuery)
-    }.forEach { fac ->
-        fac.primaryDeck?.let { deck ->
-            results.add(
-                DeckSearchResult(
-                    title = fac.placeName,
-                    subtitle = fac.formattedLocation,
-                    deckNumber = deck,
-                    highlightQuery = fac.placeName,
-                    type = DeckSearchResultType.FACILITY,
-                    categoryKey = fac.categoryKey,
                 )
             )
         }
