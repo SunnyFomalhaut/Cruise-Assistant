@@ -3,6 +3,7 @@ package com.cruise.assistant.ui.timeline
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +59,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +73,7 @@ import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LANE_COUNT
 import com.cruise.assistant.domain.TimelineLayout
+import com.cruise.assistant.domain.WallpaperManager
 import com.cruise.assistant.domain.minuteToDp
 import com.cruise.assistant.domain.nearestHourAtDp
 import com.cruise.assistant.ui.theme.CruiseAzure
@@ -181,8 +186,31 @@ fun TimelineScreen(
             }
         },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            // ---- 顶栏 ----
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            // ---- 半透明底图背景层 ----
+            if (state.settings.wallpaperEnabled) {
+                val context = LocalContext.current
+                val wallpaperBitmap = remember(state.settings.wallpaperKey) {
+                    WallpaperManager.loadWallpaperBitmap(context, state.settings.wallpaperKey)
+                }
+                if (wallpaperBitmap != null) {
+                    Image(
+                        bitmap = wallpaperBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        alpha = state.settings.wallpaperAlpha,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+
+            Column(Modifier.fillMaxSize()) {
+                // ---- 顶栏 ----
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -537,6 +565,7 @@ fun TimelineScreen(
             }
         }
     }
+}
 }
 
 @Composable
