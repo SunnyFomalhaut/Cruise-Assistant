@@ -9,6 +9,7 @@ import com.cruise.assistant.data.repo.LocationPresetRepository
 import com.cruise.assistant.data.repo.PixieDustRepository
 import com.cruise.assistant.data.repo.PixieLevelRepository
 import com.cruise.assistant.data.repo.VoyageRepository
+import com.cruise.assistant.data.repo.WishlistRepository
 import com.cruise.assistant.reminder.ReminderScheduler
 
 /** 手写依赖容器，不引入 DI 框架 */
@@ -43,6 +44,8 @@ class AppContainer(context: Context) {
     val pixieDustRepository = PixieDustRepository(db.pixieDustDao())
 
     val pixieLevelRepository = PixieLevelRepository(db.pixieLevelDao())
+
+    val wishlistRepository = WishlistRepository(db.wishlistDao(), db.categoryDao())
 
     val reminderScheduler = ReminderScheduler(
         context = context.applicationContext,

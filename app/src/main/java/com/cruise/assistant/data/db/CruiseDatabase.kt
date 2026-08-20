@@ -14,6 +14,7 @@ import com.cruise.assistant.data.db.dao.LocationPresetDao
 import com.cruise.assistant.data.db.dao.PixieDustDao
 import com.cruise.assistant.data.db.dao.PixieLevelDao
 import com.cruise.assistant.data.db.dao.VoyageDao
+import com.cruise.assistant.data.db.dao.WishlistDao
 import com.cruise.assistant.data.db.entity.CategoryEntity
 import com.cruise.assistant.data.db.entity.DayPlanEntity
 import com.cruise.assistant.data.db.entity.EventEntity
@@ -21,6 +22,7 @@ import com.cruise.assistant.data.db.entity.LocationPresetEntity
 import com.cruise.assistant.data.db.entity.PixieDustEntity
 import com.cruise.assistant.data.db.entity.PixieLevelEntity
 import com.cruise.assistant.data.db.entity.VoyageEntity
+import com.cruise.assistant.data.db.entity.WishlistItemEntity
 
 @Database(
     entities = [
@@ -31,10 +33,14 @@ import com.cruise.assistant.data.db.entity.VoyageEntity
         LocationPresetEntity::class,
         PixieDustEntity::class,
         PixieLevelEntity::class,
+        WishlistItemEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 4, to = 5)],
+    autoMigrations = [
+        AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6),
+    ],
 )
 @TypeConverters(Converters::class)
 abstract class CruiseDatabase : RoomDatabase() {
@@ -44,6 +50,7 @@ abstract class CruiseDatabase : RoomDatabase() {
     abstract fun locationPresetDao(): LocationPresetDao
     abstract fun pixieDustDao(): PixieDustDao
     abstract fun pixieLevelDao(): PixieLevelDao
+    abstract fun wishlistDao(): WishlistDao
 
     companion object {
         @Volatile private var instance: CruiseDatabase? = null

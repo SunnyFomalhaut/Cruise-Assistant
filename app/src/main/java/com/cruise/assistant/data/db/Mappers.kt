@@ -1,6 +1,8 @@
 package com.cruise.assistant.data.db
 
 import com.cruise.assistant.data.db.entity.CategoryEntity
+import com.cruise.assistant.data.db.entity.WishlistItemEntity
+import com.cruise.assistant.domain.WishlistItem
 import com.cruise.assistant.data.db.entity.DayPlanEntity
 import com.cruise.assistant.data.db.entity.EventEntity
 import com.cruise.assistant.data.db.entity.LocationPresetEntity
@@ -76,3 +78,28 @@ fun PixieDustRecord.toEntity() = PixieDustEntity(
 fun PixieLevelEntity.toDomain() = PixieLevel(id, name, colorArgb, iconKey, rank, sortOrder)
 
 fun PixieLevel.toEntity() = PixieLevelEntity(id, name, colorArgb, iconKey, rank, sortOrder)
+
+fun WishlistItemEntity.toDomain(category: com.cruise.assistant.domain.Category? = null) = WishlistItem(
+    id = id,
+    title = title,
+    categoryId = categoryId,
+    category = category,
+    deck = deck,
+    zone = zone?.let { com.cruise.assistant.domain.ShipZone.valueOf(it) },
+    placeName = placeName,
+    note = note,
+    isCompleted = isCompleted,
+    createdAt = createdAt,
+)
+
+fun WishlistItem.toEntity() = WishlistItemEntity(
+    id = id,
+    title = title,
+    categoryId = categoryId,
+    deck = deck,
+    zone = zone?.name,
+    placeName = placeName,
+    note = note,
+    isCompleted = isCompleted,
+    createdAt = createdAt,
+)
