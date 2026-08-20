@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.DirectionsBoat
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AlertDialog
@@ -57,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
+import com.cruise.assistant.domain.AppColorTheme
 import com.cruise.assistant.ui.common.TimeWheel
 import com.cruise.assistant.ui.theme.CruiseAzure
 import com.cruise.assistant.ui.theme.CruiseAzureContainer
@@ -66,6 +69,7 @@ import com.cruise.assistant.ui.theme.Slate200
 import com.cruise.assistant.ui.theme.Slate500
 import com.cruise.assistant.ui.theme.Slate700
 import com.cruise.assistant.ui.theme.Slate900
+import com.cruise.assistant.ui.theme.paletteFor
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -88,6 +92,7 @@ fun SettingsScreen(
     exactAlarmAvailable: Boolean,
     onNavigateToFacilities: () -> Unit = {},
     onNavigateToDeckMap: () -> Unit = {},
+    onColorThemeChange: (AppColorTheme) -> Unit = {},
 ) {
     var confirmReset by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(16.dp)
@@ -106,6 +111,93 @@ fun SettingsScreen(
             color = Slate900,
         )
         Spacer(Modifier.height(16.dp))
+
+        // ---- 主题配色卡片 ----
+        SettingsCard(
+            title = stringResource(R.string.theme_section_title),
+            icon = Icons.Outlined.Palette,
+            cardShape = cardShape,
+        ) {
+            Text(
+                stringResource(R.string.theme_section_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = Slate500,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                AppColorTheme.entries.forEach { theme ->
+                    val isSelected = state.settings.colorTheme == theme
+                    val palette = paletteFor(theme)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) palette.primaryContainer else MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) palette.primary else Slate200,
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onColorThemeChange(theme) },
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            // Dual Color Preview Dot / Badge
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(palette.primaryContainer)
+                                    .padding(3.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                ) {
+                                    Box(
+                                        Modifier
+                                            .fillMaxHeight()
+                                            .weight(1f)
+                                            .background(palette.primary)
+                                    )
+                                    Box(
+                                        Modifier
+                                            .fillMaxHeight()
+                                            .weight(1f)
+                                            .background(palette.secondary)
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(theme.displayNameRes),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) palette.secondary else Slate900,
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = stringResource(theme.descriptionRes),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 10.sp,
+                                color = if (isSelected) palette.secondary.copy(alpha = 0.85f) else Slate500,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
 
         // ---- 顶部特色入口：船上设施指南 ----
         Surface(

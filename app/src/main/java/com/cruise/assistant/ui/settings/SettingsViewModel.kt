@@ -7,6 +7,7 @@ import com.cruise.assistant.data.prefs.AppSettings
 import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.data.repo.VoyageRepository
+import com.cruise.assistant.domain.AppColorTheme
 import com.cruise.assistant.domain.Voyage
 import java.time.LocalTime
 import com.cruise.assistant.reminder.ReminderScheduler
@@ -44,6 +45,10 @@ class SettingsViewModel(
     ) { settings, voyage, error ->
         SettingsUiState(settings, voyage, error)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun setColorTheme(theme: AppColorTheme) {
+        viewModelScope.launch { settingsStore.setColorTheme(theme) }
+    }
 
     fun setRange(startMinute: Int, endMinute: Int) {
         if (endMinute - startMinute < MIN_RANGE_MINUTES) {

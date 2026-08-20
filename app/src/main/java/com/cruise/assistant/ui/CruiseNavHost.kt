@@ -535,6 +535,7 @@ fun CruiseNavHost(container: AppContainer) {
                     exactAlarmAvailable = container.reminderScheduler.canScheduleExact(),
                     onNavigateToFacilities = { navController.navigate(Routes.FACILITIES) },
                     onNavigateToDeckMap = { navController.navigate(Routes.DECK_MAP) },
+                    onColorThemeChange = vm::setColorTheme,
                 )
             }
 
