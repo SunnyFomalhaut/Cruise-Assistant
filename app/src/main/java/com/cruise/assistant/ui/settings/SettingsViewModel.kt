@@ -19,6 +19,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+import android.content.Context
+import android.net.Uri
+import com.cruise.assistant.domain.WallpaperManager
+import com.cruise.assistant.domain.WallpaperPreset
+
 @Immutable
 data class SettingsUiState(
     val settings: AppSettings,
@@ -48,6 +53,33 @@ class SettingsViewModel(
 
     fun setColorTheme(theme: AppColorTheme) {
         viewModelScope.launch { settingsStore.setColorTheme(theme) }
+    }
+
+    fun setWallpaperEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsStore.setWallpaperEnabled(enabled) }
+    }
+
+    fun setWallpaperKey(key: String) {
+        viewModelScope.launch {
+            settingsStore.setWallpaperKey(key)
+            if (key != WallpaperPreset.NONE.key) {
+                settingsStore.setWallpaperEnabled(true)
+            }
+        }
+    }
+
+    fun setWallpaperAlpha(alpha: Float) {
+        viewModelScope.launch { settingsStore.setWallpaperAlpha(alpha) }
+    }
+
+    fun saveCustomWallpaper(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            val success = WallpaperManager.saveCustomWallpaper(context, uri)
+            if (success) {
+                settingsStore.setWallpaperKey(WallpaperPreset.CUSTOM.key)
+                settingsStore.setWallpaperEnabled(true)
+            }
+        }
     }
 
     fun setRange(startMinute: Int, endMinute: Int) {

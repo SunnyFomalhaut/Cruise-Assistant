@@ -1,5 +1,8 @@
 package com.cruise.assistant.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -511,6 +514,14 @@ fun CruiseNavHost(container: AppContainer) {
             )
             val settingsState by vm.state.collectAsState()
             val current = settingsState
+            val context = LocalContext.current
+            val photoPickerLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickVisualMedia(),
+            ) { uri ->
+                if (uri != null) {
+                    vm.saveCustomWallpaper(context, uri)
+                }
+            }
             var showCategorySheet by remember { mutableStateOf(false) }
 
             if (current != null) {
@@ -536,6 +547,14 @@ fun CruiseNavHost(container: AppContainer) {
                     onNavigateToFacilities = { navController.navigate(Routes.FACILITIES) },
                     onNavigateToDeckMap = { navController.navigate(Routes.DECK_MAP) },
                     onColorThemeChange = vm::setColorTheme,
+                    onWallpaperEnabledToggle = vm::setWallpaperEnabled,
+                    onWallpaperKeyChange = vm::setWallpaperKey,
+                    onWallpaperAlphaChange = vm::setWallpaperAlpha,
+                    onPickCustomWallpaper = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                 )
             }
 
