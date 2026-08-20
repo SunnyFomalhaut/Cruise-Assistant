@@ -323,7 +323,8 @@ private fun SvgMapView(
                 )
                 setBackgroundColor(AndroidColor.TRANSPARENT)
                 settings.apply {
-                    javaScriptEnabled = false
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
                     builtInZoomControls = true
                     displayZoomControls = false
                     useWideViewPort = true

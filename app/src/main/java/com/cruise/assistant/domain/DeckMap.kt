@@ -48,7 +48,7 @@ object DeckMapRepository {
     fun assetUrlFor(deckNumber: Int): String = "file:///android_asset/decks/deck_$deckNumber.svg"
 
     /**
-     * 将 SVG 字符串内联到响应式 HTML 容器中，免受安全沙箱限制；支持高亮指定设施
+     * 将 SVG 字符串内联到响应式 HTML 容器中，免受安全沙箱限制；支持高亮与地图钉定位指定设施
      */
     fun inlineHtmlWrapperFor(svgContent: String, highlightTarget: String? = null): String {
         val sanitizedHighlight = highlightTarget?.trim()?.takeIf { it.isNotEmpty() }
@@ -56,22 +56,22 @@ object DeckMapRepository {
             val jsTarget = sanitizedHighlight.replace("'", "\\'").replace("\n", " ")
             """
             <style>
-                .highlight-marker {
+                .facility-highlight-box {
                     position: absolute;
                     pointer-events: none;
+                    background: rgba(2, 132, 199, 0.28);
                     border: 2.5px solid #0284C7;
-                    background-color: rgba(2, 132, 199, 0.22);
                     border-radius: 8px;
-                    box-shadow: 0 0 16px rgba(2, 132, 199, 0.75);
-                    animation: pulseHighlight 1.5s infinite ease-in-out;
-                    z-index: 999;
+                    box-shadow: 0 0 20px rgba(2, 132, 199, 0.85);
+                    animation: facilityPulse 1.8s infinite ease-in-out;
+                    z-index: 1000;
                 }
-                @keyframes pulseHighlight {
+                @keyframes facilityPulse {
                     0% {
-                        box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.8);
+                        box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.9);
                         transform: scale(0.98);
                     }
-                    70% {
+                    50% {
                         box-shadow: 0 0 0 14px rgba(2, 132, 199, 0);
                         transform: scale(1.02);
                     }
@@ -80,59 +80,125 @@ object DeckMapRepository {
                         transform: scale(0.98);
                     }
                 }
+                .facility-pin-badge {
+                    position: absolute;
+                    pointer-events: none;
+                    z-index: 1001;
+                    transform: translate(-50%, -100%);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    animation: pinBounce 1.5s infinite ease-in-out;
+                }
+                @keyframes pinBounce {
+                    0%, 100% {
+                        transform: translate(-50%, -100%);
+                    }
+                    50% {
+                        transform: translate(-50%, -112%);
+                    }
+                }
+                .pin-content {
+                    background: #0284C7;
+                    color: #FFFFFF;
+                    font-size: 13px;
+                    font-weight: 700;
+                    padding: 4px 10px;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+                    white-space: nowrap;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+                .pin-arrow {
+                    width: 0;
+                    height: 0;
+                    border-left: 6px solid transparent;
+                    border-right: 6px solid transparent;
+                    border-top: 8px solid #0284C7;
+                    margin-top: -1px;
+                }
             </style>
             <script>
-                window.addEventListener('DOMContentLoaded', function() {
+                function centerFacilityTarget() {
                     var target = '$jsTarget';
+                    var svg = document.querySelector('svg');
+                    if (!svg) return;
+                    var textNodes = Array.from(svg.querySelectorAll('text, tspan'));
+                    if (!textNodes || textNodes.length === 0) return;
+
                     var words = target.toLowerCase().split(/[\s·,]+/g).filter(function(w) {
                         return w.length > 1 && !['deck', 'the', 'and', 'restaurant', 'club'].includes(w);
                     });
                     if (words.length === 0) words = [target.toLowerCase()];
 
-                    setTimeout(function() {
-                        var svg = document.querySelector('svg');
-                        if (!svg) return;
-                        var textNodes = Array.from(svg.querySelectorAll('text, tspan'));
-                        var bestNode = null;
-                        var bestScore = 0;
+                    var bestNode = null;
+                    var bestScore = 0;
 
-                        for (var i = 0; i < textNodes.length; i++) {
-                            var node = textNodes[i];
-                            var content = (node.textContent || '').toLowerCase();
-                            var score = 0;
-                            for (var j = 0; j < words.length; j++) {
-                                if (content.indexOf(words[j]) !== -1) {
-                                    score += words[j].length * 2;
-                                }
-                            }
-                            if (content.indexOf(target.toLowerCase()) !== -1) {
-                                score += 50;
-                            }
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestNode = node;
+                    for (var i = 0; i < textNodes.length; i++) {
+                        var node = textNodes[i];
+                        var content = (node.textContent || '').toLowerCase();
+                        var score = 0;
+                        for (var j = 0; j < words.length; j++) {
+                            if (content.indexOf(words[j]) !== -1) {
+                                score += words[j].length * 2;
                             }
                         }
-
-                        if (bestNode) {
-                            var rect = bestNode.getBoundingClientRect();
-                            var marker = document.createElement('div');
-                            marker.className = 'highlight-marker';
-                            marker.style.left = (rect.left + window.pageXOffset - 8) + 'px';
-                            marker.style.top = (rect.top + window.pageYOffset - 6) + 'px';
-                            marker.style.width = (rect.width + 16) + 'px';
-                            marker.style.height = (rect.height + 12) + 'px';
-                            document.body.appendChild(marker);
-
-                            var targetY = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
-                            var targetX = rect.left + window.pageXOffset - (window.innerWidth / 2) + (rect.width / 2);
-                            window.scrollTo({
-                                top: Math.max(0, targetY),
-                                left: Math.max(0, targetX),
-                                behavior: 'smooth'
-                            });
+                        if (content.indexOf(target.toLowerCase()) !== -1) {
+                            score += 50;
                         }
-                    }, 250);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestNode = node;
+                        }
+                    }
+
+                    if (!bestNode) return;
+
+                    var existingMarkers = document.querySelectorAll('.facility-highlight-box, .facility-pin-badge');
+                    for (var k = 0; k < existingMarkers.length; k++) {
+                        existingMarkers[k].remove();
+                    }
+
+                    var rect = bestNode.getBoundingClientRect();
+                    var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft || 0;
+                    var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+                    var box = document.createElement('div');
+                    box.className = 'facility-highlight-box';
+                    box.style.left = (rect.left + scrollLeft - 8) + 'px';
+                    box.style.top = (rect.top + scrollTop - 6) + 'px';
+                    box.style.width = (rect.width + 16) + 'px';
+                    box.style.height = (rect.height + 12) + 'px';
+                    document.body.appendChild(box);
+
+                    var pin = document.createElement('div');
+                    pin.className = 'facility-pin-badge';
+                    pin.style.left = (rect.left + scrollLeft + rect.width / 2) + 'px';
+                    pin.style.top = (rect.top + scrollTop - 8) + 'px';
+                    pin.innerHTML = '<div class="pin-content"><span>📍</span><span>' + target + '</span></div><div class="pin-arrow"></div>';
+                    document.body.appendChild(pin);
+
+                    if (typeof bestNode.scrollIntoView === 'function') {
+                        bestNode.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    }
+                    var targetY = (rect.top + scrollTop) - (window.innerHeight / 2) + (rect.height / 2);
+                    var targetX = (rect.left + scrollLeft) - (window.innerWidth / 2) + (rect.width / 2);
+                    window.scrollTo({
+                        top: Math.max(0, targetY),
+                        left: Math.max(0, targetX),
+                        behavior: 'smooth'
+                    });
+                }
+
+                window.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(centerFacilityTarget, 60);
+                    setTimeout(centerFacilityTarget, 220);
+                    setTimeout(centerFacilityTarget, 500);
+                });
+                window.addEventListener('load', function() {
+                    setTimeout(centerFacilityTarget, 100);
                 });
             </script>
             """.trimIndent()

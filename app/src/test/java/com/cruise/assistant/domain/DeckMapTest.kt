@@ -47,10 +47,12 @@ class DeckMapTest {
     fun `test inlineHtmlWrapperFor includes highlight script when target provided`() {
         val svg = "<svg><text>Walt Disney Theatre</text></svg>"
         val htmlWithoutHighlight = DeckMapRepository.inlineHtmlWrapperFor(svg, null)
-        assertFalse(htmlWithoutHighlight.contains("highlight-marker"))
+        assertFalse(htmlWithoutHighlight.contains("facility-highlight-box"))
+        assertFalse(htmlWithoutHighlight.contains("facility-pin-badge"))
 
         val htmlWithHighlight = DeckMapRepository.inlineHtmlWrapperFor(svg, "Walt Disney Theatre")
-        assertTrue(htmlWithHighlight.contains("highlight-marker"))
+        assertTrue(htmlWithHighlight.contains("facility-highlight-box"))
+        assertTrue(htmlWithHighlight.contains("facility-pin-badge"))
         assertTrue(htmlWithHighlight.contains("Walt Disney Theatre"))
     }
 }
