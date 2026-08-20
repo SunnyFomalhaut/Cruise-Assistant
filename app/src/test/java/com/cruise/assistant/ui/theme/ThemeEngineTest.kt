@@ -24,11 +24,11 @@ class ThemeEngineTest {
         val palette = paletteFor(AppColorTheme.LINABELL_PINK)
         assertEquals(Color(0xFFE05375), palette.primary)
         assertEquals(Color(0xFF9E1C3F), palette.secondary)
-        assertEquals(Color(0xFFFCE7F3), palette.primaryContainer)
+        assertEquals(Color(0xFFFDF2F8), palette.primaryContainer)
         assertEquals(Color(0xFF9E1C3F), palette.onPrimaryContainer)
         assertEquals(Color(0xFFF472B6), palette.primaryLight)
         assertEquals(Color(0xFFA855F7), palette.accent) // Orchid Purple
-        assertEquals(Color(0xFFFFF9FA), palette.surfaceContainer)
+        assertEquals(Color(0xFFFDFBFB), palette.surfaceContainer)
     }
 
     @Test
@@ -36,11 +36,11 @@ class ThemeEngineTest {
         val palette = paletteFor(AppColorTheme.STELLALOU_PURPLE)
         assertEquals(Color(0xFF8B5CF6), palette.primary)
         assertEquals(Color(0xFF5B21B6), palette.secondary)
-        assertEquals(Color(0xFFEDE9FE), palette.primaryContainer)
+        assertEquals(Color(0xFFF5F3FF), palette.primaryContainer)
         assertEquals(Color(0xFF5B21B6), palette.onPrimaryContainer)
         assertEquals(Color(0xFFC4B5FD), palette.primaryLight)
         assertEquals(Color(0xFF14B8A6), palette.accent) // Mint Green
-        assertEquals(Color(0xFFFAF8FF), palette.surfaceContainer)
+        assertEquals(Color(0xFFFAFAFE), palette.surfaceContainer)
     }
 
     @Test

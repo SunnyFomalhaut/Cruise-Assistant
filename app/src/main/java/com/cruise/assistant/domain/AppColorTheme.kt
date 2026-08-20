@@ -24,7 +24,7 @@ enum class AppColorTheme(
         descriptionRes = R.string.theme_linabell_pink_desc,
         primaryArgb = 0xFFE05375,
         secondaryArgb = 0xFF9E1C3F,
-        containerArgb = 0xFFFCE7F3,
+        containerArgb = 0xFFFDF2F8,
     ),
     STELLALOU_PURPLE(
         key = "stellalou_purple",
@@ -32,7 +32,7 @@ enum class AppColorTheme(
         descriptionRes = R.string.theme_stellalou_purple_desc,
         primaryArgb = 0xFF8B5CF6,
         secondaryArgb = 0xFF5B21B6,
-        containerArgb = 0xFFEDE9FE,
+        containerArgb = 0xFFF5F3FF,
     );
 
     companion object {

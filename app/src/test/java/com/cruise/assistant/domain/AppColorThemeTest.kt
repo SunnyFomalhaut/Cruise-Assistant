@@ -41,7 +41,7 @@ class AppColorThemeTest {
         assertEquals(R.string.theme_linabell_pink_desc, linabell.descriptionRes)
         assertEquals(0xFFE05375, linabell.primaryArgb)
         assertEquals(0xFF9E1C3F, linabell.secondaryArgb)
-        assertEquals(0xFFFCE7F3, linabell.containerArgb)
+        assertEquals(0xFFFDF2F8, linabell.containerArgb)
 
         val stellalou = AppColorTheme.STELLALOU_PURPLE
         assertEquals("stellalou_purple", stellalou.key)
@@ -49,7 +49,7 @@ class AppColorThemeTest {
         assertEquals(R.string.theme_stellalou_purple_desc, stellalou.descriptionRes)
         assertEquals(0xFF8B5CF6, stellalou.primaryArgb)
         assertEquals(0xFF5B21B6, stellalou.secondaryArgb)
-        assertEquals(0xFFEDE9FE, stellalou.containerArgb)
+        assertEquals(0xFFF5F3FF, stellalou.containerArgb)
     }
 
     @Test

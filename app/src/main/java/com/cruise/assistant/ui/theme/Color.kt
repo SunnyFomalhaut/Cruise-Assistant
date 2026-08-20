@@ -48,22 +48,22 @@ val JudyBluePalette = CruiseColorPalette(
 val LinaBellPinkPalette = CruiseColorPalette(
     primary = Color(0xFFE05375),
     secondary = Color(0xFF9E1C3F),
-    primaryContainer = Color(0xFFFCE7F3),
+    primaryContainer = Color(0xFFFDF2F8),
     onPrimaryContainer = Color(0xFF9E1C3F),
     primaryLight = Color(0xFFF472B6),
     accent = Color(0xFFA855F7), // LinaBell flower purple
-    surfaceContainer = Color(0xFFFFF9FA),
+    surfaceContainer = Color(0xFFFDFBFB),
 )
 
 // 3. 星黛露紫 (StellaLou Purple)
 val StellaLouPurplePalette = CruiseColorPalette(
     primary = Color(0xFF8B5CF6),
     secondary = Color(0xFF5B21B6),
-    primaryContainer = Color(0xFFEDE9FE),
+    primaryContainer = Color(0xFFF5F3FF),
     onPrimaryContainer = Color(0xFF5B21B6),
     primaryLight = Color(0xFFC4B5FD),
     accent = Color(0xFF14B8A6), // StellaLou flower mint
-    surfaceContainer = Color(0xFFFAF8FF),
+    surfaceContainer = Color(0xFFFAFAFE),
 )
 
 fun paletteFor(theme: AppColorTheme): CruiseColorPalette = when (theme) {
