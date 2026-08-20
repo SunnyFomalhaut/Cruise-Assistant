@@ -15,26 +15,31 @@ data class DeckMapUiState(
     val decks: List<DeckInfo> = emptyList(),
     val hasMap: Boolean = true,
     val assetUrl: String = "",
+    val highlightTarget: String? = null,
 )
 
 class DeckMapViewModel(
     initialDeck: Int = 5,
+    initialHighlight: String? = null,
     maxDeck: Int = DeckMapRepository.DEFAULT_MAX_DECK,
 ) : ViewModel() {
 
     private val _selectedDeck = MutableStateFlow(
         if (DeckMapRepository.hasDeckMap(initialDeck)) initialDeck else 5
     )
+    private val _highlightTarget = MutableStateFlow(initialHighlight)
     private val _decks = MutableStateFlow(DeckMapRepository.getDecks(maxDeck))
 
     val state: StateFlow<DeckMapUiState> = combine(
         _selectedDeck,
+        _highlightTarget,
         _decks,
-    ) { currentDeck, deckList ->
+    ) { currentDeck, highlight, deckList ->
         val hasMap = DeckMapRepository.hasDeckMap(currentDeck)
         val url = DeckMapRepository.assetUrlFor(currentDeck)
         DeckMapUiState(
             selectedDeck = currentDeck,
+            highlightTarget = highlight,
             decks = deckList,
             hasMap = hasMap,
             assetUrl = url,
@@ -47,6 +52,7 @@ class DeckMapViewModel(
             val initialDecks = DeckMapRepository.getDecks(maxDeck)
             DeckMapUiState(
                 selectedDeck = initialSelected,
+                highlightTarget = initialHighlight,
                 decks = initialDecks,
                 hasMap = DeckMapRepository.hasDeckMap(initialSelected),
                 assetUrl = DeckMapRepository.assetUrlFor(initialSelected),
@@ -56,5 +62,9 @@ class DeckMapViewModel(
 
     fun onSelectDeck(deckNumber: Int) {
         _selectedDeck.value = deckNumber
+    }
+
+    fun clearHighlight() {
+        _highlightTarget.value = null
     }
 }

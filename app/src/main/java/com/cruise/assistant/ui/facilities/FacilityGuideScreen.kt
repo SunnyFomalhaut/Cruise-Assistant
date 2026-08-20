@@ -76,6 +76,7 @@ fun FacilityGuideScreen(
     categories: List<CategoryFilterOption>,
     onBack: () -> Unit,
     onOpenDeckMap: () -> Unit = {},
+    onNavigateToDeckMap: (Int, String) -> Unit = { _, _ -> },
     onSearchChange: (String) -> Unit,
     onCategorySelect: (String) -> Unit,
     onToggleOnlyOpenNow: (Boolean) -> Unit,
@@ -253,7 +254,10 @@ fun FacilityGuideScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.facilities, key = { it.placeName + "_" + it.formattedLocation }) { facility ->
-                        FacilityCard(facility)
+                        FacilityCard(
+                            facility = facility,
+                            onNavigateToDeckMap = onNavigateToDeckMap,
+                        )
                     }
                 }
             }
@@ -263,7 +267,10 @@ fun FacilityGuideScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FacilityCard(facility: FacilityItemUiModel) {
+private fun FacilityCard(
+    facility: FacilityItemUiModel,
+    onNavigateToDeckMap: (Int, String) -> Unit = { _, _ -> },
+) {
     Surface(
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -332,24 +339,60 @@ private fun FacilityCard(facility: FacilityItemUiModel) {
 
             Spacer(Modifier.height(8.dp))
 
-            // 位置行
+            // 位置行与地图定位按钮
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.LocationOn,
-                    contentDescription = null,
-                    tint = CruiseAzure,
-                    modifier = Modifier.size(15.dp),
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    text = facility.formattedLocation,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = CruiseMarine,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = null,
+                        tint = CruiseAzure,
+                        modifier = Modifier.size(15.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = facility.formattedLocation,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = CruiseMarine,
+                    )
+                }
+                facility.primaryDeck?.let { targetDeck ->
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = CruiseAzureContainer,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                onNavigateToDeckMap(targetDeck, facility.placeName)
+                            },
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Map,
+                                contentDescription = null,
+                                tint = CruiseMarine,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Text(
+                                text = stringResource(R.string.facility_view_map),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = CruiseMarine,
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(Modifier.height(8.dp))

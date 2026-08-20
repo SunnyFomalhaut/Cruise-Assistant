@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Color as AndroidColor
 import android.view.ViewGroup
 import android.webkit.WebView
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CenterFocusStrong
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DirectionsBoat
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -70,14 +73,15 @@ fun DeckMapScreen(
     state: DeckMapUiState,
     onBack: () -> Unit,
     onSelectDeck: (Int) -> Unit,
+    onClearHighlight: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
-    val htmlContent = remember(state.selectedDeck) {
+    val htmlContent = remember(state.selectedDeck, state.highlightTarget) {
         val svg = runCatching {
             context.assets.open("decks/deck_${state.selectedDeck}.svg").bufferedReader().use { it.readText() }
         }.getOrDefault("")
-        DeckMapRepository.inlineHtmlWrapperFor(svg)
+        DeckMapRepository.inlineHtmlWrapperFor(svg, state.highlightTarget)
     }
 
     Scaffold(
@@ -149,6 +153,48 @@ fun DeckMapScreen(
                         onWebViewReady = { webViewRef = it },
                         modifier = Modifier.fillMaxSize(),
                     )
+
+                    // 顶部聚焦提示标签（当由设施指南导航而来时显示）
+                    state.highlightTarget?.let { target ->
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = CruiseAzureContainer.copy(alpha = 0.95f),
+                            border = BorderStroke(1.dp, CruiseAzure.copy(alpha = 0.6f)),
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = 10.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.LocationOn,
+                                    contentDescription = null,
+                                    tint = CruiseMarine,
+                                    modifier = Modifier.size(15.dp),
+                                )
+                                Text(
+                                    text = stringResource(R.string.deck_map_focused_format, target),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = CruiseMarine,
+                                )
+                                IconButton(
+                                    onClick = onClearHighlight,
+                                    modifier = Modifier.size(18.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Close,
+                                        contentDescription = stringResource(R.string.cancel),
+                                        tint = Slate500,
+                                        modifier = Modifier.size(13.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
 
                     // 船首/船尾 悬浮方向指示标
                     Surface(

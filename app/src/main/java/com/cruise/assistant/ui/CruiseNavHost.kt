@@ -24,7 +24,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import android.net.Uri
 import android.widget.Toast
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.cruise.assistant.AppContainer
 import com.cruise.assistant.R
 import com.cruise.assistant.data.repo.RecurrenceScope
@@ -70,6 +73,19 @@ object Routes {
     const val PIXIE_DUST = "pixiedust"
     const val FACILITIES = "facilities"
     const val DECK_MAP = "deck_map"
+    const val DECK_MAP_PATTERN = "deck_map?deck={deck}&highlight={highlight}"
+
+    fun deckMap(deck: Int? = null, highlight: String? = null): String {
+        return buildString {
+            append("deck_map")
+            val params = mutableListOf<String>()
+            if (deck != null) params.add("deck=$deck")
+            if (!highlight.isNullOrBlank()) params.add("highlight=${Uri.encode(highlight)}")
+            if (params.isNotEmpty()) {
+                append("?").append(params.joinToString("&"))
+            }
+        }
+    }
 }
 
 /** 显示范围最小跨度，和 domain 层（TimelineLayout.kt 的 MIN_RANGE_MINUTES）保持一致。 */
@@ -550,19 +566,43 @@ fun CruiseNavHost(container: AppContainer) {
                 state = state,
                 categories = vm.categories,
                 onBack = { navController.popBackStack() },
-                onOpenDeckMap = { navController.navigate(Routes.DECK_MAP) },
+                onOpenDeckMap = { navController.navigate(Routes.deckMap()) },
+                onNavigateToDeckMap = { deck, venueName ->
+                    navController.navigate(Routes.deckMap(deck = deck, highlight = venueName))
+                },
                 onSearchChange = vm::onSearchQueryChange,
                 onCategorySelect = vm::onCategorySelect,
                 onToggleOnlyOpenNow = vm::onToggleOnlyOpenNow,
             )
         }
-        composable(Routes.DECK_MAP) {
-            val vm: DeckMapViewModel = viewModel()
+        composable(
+            route = Routes.DECK_MAP_PATTERN,
+            arguments = listOf(
+                navArgument("deck") {
+                    type = NavType.IntType
+                    defaultValue = 5
+                },
+                navArgument("highlight") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { backStackEntry ->
+            val initialDeck = backStackEntry.arguments?.getInt("deck") ?: 5
+            val highlightTarget = backStackEntry.arguments?.getString("highlight")
+            val vm: DeckMapViewModel = viewModel(
+                key = "deck_map_${initialDeck}_${highlightTarget}",
+                factory = viewModelFactory {
+                    DeckMapViewModel(initialDeck = initialDeck, initialHighlight = highlightTarget)
+                },
+            )
             val state by vm.state.collectAsState()
             DeckMapScreen(
                 state = state,
                 onBack = { navController.popBackStack() },
                 onSelectDeck = vm::onSelectDeck,
+                onClearHighlight = vm::clearHighlight,
             )
         }
     }

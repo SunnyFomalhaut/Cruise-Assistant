@@ -42,4 +42,15 @@ class DeckMapTest {
         assertEquals("file:///android_asset/decks/deck_5.svg", DeckMapRepository.assetUrlFor(5))
         assertEquals("file:///android_asset/decks/deck_19.svg", DeckMapRepository.assetUrlFor(19))
     }
+
+    @Test
+    fun `test inlineHtmlWrapperFor includes highlight script when target provided`() {
+        val svg = "<svg><text>Walt Disney Theatre</text></svg>"
+        val htmlWithoutHighlight = DeckMapRepository.inlineHtmlWrapperFor(svg, null)
+        assertFalse(htmlWithoutHighlight.contains("highlight-marker"))
+
+        val htmlWithHighlight = DeckMapRepository.inlineHtmlWrapperFor(svg, "Walt Disney Theatre")
+        assertTrue(htmlWithHighlight.contains("highlight-marker"))
+        assertTrue(htmlWithHighlight.contains("Walt Disney Theatre"))
+    }
 }
