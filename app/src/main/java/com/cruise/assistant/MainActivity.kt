@@ -14,8 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
+import com.cruise.assistant.data.prefs.AppSettings
 import com.cruise.assistant.ui.CruiseNavHost
 import com.cruise.assistant.ui.theme.CruiseTheme
 
@@ -42,7 +45,8 @@ class MainActivity : ComponentActivity() {
         }
         val container = (application as CruiseApp).container
         setContent {
-            CruiseTheme {
+            val settings by container.settingsStore.settings.collectAsState(initial = AppSettings())
+            CruiseTheme(theme = settings.colorTheme) {
                 Surface(
                     Modifier
                         .fillMaxSize()

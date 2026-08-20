@@ -2,6 +2,10 @@ package com.cruise.assistant.domain
 
 import com.cruise.assistant.R
 import com.cruise.assistant.data.prefs.AppSettings
+import com.cruise.assistant.ui.theme.JudyBluePalette
+import com.cruise.assistant.ui.theme.LinaBellPinkPalette
+import com.cruise.assistant.ui.theme.StellaLouPurplePalette
+import com.cruise.assistant.ui.theme.paletteFor
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -52,5 +56,12 @@ class AppColorThemeTest {
     fun appSettings_defaultColorThemeIsJudyBlue() {
         val settings = AppSettings()
         assertEquals(AppColorTheme.JUDY_BLUE, settings.colorTheme)
+    }
+
+    @Test
+    fun paletteFor_returnsCorrectPalette() {
+        assertEquals(JudyBluePalette, paletteFor(AppColorTheme.JUDY_BLUE))
+        assertEquals(LinaBellPinkPalette, paletteFor(AppColorTheme.LINABELL_PINK))
+        assertEquals(StellaLouPurplePalette, paletteFor(AppColorTheme.STELLALOU_PURPLE))
     }
 }
