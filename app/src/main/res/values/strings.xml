@@ -29,7 +29,7 @@
     <string name="finalized_badge">已定稿</string>
     <string name="unlock">解锁</string>
     <string name="generate_plan">生成计划表</string>
-    <string name="jump_to_now">跳到当前时间</string>
+    <string name="jump_to_now">转跳当前时间</string>
     <string name="now_marker">现在</string>
     <string name="ongoing_label">进行中</string>
     <string name="next_label">下一个</string>

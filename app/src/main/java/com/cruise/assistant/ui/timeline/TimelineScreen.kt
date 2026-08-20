@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Schedule
@@ -92,6 +93,7 @@ fun TimelineScreen(
     onSelectDate: (LocalDate) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenPixieDust: () -> Unit,
+    onOpenWishlist: () -> Unit = {},
     onOpenFacilities: () -> Unit = {},
     onOpenDeckMap: () -> Unit = {},
     onAddEvent: (Int) -> Unit,
@@ -122,6 +124,18 @@ fun TimelineScreen(
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(
+                    onClick = onOpenWishlist,
+                    containerColor = CruiseAzureContainer,
+                    contentColor = CruiseMarine,
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.Checklist,
+                        contentDescription = "随心打卡清单",
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                FloatingActionButton(
                     onClick = onOpenPixieDust,
                     containerColor = CruiseAzureContainer,
                     contentColor = CruiseMarine,
@@ -133,7 +147,7 @@ fun TimelineScreen(
                     )
                 }
                 if (!state.isFinalized) {
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(12.dp))
                     FloatingActionButton(
                         onClick = {
                             val startMin = defaultStartMinute(
@@ -311,11 +325,11 @@ fun TimelineScreen(
                 Spacer(Modifier.weight(1f))
 
                 if (state.todayInVoyage) {
-                    // "跳到当前时间"胶囊按钮
+                    // "转跳当前时间"圆角方框按钮
                     FilledTonalButton(
                         onClick = onJumpToNow,
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
                             containerColor = if (state.isToday) CruiseAzureContainer else Slate100,
                             contentColor = if (state.isToday) CruiseMarine else Slate700,

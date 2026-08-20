@@ -63,6 +63,8 @@ import com.cruise.assistant.ui.timeline.ConflictDialog
 import com.cruise.assistant.ui.timeline.TimelineLoading
 import com.cruise.assistant.ui.timeline.TimelineScreen
 import com.cruise.assistant.ui.timeline.TimelineViewModel
+import com.cruise.assistant.ui.wishlist.WishlistScreen
+import com.cruise.assistant.ui.wishlist.WishlistViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -71,6 +73,7 @@ object Routes {
     const val TIMELINE = "timeline"
     const val SETTINGS = "settings"
     const val PIXIE_DUST = "pixiedust"
+    const val WISHLIST = "wishlist"
     const val FACILITIES = "facilities"
     const val DECK_MAP = "deck_map"
     const val DECK_MAP_PATTERN = "deck_map?deck={deck}&highlight={highlight}"
@@ -186,6 +189,7 @@ fun CruiseNavHost(container: AppContainer) {
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenPixieDust = { navController.navigate(Routes.PIXIE_DUST) },
+                    onOpenWishlist = { navController.navigate(Routes.WISHLIST) },
                     onOpenFacilities = { navController.navigate(Routes.FACILITIES) },
                     onOpenDeckMap = { navController.navigate(Routes.DECK_MAP) },
                     onAddEvent = { startMinute ->
@@ -558,6 +562,25 @@ fun CruiseNavHost(container: AppContainer) {
                     onDismiss = { showCategorySheet = false },
                 )
             }
+        }
+        composable(Routes.WISHLIST) {
+            val vm: WishlistViewModel = viewModel(
+                factory = viewModelFactory {
+                    WishlistViewModel(container.wishlistRepository, container.categoryRepository)
+                },
+            )
+            val state by vm.state.collectAsState()
+            WishlistScreen(
+                state = state,
+                onBack = { navController.popBackStack() },
+                onNavigateToDeckMap = { deck, venueName ->
+                    navController.navigate(Routes.deckMap(deck = deck, highlight = venueName))
+                },
+                onToggleCompleted = vm::toggleCompleted,
+                onSaveItem = vm::saveItem,
+                onDeleteItem = vm::deleteItem,
+                onFilterCategory = vm::onCategoryFilterSelect,
+            )
         }
         composable(Routes.FACILITIES) {
             val vm: FacilityGuideViewModel = viewModel()
