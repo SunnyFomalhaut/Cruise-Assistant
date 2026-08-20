@@ -30,9 +30,9 @@ enum class AppColorTheme(
         key = "linabell_pink",
         displayNameRes = R.string.theme_linabell_pink,
         descriptionRes = R.string.theme_linabell_pink_desc,
-        primaryArgb = 0xFFD47A70,
-        secondaryArgb = 0xFF8C3E3E,
-        containerArgb = 0xFFFAF0EE,
+        primaryArgb = 0xFFE5879B,
+        secondaryArgb = 0xFF8C3349,
+        containerArgb = 0xFFFFF0F3,
     ),
     SHELLIEMAY_PINK(
         key = "shelliemay_pink",
@@ -70,9 +70,9 @@ enum class AppColorTheme(
         key = "cookieann_yellow",
         displayNameRes = R.string.theme_cookieann_yellow,
         descriptionRes = R.string.theme_cookieann_yellow_desc,
-        primaryArgb = 0xFFD97706,
-        secondaryArgb = 0xFF78350F,
-        containerArgb = 0xFFFFFBEB,
+        primaryArgb = 0xFFE2A428,
+        secondaryArgb = 0xFF7A4308,
+        containerArgb = 0xFFFFFDEB,
     );
 
     companion object {

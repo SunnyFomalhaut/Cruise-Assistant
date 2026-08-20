@@ -32,10 +32,10 @@ class ThemeEngineTest {
     @Test
     fun testLinaBellPinkPaletteTokens() {
         val palette = paletteFor(AppColorTheme.LINABELL_PINK)
-        assertEquals(Color(0xFFD47A70), palette.primary)
-        assertEquals(Color(0xFF8C3E3E), palette.secondary)
-        assertEquals(Color(0xFFFAF0EE), palette.primaryContainer)
-        assertEquals(Color(0xFF8C3E3E), palette.onPrimaryContainer)
+        assertEquals(Color(0xFFE5879B), palette.primary)
+        assertEquals(Color(0xFF8C3349), palette.secondary)
+        assertEquals(Color(0xFFFFF0F3), palette.primaryContainer)
+        assertEquals(Color(0xFF8C3349), palette.onPrimaryContainer)
         assertEquals(Color(0xFFA855F7), palette.accent) // Orchid Purple
         assertEquals(Color(0xFFFDFBFB), palette.surfaceContainer)
     }
@@ -83,10 +83,11 @@ class ThemeEngineTest {
     @Test
     fun testCookieAnnYellowPaletteTokens() {
         val palette = paletteFor(AppColorTheme.COOKIEANN_YELLOW)
-        assertEquals(Color(0xFFD97706), palette.primary)
-        assertEquals(Color(0xFF78350F), palette.secondary)
-        assertEquals(Color(0xFFFFFBEB), palette.primaryContainer)
-        assertEquals(Color(0xFFEC4899), palette.accent) // CookieAnn bow pink
+        assertEquals(Color(0xFFE2A428), palette.primary)
+        assertEquals(Color(0xFF7A4308), palette.secondary)
+        assertEquals(Color(0xFFFFFDEB), palette.primaryContainer)
+        assertEquals(Color(0xFF7A4308), palette.onPrimaryContainer)
+        assertEquals(Color(0xFFF472B6), palette.accent) // CookieAnn bow pink
     }
 
     @Test

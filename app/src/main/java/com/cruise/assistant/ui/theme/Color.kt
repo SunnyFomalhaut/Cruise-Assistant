@@ -55,13 +55,13 @@ val DuffyBluePalette = CruiseColorPalette(
     surfaceContainer = Color(0xFFF8FAFD),
 )
 
-// 3. 贝儿粉 (LinaBell Pink - 低饱和柔和蜜桃粉)
+// 3. 贝儿粉 (LinaBell Pink - 柔和低饱和淡粉)
 val LinaBellPinkPalette = CruiseColorPalette(
-    primary = Color(0xFFD47A70),
-    secondary = Color(0xFF8C3E3E),
-    primaryContainer = Color(0xFFFAF0EE),
-    onPrimaryContainer = Color(0xFF8C3E3E),
-    primaryLight = Color(0xFFE8A59E),
+    primary = Color(0xFFE5879B),
+    secondary = Color(0xFF8C3349),
+    primaryContainer = Color(0xFFFFF0F3),
+    onPrimaryContainer = Color(0xFF8C3349),
+    primaryLight = Color(0xFFF9A8B8),
     accent = Color(0xFFA855F7), // LinaBell flower purple
     surfaceContainer = Color(0xFFFDFBFB),
 )
@@ -111,14 +111,14 @@ val OluGreenPalette = CruiseColorPalette(
     surfaceContainer = Color(0xFFFAFDF6),
 )
 
-// 8. 饼饼黄 (CookieAnn Yellow - 烘焙暖心蜂蜜黄)
+// 8. 饼饼黄 (CookieAnn Yellow - 烘焙奶香卡士达浅黄)
 val CookieAnnYellowPalette = CruiseColorPalette(
-    primary = Color(0xFFD97706),
-    secondary = Color(0xFF78350F),
-    primaryContainer = Color(0xFFFFFBEB),
-    onPrimaryContainer = Color(0xFF78350F),
-    primaryLight = Color(0xFFFBBF24),
-    accent = Color(0xFFEC4899), // CookieAnn bow pink
+    primary = Color(0xFFE2A428),
+    secondary = Color(0xFF7A4308),
+    primaryContainer = Color(0xFFFFFDEB),
+    onPrimaryContainer = Color(0xFF7A4308),
+    primaryLight = Color(0xFFFACC15),
+    accent = Color(0xFFF472B6), // CookieAnn bow pink
     surfaceContainer = Color(0xFFFDFDF9),
 )
 

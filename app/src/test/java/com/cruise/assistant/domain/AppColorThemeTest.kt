@@ -51,7 +51,7 @@ class AppColorThemeTest {
         val linabell = AppColorTheme.LINABELL_PINK
         assertEquals("linabell_pink", linabell.key)
         assertEquals(R.string.theme_linabell_pink, linabell.displayNameRes)
-        assertEquals(0xFFD47A70, linabell.primaryArgb)
+        assertEquals(0xFFE5879B, linabell.primaryArgb)
 
         val shelliemay = AppColorTheme.SHELLIEMAY_PINK
         assertEquals("shelliemay_pink", shelliemay.key)
@@ -76,7 +76,7 @@ class AppColorThemeTest {
         val cookieann = AppColorTheme.COOKIEANN_YELLOW
         assertEquals("cookieann_yellow", cookieann.key)
         assertEquals(R.string.theme_cookieann_yellow, cookieann.displayNameRes)
-        assertEquals(0xFFD97706, cookieann.primaryArgb)
+        assertEquals(0xFFE2A428, cookieann.primaryArgb)
     }
 
     @Test
