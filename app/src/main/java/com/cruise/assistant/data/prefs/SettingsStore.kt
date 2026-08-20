@@ -5,11 +5,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.cruise.assistant.domain.AppColorTheme
+import com.cruise.assistant.domain.WallpaperPreset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -30,6 +32,9 @@ data class AppSettings(
     val onboardingCompleted: Boolean = false,
     val lastPixieDeck: Int? = null,
     val colorTheme: AppColorTheme = AppColorTheme.JUDY_BLUE,
+    val wallpaperEnabled: Boolean = false,
+    val wallpaperKey: String = WallpaperPreset.NONE.key,
+    val wallpaperAlpha: Float = 0.15f,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("cruise_settings")
@@ -51,6 +56,9 @@ class SettingsStore(private val context: Context) {
         val lastPixieDeck = intPreferencesKey("last_pixie_deck")
         val armedEventIds = stringSetPreferencesKey("armed_event_ids")
         val colorTheme = stringPreferencesKey("color_theme")
+        val wallpaperEnabled = booleanPreferencesKey("wallpaper_enabled")
+        val wallpaperKey = stringPreferencesKey("wallpaper_key")
+        val wallpaperAlpha = floatPreferencesKey("wallpaper_alpha")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -74,6 +82,9 @@ class SettingsStore(private val context: Context) {
             onboardingCompleted = prefs[Keys.onboardingCompleted] ?: defaults.onboardingCompleted,
             lastPixieDeck = prefs[Keys.lastPixieDeck],
             colorTheme = prefs[Keys.colorTheme]?.let { AppColorTheme.fromKey(it) } ?: defaults.colorTheme,
+            wallpaperEnabled = prefs[Keys.wallpaperEnabled] ?: defaults.wallpaperEnabled,
+            wallpaperKey = prefs[Keys.wallpaperKey] ?: defaults.wallpaperKey,
+            wallpaperAlpha = prefs[Keys.wallpaperAlpha]?.coerceIn(0.05f, 0.40f) ?: defaults.wallpaperAlpha,
         )
     }
 
@@ -112,6 +123,15 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setColorTheme(theme: AppColorTheme) =
         edit { it[Keys.colorTheme] = theme.key }
+
+    suspend fun setWallpaperEnabled(enabled: Boolean) =
+        edit { it[Keys.wallpaperEnabled] = enabled }
+
+    suspend fun setWallpaperKey(key: String) =
+        edit { it[Keys.wallpaperKey] = key }
+
+    suspend fun setWallpaperAlpha(alpha: Float) =
+        edit { it[Keys.wallpaperAlpha] = alpha.coerceIn(0.05f, 0.40f) }
 
     /**
      * 上一次 rescheduleAll() 实际排上闹钟的事件 id 集合，用于下次重排时精确取消——
