@@ -118,50 +118,32 @@ fun SettingsScreen(
             icon = Icons.Outlined.Palette,
             cardShape = cardShape,
         ) {
-            Text(
-                stringResource(R.string.theme_section_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = Slate500,
-            )
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 AppColorTheme.entries.forEach { theme ->
                     val isSelected = state.settings.colorTheme == theme
                     val palette = paletteFor(theme)
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isSelected) palette.primaryContainer else MaterialTheme.colorScheme.surface,
+                        onClick = { onColorThemeChange(theme) },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isSelected) palette.primaryContainer else Slate100,
                         border = androidx.compose.foundation.BorderStroke(
-                            width = if (isSelected) 2.dp else 1.dp,
+                            width = if (isSelected) 1.5.dp else 1.dp,
                             color = if (isSelected) palette.primary else Slate200,
                         ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { onColorThemeChange(theme) },
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp, horizontal = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            // Dual Color Preview Dot / Badge
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(palette.primaryContainer)
-                                    .padding(3.dp),
-                                contentAlignment = Alignment.Center,
+                                    .size(14.dp)
+                                    .clip(CircleShape),
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(CircleShape),
-                                ) {
+                                Row(Modifier.fillMaxSize()) {
                                     Box(
                                         Modifier
                                             .fillMaxHeight()
@@ -176,20 +158,12 @@ fun SettingsScreen(
                                     )
                                 }
                             }
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.width(8.dp))
                             Text(
                                 text = stringResource(theme.displayNameRes),
-                                style = MaterialTheme.typography.labelLarge,
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) palette.secondary else Slate900,
-                            )
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = stringResource(theme.descriptionRes),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
-                                color = if (isSelected) palette.secondary.copy(alpha = 0.85f) else Slate500,
-                                maxLines = 1,
+                                color = if (isSelected) palette.secondary else Slate700,
                             )
                         }
                     }
