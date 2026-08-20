@@ -22,12 +22,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -91,15 +89,15 @@ fun PixieDustScreen(
 
             Spacer(Modifier.width(8.dp))
 
-            TabRow(
+            SecondaryTabRow(
                 selectedTabIndex = if (state.tab == PixieTab.GIVEN) 0 else 1,
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(14.dp)),
                 containerColor = Slate100,
-                indicator = { tabPositions ->
+                indicator = {
                     TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[if (state.tab == PixieTab.GIVEN) 0 else 1]),
+                        modifier = Modifier.tabIndicatorOffset(if (state.tab == PixieTab.GIVEN) 0 else 1),
                         color = CruiseAzure,
                         height = 3.dp,
                     )
