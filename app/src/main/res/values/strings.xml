@@ -212,8 +212,18 @@
     <string name="theme_section_desc">选择您喜爱的主题配色风格</string>
     <string name="theme_judy_blue">朱迪蓝</string>
     <string name="theme_judy_blue_desc">经典海洋探索风格</string>
+    <string name="theme_duffy_blue">达菲蓝</string>
+    <string name="theme_duffy_blue_desc">水手服与小熊浅棕</string>
     <string name="theme_linabell_pink">贝儿粉</string>
-    <string name="theme_linabell_pink_desc">甜美活泼的小狐狸</string>
-    <string name="theme_stellalou_purple">星黛露紫</string>
-    <string name="theme_stellalou_purple_desc">优雅梦幻的芭蕾舞者</string>
+    <string name="theme_linabell_pink_desc">柔和低饱和蜜桃粉</string>
+    <string name="theme_shelliemay_pink">玫玫粉</string>
+    <string name="theme_shelliemay_pink_desc">复古烟熏玫瑰粉</string>
+    <string name="theme_stellalou_purple">露露紫</string>
+    <string name="theme_stellalou_purple_desc">梦幻芭蕾舞台紫</string>
+    <string name="theme_gelatoni_green">托尼绿</string>
+    <string name="theme_gelatoni_green_desc">画家水彩薄荷绿</string>
+    <string name="theme_olu_green">olu绿</string>
+    <string name="theme_olu_green_desc">热带海岛青柠绿</string>
+    <string name="theme_cookieann_yellow">饼饼黄</string>
+    <string name="theme_cookieann_yellow_desc">烘焙暖心蜂蜜黄</string>
 </resources>

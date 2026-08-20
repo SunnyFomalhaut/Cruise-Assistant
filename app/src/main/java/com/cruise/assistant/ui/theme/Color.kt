@@ -44,19 +44,41 @@ val JudyBluePalette = CruiseColorPalette(
     surfaceContainer = Color(0xFFF8FAFC),
 )
 
-// 2. 贝儿粉 (LinaBell Pink)
+// 2. 达菲蓝 (Duffy Blue)
+val DuffyBluePalette = CruiseColorPalette(
+    primary = Color(0xFF2563EB),
+    secondary = Color(0xFF1E3A8A),
+    primaryContainer = Color(0xFFEFF6FF),
+    onPrimaryContainer = Color(0xFF1E3A8A),
+    primaryLight = Color(0xFF60A5FA),
+    accent = Color(0xFFB45309), // Duffy Bear warm brown
+    surfaceContainer = Color(0xFFF8FAFD),
+)
+
+// 3. 贝儿粉 (LinaBell Pink - 低饱和柔和蜜桃粉)
 val LinaBellPinkPalette = CruiseColorPalette(
-    primary = Color(0xFFE05375),
-    secondary = Color(0xFF9E1C3F),
-    primaryContainer = Color(0xFFFDF2F8),
-    onPrimaryContainer = Color(0xFF9E1C3F),
-    primaryLight = Color(0xFFF472B6),
+    primary = Color(0xFFD47A70),
+    secondary = Color(0xFF8C3E3E),
+    primaryContainer = Color(0xFFFAF0EE),
+    onPrimaryContainer = Color(0xFF8C3E3E),
+    primaryLight = Color(0xFFE8A59E),
     accent = Color(0xFFA855F7), // LinaBell flower purple
     surfaceContainer = Color(0xFFFDFBFB),
 )
 
-// 3. 星黛露紫 (StellaLou Purple)
-val StellaLouPurplePalette = CruiseColorPalette(
+// 4. 玫玫粉 (ShellieMay Pink - 复古烟熏玫瑰粉)
+val ShellieMayPinkPalette = CruiseColorPalette(
+    primary = Color(0xFFC06C84),
+    secondary = Color(0xFF7A2B48),
+    primaryContainer = Color(0xFFFDF1F5),
+    onPrimaryContainer = Color(0xFF7A2B48),
+    primaryLight = Color(0xFFE09BAE),
+    accent = Color(0xFF9CA3AF), // ShellieMay bow gray
+    surfaceContainer = Color(0xFFFDFBFB),
+)
+
+// 5. 露露紫 (StellaLou / Lulu Purple - 梦幻芭蕾紫)
+val LuluPurplePalette = CruiseColorPalette(
     primary = Color(0xFF8B5CF6),
     secondary = Color(0xFF5B21B6),
     primaryContainer = Color(0xFFF5F3FF),
@@ -65,11 +87,50 @@ val StellaLouPurplePalette = CruiseColorPalette(
     accent = Color(0xFF14B8A6), // StellaLou flower mint
     surfaceContainer = Color(0xFFFAFAFE),
 )
+val StellaLouPurplePalette = LuluPurplePalette
+
+// 6. 托尼绿 (Gelatoni Green - 画家水彩薄荷绿)
+val GelatoniGreenPalette = CruiseColorPalette(
+    primary = Color(0xFF4E8A73),
+    secondary = Color(0xFF1E4636),
+    primaryContainer = Color(0xFFEEF7F2),
+    onPrimaryContainer = Color(0xFF1E4636),
+    primaryLight = Color(0xFF81B8A3),
+    accent = Color(0xFF0284C7), // Gelatoni beret blue
+    surfaceContainer = Color(0xFFF9FBF9),
+)
+
+// 7. olu绿 (Olu Green - 夏威夷海岛青柠绿)
+val OluGreenPalette = CruiseColorPalette(
+    primary = Color(0xFF65A30D),
+    secondary = Color(0xFF365314),
+    primaryContainer = Color(0xFFF4FBE8),
+    onPrimaryContainer = Color(0xFF365314),
+    primaryLight = Color(0xFFA3E635),
+    accent = Color(0xFFD97706), // Ukulele amber
+    surfaceContainer = Color(0xFFFAFDF6),
+)
+
+// 8. 饼饼黄 (CookieAnn Yellow - 烘焙暖心蜂蜜黄)
+val CookieAnnYellowPalette = CruiseColorPalette(
+    primary = Color(0xFFD97706),
+    secondary = Color(0xFF78350F),
+    primaryContainer = Color(0xFFFFFBEB),
+    onPrimaryContainer = Color(0xFF78350F),
+    primaryLight = Color(0xFFFBBF24),
+    accent = Color(0xFFEC4899), // CookieAnn bow pink
+    surfaceContainer = Color(0xFFFDFDF9),
+)
 
 fun paletteFor(theme: AppColorTheme): CruiseColorPalette = when (theme) {
     AppColorTheme.JUDY_BLUE -> JudyBluePalette
+    AppColorTheme.DUFFY_BLUE -> DuffyBluePalette
     AppColorTheme.LINABELL_PINK -> LinaBellPinkPalette
-    AppColorTheme.STELLALOU_PURPLE -> StellaLouPurplePalette
+    AppColorTheme.SHELLIEMAY_PINK -> ShellieMayPinkPalette
+    AppColorTheme.LULU_PURPLE -> LuluPurplePalette
+    AppColorTheme.GELATONI_GREEN -> GelatoniGreenPalette
+    AppColorTheme.OLU_GREEN -> OluGreenPalette
+    AppColorTheme.COOKIEANN_YELLOW -> CookieAnnYellowPalette
 }
 
 val LocalCruiseColors = staticCompositionLocalOf { JudyBluePalette }

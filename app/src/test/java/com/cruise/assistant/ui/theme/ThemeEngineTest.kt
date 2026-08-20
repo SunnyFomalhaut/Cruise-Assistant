@@ -20,20 +20,39 @@ class ThemeEngineTest {
     }
 
     @Test
+    fun testDuffyBluePaletteTokens() {
+        val palette = paletteFor(AppColorTheme.DUFFY_BLUE)
+        assertEquals(Color(0xFF2563EB), palette.primary)
+        assertEquals(Color(0xFF1E3A8A), palette.secondary)
+        assertEquals(Color(0xFFEFF6FF), palette.primaryContainer)
+        assertEquals(Color(0xFF1E3A8A), palette.onPrimaryContainer)
+        assertEquals(Color(0xFFB45309), palette.accent) // Duffy Bear warm brown
+    }
+
+    @Test
     fun testLinaBellPinkPaletteTokens() {
         val palette = paletteFor(AppColorTheme.LINABELL_PINK)
-        assertEquals(Color(0xFFE05375), palette.primary)
-        assertEquals(Color(0xFF9E1C3F), palette.secondary)
-        assertEquals(Color(0xFFFDF2F8), palette.primaryContainer)
-        assertEquals(Color(0xFF9E1C3F), palette.onPrimaryContainer)
-        assertEquals(Color(0xFFF472B6), palette.primaryLight)
+        assertEquals(Color(0xFFD47A70), palette.primary)
+        assertEquals(Color(0xFF8C3E3E), palette.secondary)
+        assertEquals(Color(0xFFFAF0EE), palette.primaryContainer)
+        assertEquals(Color(0xFF8C3E3E), palette.onPrimaryContainer)
         assertEquals(Color(0xFFA855F7), palette.accent) // Orchid Purple
         assertEquals(Color(0xFFFDFBFB), palette.surfaceContainer)
     }
 
     @Test
-    fun testStellaLouPurplePaletteTokens() {
-        val palette = paletteFor(AppColorTheme.STELLALOU_PURPLE)
+    fun testShellieMayPinkPaletteTokens() {
+        val palette = paletteFor(AppColorTheme.SHELLIEMAY_PINK)
+        assertEquals(Color(0xFFC06C84), palette.primary)
+        assertEquals(Color(0xFF7A2B48), palette.secondary)
+        assertEquals(Color(0xFFFDF1F5), palette.primaryContainer)
+        assertEquals(Color(0xFF7A2B48), palette.onPrimaryContainer)
+        assertEquals(Color(0xFF9CA3AF), palette.accent) // ShellieMay bow gray
+    }
+
+    @Test
+    fun testLuluPurplePaletteTokens() {
+        val palette = paletteFor(AppColorTheme.LULU_PURPLE)
         assertEquals(Color(0xFF8B5CF6), palette.primary)
         assertEquals(Color(0xFF5B21B6), palette.secondary)
         assertEquals(Color(0xFFF5F3FF), palette.primaryContainer)
@@ -44,14 +63,36 @@ class ThemeEngineTest {
     }
 
     @Test
-    fun testPalettesAreDistinct() {
-        val blue = paletteFor(AppColorTheme.JUDY_BLUE)
-        val pink = paletteFor(AppColorTheme.LINABELL_PINK)
-        val purple = paletteFor(AppColorTheme.STELLALOU_PURPLE)
+    fun testGelatoniGreenPaletteTokens() {
+        val palette = paletteFor(AppColorTheme.GELATONI_GREEN)
+        assertEquals(Color(0xFF4E8A73), palette.primary)
+        assertEquals(Color(0xFF1E4636), palette.secondary)
+        assertEquals(Color(0xFFEEF7F2), palette.primaryContainer)
+        assertEquals(Color(0xFF0284C7), palette.accent) // Gelatoni beret blue
+    }
 
-        assertNotEquals(blue.primary, pink.primary)
-        assertNotEquals(pink.primary, purple.primary)
-        assertNotEquals(blue.primaryContainer, pink.primaryContainer)
-        assertNotEquals(pink.primaryContainer, purple.primaryContainer)
+    @Test
+    fun testOluGreenPaletteTokens() {
+        val palette = paletteFor(AppColorTheme.OLU_GREEN)
+        assertEquals(Color(0xFF65A30D), palette.primary)
+        assertEquals(Color(0xFF365314), palette.secondary)
+        assertEquals(Color(0xFFF4FBE8), palette.primaryContainer)
+        assertEquals(Color(0xFFD97706), palette.accent) // Ukulele amber
+    }
+
+    @Test
+    fun testCookieAnnYellowPaletteTokens() {
+        val palette = paletteFor(AppColorTheme.COOKIEANN_YELLOW)
+        assertEquals(Color(0xFFD97706), palette.primary)
+        assertEquals(Color(0xFF78350F), palette.secondary)
+        assertEquals(Color(0xFFFFFBEB), palette.primaryContainer)
+        assertEquals(Color(0xFFEC4899), palette.accent) // CookieAnn bow pink
+    }
+
+    @Test
+    fun testPalettesAreDistinct() {
+        val allPalettes = AppColorTheme.entries.map { paletteFor(it) }
+        val primaryColors = allPalettes.map { it.primary }.toSet()
+        assertEquals("All 8 theme primary colors should be unique", 8, primaryColors.size)
     }
 }
