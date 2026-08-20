@@ -206,4 +206,14 @@
     <string name="deck_map_stern">船尾 ↓</string>
     <string name="deck_map_reset_zoom">复位</string>
     <string name="deck_map_focused_format">已定位：%s</string>
+
+    <!-- Theme Palette -->
+    <string name="theme_section_title">主题配色</string>
+    <string name="theme_section_desc">选择您喜爱的主题配色风格</string>
+    <string name="theme_judy_blue">朱迪蓝</string>
+    <string name="theme_judy_blue_desc">经典海洋探索风格</string>
+    <string name="theme_linabell_pink">贝儿粉</string>
+    <string name="theme_linabell_pink_desc">甜美活泼的小狐狸</string>
+    <string name="theme_stellalou_purple">星黛露紫</string>
+    <string name="theme_stellalou_purple_desc">优雅梦幻的芭蕾舞者</string>
 </resources>

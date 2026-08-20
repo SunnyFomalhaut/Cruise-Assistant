@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.cruise.assistant.domain.AppColorTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -28,6 +29,7 @@ data class AppSettings(
     val notificationsEnabled: Boolean = true,
     val onboardingCompleted: Boolean = false,
     val lastPixieDeck: Int? = null,
+    val colorTheme: AppColorTheme = AppColorTheme.JUDY_BLUE,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("cruise_settings")
@@ -48,6 +50,7 @@ class SettingsStore(private val context: Context) {
         val onboardingCompleted = booleanPreferencesKey("onboarding_completed")
         val lastPixieDeck = intPreferencesKey("last_pixie_deck")
         val armedEventIds = stringSetPreferencesKey("armed_event_ids")
+        val colorTheme = stringPreferencesKey("color_theme")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -70,6 +73,7 @@ class SettingsStore(private val context: Context) {
             notificationsEnabled = prefs[Keys.notificationsEnabled] ?: defaults.notificationsEnabled,
             onboardingCompleted = prefs[Keys.onboardingCompleted] ?: defaults.onboardingCompleted,
             lastPixieDeck = prefs[Keys.lastPixieDeck],
+            colorTheme = prefs[Keys.colorTheme]?.let { AppColorTheme.fromKey(it) } ?: defaults.colorTheme,
         )
     }
 
@@ -105,6 +109,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setLastPixieDeck(deck: Int) =
         edit { it[Keys.lastPixieDeck] = deck }
+
+    suspend fun setColorTheme(theme: AppColorTheme) =
+        edit { it[Keys.colorTheme] = theme.key }
 
     /**
      * 上一次 rescheduleAll() 实际排上闹钟的事件 id 集合，用于下次重排时精确取消——
