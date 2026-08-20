@@ -51,7 +51,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,13 +112,24 @@ fun TimelineScreen(
 ) {
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
     var menuEvent by remember { mutableStateOf<CruiseEvent?>(null) }
 
-    // 打开当天时自动滚到"现在"附近
+    fun scrollToNow() {
+        if (!state.isToday) return
+        val redLinePx = with(density) { state.layout.minuteToDp(state.nowMinute).dp.toPx() }
+        val targetPx = (redLinePx - with(density) { 100.dp.toPx() }).coerceAtLeast(0f).toInt()
+        coroutineScope.launch {
+            scrollState.animateScrollTo(targetPx)
+        }
+    }
+
+    // 打开当天或切到当天时自动滚到"现在"红线附近
     LaunchedEffect(state.selectedDate, state.isToday) {
         if (state.isToday) {
-            val y = state.layout.minuteToDp(state.nowMinute)
-            scrollState.animateScrollTo((y - 200f).coerceAtLeast(0f).toInt())
+            val redLinePx = with(density) { state.layout.minuteToDp(state.nowMinute).dp.toPx() }
+            val targetPx = (redLinePx - with(density) { 100.dp.toPx() }).coerceAtLeast(0f).toInt()
+            scrollState.animateScrollTo(targetPx)
         }
     }
 
@@ -321,7 +334,13 @@ fun TimelineScreen(
                 if (state.todayInVoyage) {
                     // "转跳当前时间"圆角方框按钮
                     FilledTonalButton(
-                        onClick = onJumpToNow,
+                        onClick = {
+                            if (state.isToday) {
+                                scrollToNow()
+                            } else {
+                                onJumpToNow()
+                            }
+                        },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
