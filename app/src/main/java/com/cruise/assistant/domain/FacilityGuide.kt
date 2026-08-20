@@ -10,6 +10,8 @@ data class FacilityItemUiModel(
     val categoryKey: String,
     val categoryLabel: String,
     val deck: Int?,
+    val allDecks: List<Int> = listOfNotNull(deck),
+    val primaryDeck: Int? = deck,
     val zone: ShipZone?,
     val formattedLocation: String,
     val slots: List<OperatingSlot>,
@@ -44,13 +46,24 @@ fun LocationCatalogEntry.toFacilityItemUiModel(currentTime: LocalTime = LocalTim
     val hasHours = hours?.isConfigured == true
     val open = if (is24H) true else isOpenAt(currentTime)
 
-    val locationStr = formatLocation(deck, zone, null, compact = false) ?: if (deck == null) "全船/Dial 0" else "Deck $deck"
+    val effectiveDecks = allDecks.ifEmpty { listOfNotNull(deck) }
+    val locationStr = if (effectiveDecks.isNotEmpty()) {
+        val deckPart = "Deck " + effectiveDecks.joinToString(", ")
+        val zonePart = zone?.label?.let { " $it" } ?: ""
+        deckPart + zonePart
+    } else if (deck == null) {
+        "全船/Dial 0"
+    } else {
+        "Deck $deck"
+    }
 
     return FacilityItemUiModel(
         placeName = placeName,
         categoryKey = category,
         categoryLabel = categoryLabelFor(category),
         deck = deck,
+        allDecks = effectiveDecks,
+        primaryDeck = primaryDeck,
         zone = zone,
         formattedLocation = locationStr,
         slots = configuredSlots,

@@ -32,6 +32,13 @@ fun parseLocationsJson(json: String): List<LocationCatalogEntry> = runCatching {
                     }
                 })
             }
+            val additionalDecks = v.optJSONArray("additionalDecks")?.let { arr ->
+                buildList {
+                    for (k in 0 until arr.length()) {
+                        add(arr.getInt(k))
+                    }
+                }
+            } ?: emptyList()
             add(
                 LocationCatalogEntry(
                     deck = v.optInt("deck", -1).takeIf { it >= 0 },
@@ -42,6 +49,7 @@ fun parseLocationsJson(json: String): List<LocationCatalogEntry> = runCatching {
                         ?.let { DiningGroup.valueOf(it.uppercase()) },
                     category = v.optString("category", "meal"),
                     hours = hours,
+                    additionalDecks = additionalDecks,
                 ),
             )
         }

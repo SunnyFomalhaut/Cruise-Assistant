@@ -623,6 +623,7 @@
     {
       "name": "帕洛意大利餐厅 Palo Trattoria",
       "deck": 10,
+      "additionalDecks": [11],
       "zone": "stern",
       "category": "meal",
       "group": "paid",
@@ -1008,6 +1009,7 @@
     {
       "name": "华特迪士尼剧院 Walt Disney Theatre",
       "deck": 6,
+      "additionalDecks": [7],
       "zone": "bow",
       "category": "show",
       "slots": []

@@ -46,7 +46,12 @@ data class LocationCatalogEntry(
     val category: String = "meal",
     /** 营业时间；null 或未配置 = 不参与筛选/校验（宽松处理） */
     val hours: OperatingHours? = null,
-)
+    /** 多层挑高/跨层甲板列表（不含 primary deck） */
+    val additionalDecks: List<Int> = emptyList(),
+) {
+    val allDecks: List<Int> get() = listOfNotNull(deck) + additionalDecks
+    val primaryDeck: Int? get() = allDecks.minOrNull() ?: deck
+}
 
 /** 运行时地点目录：CruiseApp 启动时从 assets 加载；未加载时返回空目录 */
 object LocationCatalog {

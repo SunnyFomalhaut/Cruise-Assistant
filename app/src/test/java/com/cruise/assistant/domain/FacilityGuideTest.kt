@@ -97,6 +97,23 @@ class FacilityGuideTest {
     }
 
     @Test
+    fun `test multi deck facility formatting and primary deck`() {
+        val entry = LocationCatalogEntry(
+            deck = 6,
+            additionalDecks = listOf(7),
+            zone = ShipZone.BOW,
+            placeName = "华特迪士尼剧院 Walt Disney Theatre",
+            category = "show",
+            hours = null,
+        )
+
+        val model = entry.toFacilityItemUiModel()
+        assertEquals(listOf(6, 7), model.allDecks)
+        assertEquals(6, model.primaryDeck)
+        assertEquals("Deck 6, 7 船头", model.formattedLocation)
+    }
+
+    @Test
     fun `test filter facilities by category, search query, and open now`() {
         val f1 = FacilityItemUiModel(
             placeName = "米奇泳池 Mickey Pool",
