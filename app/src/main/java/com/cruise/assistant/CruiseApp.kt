@@ -2,6 +2,7 @@ package com.cruise.assistant
 
 import android.app.Application
 import com.cruise.assistant.domain.LocationCatalog
+import com.cruise.assistant.domain.StateroomCatalog
 import com.cruise.assistant.domain.parseLocationsJson
 import com.cruise.assistant.reminder.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,11 @@ class CruiseApp : Application() {
         runCatching {
             val json = assets.open("locations.json").bufferedReader().use { it.readText() }
             LocationCatalog.setCatalog(parseLocationsJson(json))
+        }
+        // 全船客房全量目录：从 assets/staterooms.json 解析
+        runCatching {
+            val roomJson = assets.open("staterooms.json").bufferedReader().use { it.readText() }
+            StateroomCatalog.setStaterooms(StateroomCatalog.parseStateroomsJson(roomJson))
         }
         // 幂等补缺内置类别：升级用户（已有航次/类别表非空）也能拿到新增的内置类别
         // （如 v1.7.4 的 泳池娱乐/商店/青少年活动）——createVoyage 只在首次建航次时跑。
