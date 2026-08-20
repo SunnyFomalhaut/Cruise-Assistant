@@ -219,15 +219,13 @@ fun TimelineScreen(
                 // 快捷操作按钮组（设施指南、甲板地图与设置）
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(
+                        onClick = onOpenFacilities,
                         shape = RoundedCornerShape(10.dp),
                         color = Slate100,
                         border = BorderStroke(1.dp, Slate200),
                         modifier = Modifier.size(38.dp),
                     ) {
-                        IconButton(
-                            onClick = onOpenFacilities,
-                            modifier = Modifier.fillMaxSize(),
-                        ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Icon(
                                 Icons.Outlined.Explore,
                                 contentDescription = stringResource(R.string.facility_guide_title),
@@ -237,15 +235,13 @@ fun TimelineScreen(
                         }
                     }
                     Surface(
+                        onClick = onOpenDeckMap,
                         shape = RoundedCornerShape(10.dp),
                         color = Slate100,
                         border = BorderStroke(1.dp, Slate200),
                         modifier = Modifier.size(38.dp),
                     ) {
-                        IconButton(
-                            onClick = onOpenDeckMap,
-                            modifier = Modifier.fillMaxSize(),
-                        ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Icon(
                                 imageVector = Icons.Outlined.Map,
                                 contentDescription = stringResource(R.string.deck_map_title),
@@ -255,15 +251,13 @@ fun TimelineScreen(
                         }
                     }
                     Surface(
+                        onClick = onOpenSettings,
                         shape = RoundedCornerShape(10.dp),
                         color = Slate100,
                         border = BorderStroke(1.dp, Slate200),
                         modifier = Modifier.size(38.dp),
                     ) {
-                        IconButton(
-                            onClick = onOpenSettings,
-                            modifier = Modifier.fillMaxSize(),
-                        ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Icon(
                                 Icons.Outlined.Settings,
                                 contentDescription = stringResource(R.string.settings),
