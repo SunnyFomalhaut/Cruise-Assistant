@@ -81,12 +81,13 @@ fun WishlistEditSheet(
     var placeName by remember { mutableStateOf(initialItem?.placeName ?: "") }
     var note by remember { mutableStateOf(initialItem?.note ?: "") }
     var noLocation by remember { mutableStateOf(initialItem != null && initialItem.deck == null && initialItem.placeName.isNullOrEmpty()) }
-    var presetMode by remember { mutableStateOf(false) }
-
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId } ?: defaultCategory
     val categoryIconKey = selectedCategory?.iconKey ?: "fun"
     val presetOptions = remember(categoryIconKey) {
         locationPresetOptions(categoryIconKey)
+    }
+    var presetMode by remember(categoryIconKey) {
+        mutableStateOf(presetOptions.isNotEmpty() && (initialItem == null || presetOptions.any { opt -> opt is com.cruise.assistant.domain.LocationPresetOption.Entry && opt.entry.placeName == initialItem.placeName }))
     }
 
     ModalBottomSheet(
@@ -148,6 +149,8 @@ fun WishlistEditSheet(
                         selected = isSelected,
                         onClick = {
                             selectedCategoryId = cat.id
+                            val options = locationPresetOptions(cat.iconKey)
+                            presetMode = options.isNotEmpty()
                             if (title.isBlank() && initialItem == null) {
                                 title = cat.name
                             }
@@ -226,6 +229,10 @@ fun WishlistEditSheet(
                     deck = entry.deck
                     zone = entry.zone
                     placeName = entry.placeName
+                    presetMode = true
+                    if (title.isBlank() || categories.any { it.name == title }) {
+                        title = entry.placeName
+                    }
                 },
                 onCustomLocation = { presetMode = false },
                 modifier = Modifier.fillMaxWidth(),
