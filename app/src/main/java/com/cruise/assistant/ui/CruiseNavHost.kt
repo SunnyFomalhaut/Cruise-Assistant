@@ -602,6 +602,7 @@ fun CruiseNavHost(container: AppContainer) {
                 state = state,
                 onBack = { navController.popBackStack() },
                 onSelectDeck = vm::onSelectDeck,
+                onNavigateToFacility = vm::navigateToFacility,
                 onClearHighlight = vm::clearHighlight,
             )
         }

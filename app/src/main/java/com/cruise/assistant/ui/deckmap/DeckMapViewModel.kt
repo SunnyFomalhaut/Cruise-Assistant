@@ -64,6 +64,11 @@ class DeckMapViewModel(
         _selectedDeck.value = deckNumber
     }
 
+    fun navigateToFacility(deckNumber: Int, highlight: String) {
+        _selectedDeck.value = deckNumber
+        _highlightTarget.value = highlight
+    }
+
     fun clearHighlight() {
         _highlightTarget.value = null
     }

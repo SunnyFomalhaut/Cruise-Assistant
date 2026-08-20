@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.CenterFocusStrong
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DirectionsBoat
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -54,6 +55,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.DeckInfo
@@ -73,15 +75,28 @@ fun DeckMapScreen(
     state: DeckMapUiState,
     onBack: () -> Unit,
     onSelectDeck: (Int) -> Unit,
+    onNavigateToFacility: (Int, String) -> Unit = { _, _ -> },
     onClearHighlight: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    var showSearchSheet by remember { mutableStateOf(false) }
     val htmlContent = remember(state.selectedDeck, state.highlightTarget) {
         val svg = runCatching {
             context.assets.open("decks/deck_${state.selectedDeck}.svg").bufferedReader().use { it.readText() }
         }.getOrDefault("")
         DeckMapRepository.inlineHtmlWrapperFor(svg, state.highlightTarget)
+    }
+
+    if (showSearchSheet) {
+        DeckMapSearchSheet(
+            currentDeck = state.selectedDeck,
+            onSelectResult = { targetDeck, query ->
+                onNavigateToFacility(targetDeck, query)
+                showSearchSheet = false
+            },
+            onDismiss = { showSearchSheet = false },
+        )
     }
 
     Scaffold(
@@ -134,6 +149,7 @@ fun DeckMapScreen(
                 decks = state.decks,
                 selectedDeck = state.selectedDeck,
                 onSelectDeck = onSelectDeck,
+                onOpenSearch = { showSearchSheet = true },
                 modifier = Modifier
                     .width(62.dp)
                     .fillMaxHeight(),
@@ -240,6 +256,7 @@ private fun DeckRail(
     decks: List<DeckInfo>,
     selectedDeck: Int,
     onSelectDeck: (Int) -> Unit,
+    onOpenSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -300,6 +317,40 @@ private fun DeckRail(
                                     .background(CruiseAzure),
                             )
                         }
+                    }
+                }
+            }
+
+            // D5 下方的搜索入口按钮
+            item {
+                Spacer(Modifier.height(2.dp))
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Slate100,
+                    border = BorderStroke(1.dp, Slate200),
+                    modifier = Modifier
+                        .size(48.dp, 38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { onOpenSearch() },
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = "搜索",
+                            tint = CruiseMarine,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = "搜索",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = CruiseMarine,
+                        )
                     }
                 }
             }
