@@ -142,13 +142,37 @@ class ShowPresetTest {
                 startTimes = listOf(LocalTime.of(18, 15), LocalTime.of(20, 45)),
                 dinnerLinked = false,
             ),
+            ShowPreset(
+                key = "show_baymax_expo",
+                title = "大白超级健身世博会 Baymax Super Exercise Expo",
+                deck = 10,
+                zone = ShipZone.MID,
+                placeName = "花园舞台",
+                durationMinutes = 30,
+                dayOffsets = listOf(2),
+                dailyRangeTo = 4,
+                startTimes = listOf(LocalTime.of(8, 45)),
+                dinnerLinked = false,
+            ),
+            ShowPreset(
+                key = "show_duffy_friend_ship",
+                title = "达菲与友谊之船 Duffy and The Friend Ship",
+                deck = 10,
+                zone = ShipZone.MID,
+                placeName = "花园舞台",
+                durationMinutes = 30,
+                dayOffsets = listOf(2),
+                dailyRangeTo = 4,
+                startTimes = listOf(LocalTime.of(9, 45)),
+                dinnerLinked = false,
+            ),
         )
         assertEquals(expected, DISNEY_ADVENTURE_SHOWS)
     }
 
     @Test
-    fun catalog_containsSixShows_withUniqueKeysAndValidDecks() {
-        assertEquals(6, DISNEY_ADVENTURE_SHOWS.size)
+    fun catalog_containsEightShows_withUniqueKeysAndValidDecks() {
+        assertEquals(8, DISNEY_ADVENTURE_SHOWS.size)
         val keys = DISNEY_ADVENTURE_SHOWS.map { it.key }
         assertEquals(keys.size, keys.distinct().size)
         // 迪士尼探险号客用甲板 Deck 5-19
@@ -165,6 +189,8 @@ class ShowPresetTest {
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_lion_king" }.dinnerLinked)
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_moana" }.dinnerLinked)
         assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_avengers" }.dinnerLinked)
+        assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_baymax_expo" }.dinnerLinked)
+        assertEquals(false, DISNEY_ADVENTURE_SHOWS.first { it.key == "show_duffy_friend_ship" }.dinnerLinked)
     }
 
     @Test
@@ -181,7 +207,7 @@ class ShowPresetTest {
     fun presetShowsSummary_listsAllShowsWithDayAndCount() {
         val summary = presetShowsSummary()
         val lines = summary.split("\n")
-        assertEquals(6, lines.size)
+        assertEquals(8, lines.size)
         assertTrue("line0=$lines", lines[0].contains("扬帆起航 Let's Set Sail"))
         assertTrue(lines[0].contains("第1天"))
         assertTrue(lines[0].contains("3场"))
@@ -196,6 +222,34 @@ class ShowPresetTest {
         assertTrue(lines[5].contains("复仇者集结 Avengers Assemble!"))
         assertTrue(lines[5].contains("第2天起每天"))
         assertTrue(lines[5].contains("2场"))
+        assertTrue(lines[6].contains("大白超级健身世博会 Baymax Super Exercise Expo"))
+        assertTrue(lines[6].contains("第2天起每天"))
+        assertTrue(lines[6].contains("1场"))
+        assertTrue(lines[7].contains("达菲与友谊之船 Duffy and The Friend Ship"))
+        assertTrue(lines[7].contains("第2天起每天"))
+        assertTrue(lines[7].contains("1场"))
+    }
+
+    @Test
+    fun disneyAdventureShows_contains8ShowsWithEarliestTimes() {
+        val shows = DISNEY_ADVENTURE_SHOWS
+        assertEquals(8, shows.size)
+
+        val baymax = shows.first { it.key == "show_baymax_expo" }
+        assertEquals("大白超级健身世博会 Baymax Super Exercise Expo", baymax.title)
+        assertEquals(10, baymax.deck)
+        assertEquals(ShipZone.MID, baymax.zone)
+        assertEquals("花园舞台", baymax.placeName)
+        assertEquals(30, baymax.durationMinutes)
+        assertEquals(LocalTime.of(8, 45), baymax.startTimes.first())
+
+        val duffy = shows.first { it.key == "show_duffy_friend_ship" }
+        assertEquals("达菲与友谊之船 Duffy and The Friend Ship", duffy.title)
+        assertEquals(10, duffy.deck)
+        assertEquals(ShipZone.MID, duffy.zone)
+        assertEquals("花园舞台", duffy.placeName)
+        assertEquals(30, duffy.durationMinutes)
+        assertEquals(LocalTime.of(9, 45), duffy.startTimes.first())
     }
 
     @Test

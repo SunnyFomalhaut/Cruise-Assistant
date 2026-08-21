@@ -136,6 +136,28 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
             LocalTime.of(20, 45),
         ),
     ),
+    ShowPreset(
+        key = "show_baymax_expo",
+        title = "大白超级健身世博会 Baymax Super Exercise Expo",
+        deck = 10,
+        zone = ShipZone.MID,
+        placeName = "花园舞台",
+        durationMinutes = 30,
+        dayOffsets = listOf(2),
+        dailyRangeTo = 4,
+        startTimes = listOf(LocalTime.of(8, 45)),
+    ),
+    ShowPreset(
+        key = "show_duffy_friend_ship",
+        title = "达菲与友谊之船 Duffy and The Friend Ship",
+        deck = 10,
+        zone = ShipZone.MID,
+        placeName = "花园舞台",
+        durationMinutes = 30,
+        dayOffsets = listOf(2),
+        dailyRangeTo = 4,
+        startTimes = listOf(LocalTime.of(9, 45)),
+    ),
 )
 
 /** 弹窗消息中的演出列表摘要：每行 "· {title}（{天数} {场次数}）"，行间 \n 连接 */
