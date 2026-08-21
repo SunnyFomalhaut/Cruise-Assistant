@@ -19,9 +19,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.Category
+import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.WishlistItem
 import com.cruise.assistant.domain.locationPresetOptions
@@ -88,6 +94,9 @@ fun WishlistEditSheet(
     }
     var presetMode by remember(categoryIconKey) {
         mutableStateOf(presetOptions.isNotEmpty() && (initialItem == null || presetOptions.any { opt -> opt is com.cruise.assistant.domain.LocationPresetOption.Entry && opt.entry.placeName == initialItem.placeName }))
+    }
+    var showPresetMode by remember(categoryIconKey) {
+        mutableStateOf(categoryIconKey == "show" && (initialItem == null || DISNEY_ADVENTURE_SHOWS.any { it.title == initialItem.title }))
     }
 
     ModalBottomSheet(
@@ -151,6 +160,9 @@ fun WishlistEditSheet(
                             selectedCategoryId = cat.id
                             val options = locationPresetOptions(cat.iconKey)
                             presetMode = options.isNotEmpty()
+                            if (cat.iconKey == "show") {
+                                showPresetMode = true
+                            }
                             if (title.isBlank() && initialItem == null) {
                                 title = cat.name
                             }
@@ -186,18 +198,90 @@ fun WishlistEditSheet(
                 color = Slate700,
             )
             Spacer(Modifier.height(6.dp))
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                placeholder = { Text("如：玩钢铁侠过山车、达菲商店购物、看日落...") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = CruiseAzure,
-                    unfocusedBorderColor = Slate200,
-                ),
-            )
+            if (categoryIconKey == "show" && showPresetMode) {
+                var showMenuOpen by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = showMenuOpen,
+                    onExpandedChange = { showMenuOpen = it },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    OutlinedTextField(
+                        value = title.ifEmpty { "选择预置演出" },
+                        onValueChange = {},
+                        readOnly = true,
+                        singleLine = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showMenuOpen) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = CruiseAzure,
+                            unfocusedBorderColor = Slate200,
+                        ),
+                        modifier = Modifier
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)
+                            .fillMaxWidth(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = showMenuOpen,
+                        onDismissRequest = { showMenuOpen = false },
+                    ) {
+                        DISNEY_ADVENTURE_SHOWS.forEach { show ->
+                            val selected = title == show.title
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            show.title,
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                        )
+                                        Text(
+                                            "Deck ${show.deck} ${show.zone.label} · ${show.placeName}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Slate500,
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    title = show.title
+                                    deck = show.deck
+                                    zone = show.zone
+                                    placeName = show.placeName
+                                    noLocation = false
+                                    presetMode = true
+                                    showMenuOpen = false
+                                },
+                                modifier = if (selected) Modifier.background(CruiseAzureContainer) else Modifier,
+                            )
+                        }
+                        HorizontalDivider(color = Slate200)
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "✍️ 自定义演出",
+                                    color = CruiseAzure,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            },
+                            onClick = {
+                                showPresetMode = false
+                                showMenuOpen = false
+                            },
+                        )
+                    }
+                }
+            } else {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    placeholder = { Text("如：玩钢铁侠过山车、达菲商店购物、看日落...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = CruiseAzure,
+                        unfocusedBorderColor = Slate200,
+                    ),
+                )
+            }
 
             Spacer(Modifier.height(14.dp))
 
