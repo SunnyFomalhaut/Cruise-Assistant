@@ -52,8 +52,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -288,7 +293,7 @@ private fun FacilityCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Box(Modifier.fillMaxWidth()) {
-            // 预留半透明设施背景海报层
+            // 半透明设施背景海报层（左侧显现，向右渐隐至100%完全透明）
             val context = LocalContext.current
             val posterBitmap = remember(facility.placeName) {
                 PosterManager.loadFacilityPoster(context, facility.placeName)
@@ -298,8 +303,24 @@ private fun FacilityCard(
                     bitmap = posterBitmap.asImageBitmap(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    alpha = 0.15f,
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.42f),
+                                        Color.Black.copy(alpha = 0.18f),
+                                        Color.Transparent
+                                    ),
+                                    startX = 0f,
+                                    endX = size.width * 0.82f,
+                                ),
+                                blendMode = BlendMode.DstIn,
+                            )
+                        },
                 )
             }
 

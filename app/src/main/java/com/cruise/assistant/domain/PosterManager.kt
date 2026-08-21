@@ -17,21 +17,16 @@ object PosterManager {
      * 设施名称 -> 海报 asset 路径映射表（后续可在此持续扩充各餐厅/设施官方海报）
      */
     private val facilityPosterRegistry = mutableMapOf<String, String>(
-        // 示例：预留常见固定餐厅与设施海报插槽
-        // "Navigator's Club" to "posters/facilities/navigators_club.jpg",
-        // "Animator's Palate" to "posters/facilities/animators_palate.jpg",
-        // "Royal Court" to "posters/facilities/royal_court.jpg",
-        // "Palo Trattoria" to "posters/facilities/palo.jpg",
+        "寻路者湾" to "posters/facilities/wayfinder_bay.jpg",
+        "wayfinder bay" to "posters/facilities/wayfinder_bay.jpg",
     )
 
     /**
      * 事件标题 / presetKey -> 海报 asset 路径映射表（预留各演出与特色活动海报插槽）
      */
     private val eventPosterRegistry = mutableMapOf<String, String>(
-        // 示例：预留常见演出剧目海报插槽
-        // "moana" to "posters/events/moana.jpg",
-        // "avengers" to "posters/events/avengers.jpg",
-        // "disney_seas" to "posters/events/seas_the_adventure.jpg",
+        "moana" to "posters/facilities/wayfinder_bay.jpg",
+        "海洋奇缘" to "posters/facilities/wayfinder_bay.jpg",
     )
 
     /**
