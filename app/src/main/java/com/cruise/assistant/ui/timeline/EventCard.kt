@@ -1,6 +1,5 @@
 package com.cruise.assistant.ui.timeline
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -30,9 +27,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
-import com.cruise.assistant.domain.PosterManager
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.formatLocation
 import com.cruise.assistant.domain.formatWaitStart
@@ -106,12 +99,7 @@ fun EventCard(
         else -> 1
     }
 
-    val context = LocalContext.current
-    val posterBitmap = remember(event.title, event.presetKey) {
-        PosterManager.loadEventPoster(context, event.title, event.presetKey)
-    }
-
-    Box(
+    Row(
         modifier
             .fillMaxWidth()
             .then(if (active) Modifier else Modifier.alpha(0.45f))
@@ -124,27 +112,16 @@ fun EventCard(
             )
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
-        if (posterBitmap != null && active) {
-            Image(
-                bitmap = posterBitmap.asImageBitmap(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                alpha = 0.16f,
-                modifier = Modifier.matchParentSize(),
-            )
-        }
-
-        Row(Modifier.fillMaxSize()) {
-            // 左侧圆角微色柱
-            Box(
-                Modifier
-                    .padding(vertical = 4.dp, horizontal = 2.dp)
-                    .width(3.5.dp)
-                    .fillMaxHeight()
-                    .then(if (active) Modifier else Modifier.alpha(0.45f))
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(colorArgb)),
-            )
+        // 左侧圆角微色柱
+        Box(
+            Modifier
+                .padding(vertical = 4.dp, horizontal = 2.dp)
+                .width(3.5.dp)
+                .fillMaxHeight()
+                .then(if (active) Modifier else Modifier.alpha(0.45f))
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color(colorArgb)),
+        )
         Column(
             Modifier
                 .weight(1f)
@@ -419,9 +396,8 @@ fun EventCard(
                             }
                         }
                     }
-        }
-    }
-}
+                }
+            }
         }
     }
 }
