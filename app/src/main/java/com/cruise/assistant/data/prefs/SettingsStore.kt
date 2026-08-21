@@ -34,7 +34,7 @@ data class AppSettings(
     val colorTheme: AppColorTheme = AppColorTheme.JUDY_BLUE,
     val wallpaperEnabled: Boolean = false,
     val wallpaperKey: String = WallpaperPreset.NONE.key,
-    val wallpaperAlpha: Float = 0.15f,
+    val wallpaperAlpha: Float = 0.10f,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("cruise_settings")

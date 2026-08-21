@@ -231,6 +231,7 @@ fun SettingsScreen(
                 Spacer(Modifier.height(12.dp))
 
                 // 透明度调节
+                val alphaPercent = kotlin.math.round(state.settings.wallpaperAlpha * 100).toInt()
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         stringResource(R.string.wallpaper_opacity_label),
@@ -239,7 +240,7 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f),
                     )
                     Text(
-                        "${(state.settings.wallpaperAlpha * 100).toInt()}%",
+                        "${alphaPercent}%",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = CruiseMarine,
@@ -247,7 +248,7 @@ fun SettingsScreen(
                 }
                 Slider(
                     value = state.settings.wallpaperAlpha,
-                    onValueChange = onWallpaperAlphaChange,
+                    onValueChange = { onWallpaperAlphaChange(kotlin.math.round(it * 100) / 100f) },
                     valueRange = 0.05f..0.40f,
                     steps = 34,
                     colors = SliderDefaults.colors(
