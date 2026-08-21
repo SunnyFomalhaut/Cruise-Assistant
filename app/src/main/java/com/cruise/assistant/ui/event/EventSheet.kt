@@ -37,8 +37,13 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +55,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,8 +71,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
+import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
 import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
+import com.cruise.assistant.domain.ShowPreset
 import com.cruise.assistant.domain.locationPresetOptions
 import com.cruise.assistant.ui.common.TimeWheel
 import com.cruise.assistant.ui.common.iconFor
@@ -92,6 +103,8 @@ fun EventSheet(
     onNoLocationToggle: (Boolean) -> Unit,
     onSelectPresetLocation: (com.cruise.assistant.domain.LocationCatalogEntry) -> Unit,
     onCustomLocationSelected: () -> Unit,
+    onShowPresetSelect: (ShowPreset) -> Unit = {},
+    onCustomShowSelected: () -> Unit = {},
     onMealPeriodSelect: (MealPeriod?) -> Unit,
     onStartChange: (LocalTime) -> Unit,
     onEndChange: (LocalTime) -> Unit,
@@ -242,15 +255,79 @@ fun EventSheet(
                     }
 
                     Spacer(Modifier.height(14.dp))
-                    OutlinedTextField(
-                        value = state.title,
-                        onValueChange = onTitleChange,
-                        label = { Text(stringResource(R.string.event_title_hint)) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = !state.isSystemEvent,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    if (state.categoryIconKey == "show" && state.showPresetMode && !state.isSystemEvent) {
+                        var showMenuOpen by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(
+                            expanded = showMenuOpen,
+                            onExpandedChange = { showMenuOpen = it },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            OutlinedTextField(
+                                value = state.title.ifEmpty { "选择预置演出" },
+                                onValueChange = {},
+                                label = { Text(stringResource(R.string.event_title_hint)) },
+                                readOnly = true,
+                                singleLine = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showMenuOpen) },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)
+                                    .fillMaxWidth(),
+                            )
+                            ExposedDropdownMenu(
+                                expanded = showMenuOpen,
+                                onDismissRequest = { showMenuOpen = false },
+                            ) {
+                                DISNEY_ADVENTURE_SHOWS.forEach { show ->
+                                    val selected = state.title == show.title
+                                    DropdownMenuItem(
+                                        text = {
+                                            Column {
+                                                Text(
+                                                    show.title,
+                                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                                )
+                                                Text(
+                                                    "Deck ${show.deck} ${show.zone.label} · ${show.placeName}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Slate500,
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            onShowPresetSelect(show)
+                                            showMenuOpen = false
+                                        },
+                                        modifier = if (selected) Modifier.background(CruiseAzureContainer) else Modifier,
+                                    )
+                                }
+                                HorizontalDivider(color = Slate200)
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "✍️ 自定义演出",
+                                            color = CruiseAzure,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    },
+                                    onClick = {
+                                        onCustomShowSelected()
+                                        showMenuOpen = false
+                                    },
+                                )
+                            }
+                        }
+                    } else {
+                        OutlinedTextField(
+                            value = state.title,
+                            onValueChange = onTitleChange,
+                            label = { Text(stringResource(R.string.event_title_hint)) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !state.isSystemEvent,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
 
                     if (state.isSystemEvent) {
                         Spacer(Modifier.height(6.dp))
