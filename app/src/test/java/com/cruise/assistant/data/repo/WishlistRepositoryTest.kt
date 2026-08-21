@@ -20,12 +20,12 @@ class WishlistRepositoryTest {
             category = Category(id = 5, name = "娱乐", colorArgb = 0xFF0284C7.toInt(), iconKey = "fun"),
             deck = 18,
             zone = ShipZone.STERN,
-            placeName = "旧京山街道",
+            placeName = "旧金山街道",
             note = "记得带手机拍照",
             isCompleted = false,
         )
 
-        assertEquals("Deck 18 船尾 旧京山街道", item.formattedLocation)
+        assertEquals("Deck 18 船尾 旧金山街道", item.formattedLocation)
         assertFalse(item.isCompleted)
 
         val completedItem = item.copy(isCompleted = true)
