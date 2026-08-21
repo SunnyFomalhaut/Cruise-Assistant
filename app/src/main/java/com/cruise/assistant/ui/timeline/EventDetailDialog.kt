@@ -1,6 +1,7 @@
 package com.cruise.assistant.ui.timeline
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,16 +33,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.PosterManager
 import com.cruise.assistant.domain.SHOW_WAIT_MINUTES
 import com.cruise.assistant.domain.formatLocation
 import com.cruise.assistant.domain.formatWaitStart
@@ -89,6 +100,38 @@ fun EventDetailDialog(
                 .padding(horizontal = 4.dp),
         ) {
             Box(Modifier.fillMaxWidth()) {
+                // 半透明背景海报插槽（竖向淡入淡出渐变蒙版）
+                val context = LocalContext.current
+                val posterBitmap = remember(event.title, event.placeName, event.presetKey) {
+                    PosterManager.loadEventPoster(context, event.title, event.presetKey)
+                        ?: event.placeName?.let { PosterManager.loadFacilityPoster(context, it) }
+                }
+                if (posterBitmap != null) {
+                    Image(
+                        bitmap = posterBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .matchParentSize()
+                            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                            .drawWithContent {
+                                drawContent()
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Black.copy(alpha = 0.35f),
+                                            Color.Black.copy(alpha = 0.12f),
+                                            Color.Transparent
+                                        ),
+                                        startY = 0f,
+                                        endY = size.height * 0.90f,
+                                    ),
+                                    blendMode = BlendMode.DstIn,
+                                )
+                            },
+                    )
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
