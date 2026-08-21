@@ -1,5 +1,6 @@
 package com.cruise.assistant.ui.facilities
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -36,6 +37,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,18 +48,26 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.FacilityItemUiModel
+import com.cruise.assistant.domain.PosterManager
 import com.cruise.assistant.domain.OperatingSlot
 import com.cruise.assistant.ui.common.iconFor
 import com.cruise.assistant.ui.theme.CruiseAzure
@@ -277,11 +287,27 @@ private fun FacilityCard(
         border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-        ) {
+        Box(Modifier.fillMaxWidth()) {
+            // 预留半透明设施背景海报层
+            val context = LocalContext.current
+            val posterBitmap = remember(facility.placeName) {
+                PosterManager.loadFacilityPoster(context, facility.placeName)
+            }
+            if (posterBitmap != null) {
+                Image(
+                    bitmap = posterBitmap.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.15f,
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
+
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+            ) {
             // 头部：名称 + 类别徽标
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -477,4 +503,5 @@ private fun FacilityCard(
             }
         }
     }
+}
 }
