@@ -103,6 +103,7 @@ fun TimelineScreen(
     onOpenWishlist: () -> Unit = {},
     onOpenFacilities: () -> Unit = {},
     onOpenDeckMap: () -> Unit = {},
+    onNavigateToDeckMap: (deck: Int, target: String) -> Unit = { _, _ -> },
     onAddEvent: (Int) -> Unit,
     onEditEvent: (CruiseEvent) -> Unit,
     onMoveToLane: (Long, Int) -> Unit,
@@ -119,6 +120,7 @@ fun TimelineScreen(
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     var menuEvent by remember { mutableStateOf<CruiseEvent?>(null) }
+    var detailEvent by remember { mutableStateOf<CruiseEvent?>(null) }
 
     fun scrollToNow() {
         if (!state.isToday) return
@@ -485,7 +487,13 @@ fun TimelineScreen(
                                     categories = state.categories,
                                     conflictIds = conflictIds,
                                     singleLane = state.isFinalized,
-                                    onEventClick = { event -> if (!state.isFinalized) onEditEvent(event) },
+                                    onEventClick = { event ->
+                                        if (state.isFinalized) {
+                                            detailEvent = event
+                                        } else {
+                                            onEditEvent(event)
+                                        }
+                                    },
                                     onEventLongClick = { event -> if (!state.isFinalized) menuEvent = event },
                                     menuFor = menuEvent,
                                     menuContent = { event ->
@@ -566,6 +574,19 @@ fun TimelineScreen(
         }
     }
 }
+
+    // 定稿状态点击任务卡片弹出详情展示框
+    detailEvent?.let { event ->
+        EventDetailDialog(
+            event = event,
+            category = state.categories[event.categoryId],
+            onNavigateToMap = { deck, target ->
+                detailEvent = null
+                onNavigateToDeckMap(deck, target)
+            },
+            onDismiss = { detailEvent = null },
+        )
+    }
 }
 
 @Composable

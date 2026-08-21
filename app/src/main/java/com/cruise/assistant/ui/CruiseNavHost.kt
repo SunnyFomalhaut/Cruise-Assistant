@@ -195,6 +195,9 @@ fun CruiseNavHost(container: AppContainer) {
                     onOpenWishlist = { navController.navigate(Routes.WISHLIST) },
                     onOpenFacilities = { navController.navigate(Routes.FACILITIES) },
                     onOpenDeckMap = { navController.navigate(Routes.DECK_MAP) },
+                    onNavigateToDeckMap = { deck, venueName ->
+                        navController.navigate(Routes.deckMap(deck = deck, highlight = venueName))
+                    },
                     onAddEvent = { startMinute ->
                         sheetSeq++
                         sheetRequest = EventSheetRequest(current.selectedDate, startMinute, 0L, sheetSeq)
