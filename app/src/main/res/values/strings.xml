@@ -227,12 +227,12 @@
     <string name="theme_cookieann_yellow">饼饼黄</string>
     <string name="theme_cookieann_yellow_desc">烘焙暖心蜂蜜黄</string>
 
-    <!-- 日程表半透明底图 (v1.11.0) -->
-    <string name="wallpaper_section_title">日程表底图</string>
-    <string name="wallpaper_section_desc">在时间轴日程背景嵌底半透明精美壁纸</string>
-    <string name="wallpaper_enabled">启用日程表底图</string>
-    <string name="wallpaper_opacity_label">底图透明度</string>
+    <!-- 日程表半透明壁纸 -->
+    <string name="wallpaper_section_title">日程表壁纸</string>
+    <string name="wallpaper_section_desc">在时间轴日程背景呈现半透明精美壁纸</string>
+    <string name="wallpaper_enabled">启用日程表壁纸</string>
+    <string name="wallpaper_opacity_label">壁纸透明度</string>
     <string name="wallpaper_custom">自定义</string>
     <string name="wallpaper_custom_desc">从系统相册选取</string>
-    <string name="wallpaper_none">无底图</string>
+    <string name="wallpaper_none">无壁纸</string>
 </resources>

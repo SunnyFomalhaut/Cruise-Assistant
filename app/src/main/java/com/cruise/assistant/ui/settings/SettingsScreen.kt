@@ -260,7 +260,7 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "底图选择",
+                    text = "壁纸选择",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Slate700,
