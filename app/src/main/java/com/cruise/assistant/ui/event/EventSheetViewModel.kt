@@ -10,10 +10,12 @@ import com.cruise.assistant.data.repo.RecurrenceScope
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
 import com.cruise.assistant.domain.LocationCatalog
 import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
+import com.cruise.assistant.domain.ShowPreset
 import com.cruise.assistant.domain.isOpenAt
 import com.cruise.assistant.domain.isOpenFor
 import com.cruise.assistant.reminder.ReminderScheduler
@@ -59,6 +61,8 @@ data class EventSheetState(
     val builtInShip: Boolean = false,
     /** 是否处于预置地点下拉模式；false = 自由输入 */
     val locationPresetMode: Boolean = false,
+    /** 是否处于演出预置下拉模式；false = 自由输入 */
+    val showPresetMode: Boolean = false,
     /** 餐次二级选项（仅餐食类别显示）；默认晚餐（餐食事件最常见的预设），null = 全部 */
     val selectedMealPeriod: MealPeriod? = MealPeriod.DINNER,
     /** 是否餐食类别且内置船（决定是否显示餐次行） */
@@ -133,6 +137,12 @@ class EventSheetViewModel(
                         zone = current.zone,
                         placeName = current.placeName,
                     ),
+                    showPresetMode = resolveShowPresetMode(
+                        isEditing = current.isEditing,
+                        builtInShip = current.builtInShip,
+                        iconKey = current.categoryIconKey ?: iconKey,
+                        title = current.title,
+                    ),
                 )
             }
         }
@@ -156,6 +166,12 @@ class EventSheetViewModel(
                             deck = current.deck,
                             zone = current.zone,
                             placeName = current.placeName,
+                        ),
+                        showPresetMode = resolveShowPresetMode(
+                            isEditing = current.isEditing,
+                            builtInShip = current.builtInShip,
+                            iconKey = iconKey,
+                            title = current.title,
                         ),
                     )
                 }
@@ -206,6 +222,12 @@ class EventSheetViewModel(
                                 zone = current.zone,
                                 placeName = current.placeName,
                             ),
+                            showPresetMode = resolveShowPresetMode(
+                                isEditing = true,
+                                builtInShip = current.builtInShip,
+                                iconKey = iconKey,
+                                title = current.title,
+                            ),
                         )
                     }
                 }
@@ -216,11 +238,13 @@ class EventSheetViewModel(
     fun onCategorySelect(id: Long) = _state.update {
         val iconKey = it.categories.firstOrNull { c -> c.id == id }?.iconKey
         val presetAvailable = it.builtInShip && LocationCatalog.venuesByCategory().containsKey(iconKey)
+        val showPreset = it.builtInShip && iconKey == "show"
         it.copy(
             selectedCategoryId = id,
             categoryIconKey = iconKey,
             // 切到演出/餐饮时默认进下拉模式；其他类别退回自由输入
             locationPresetMode = presetAvailable,
+            showPresetMode = showPreset,
             // 餐次行仅餐食类别显示；切类别时重置餐次选择
             selectedMealPeriod = null,
             showMealPeriodRow = it.builtInShip && iconKey == "meal",
@@ -284,6 +308,28 @@ class EventSheetViewModel(
     }
 
     fun onCustomLocationSelected() = _state.update { it.copy(locationPresetMode = false) }
+
+    fun onShowPresetSelect(preset: ShowPreset) = _state.update {
+        val start = preset.startTimes.first()
+        val endMinutes = start.hour * 60 + start.minute + preset.durationMinutes
+        val end = LocalTime.of((endMinutes / 60).coerceAtMost(23), endMinutes % 60)
+        it.copy(
+            title = preset.title,
+            deck = preset.deck,
+            zone = preset.zone,
+            placeName = preset.placeName,
+            noLocation = false,
+            locationPresetMode = true,
+            startTime = start,
+            endTime = end,
+            showPresetMode = true,
+            errorResId = null,
+        )
+    }
+
+    fun onCustomShowSelected() = _state.update {
+        it.copy(showPresetMode = false)
+    }
 
     /**
      * Fix round 2 防线二：系统事件（登船/下船）没有地点，UI 已经不渲染 LocationPicker，
@@ -438,5 +484,24 @@ class EventSheetViewModel(
         // 新建与编辑都默认预置下拉：编辑预置晚餐（无地点）也能直接选餐厅地点，
         // 而非掉回自由输入。选中高亮由 LocationPicker 按 deck/zone/placeName 匹配。
         return true
+    }
+
+    /**
+     * 幂等收敛：是否处于演出预置下拉模式。
+     * 非内置船或非演出类别 → false；新建事件 → true（默认预置下拉）；
+     * 编辑已有事件 → 标题匹配 8 部预置之一为 true，否则 false（自定义演出自由输入）。
+     */
+    private fun resolveShowPresetMode(
+        isEditing: Boolean,
+        builtInShip: Boolean,
+        iconKey: String?,
+        title: String,
+    ): Boolean {
+        if (!builtInShip || iconKey != "show") return false
+        return if (isEditing) {
+            DISNEY_ADVENTURE_SHOWS.any { it.title == title }
+        } else {
+            true
+        }
     }
 }
