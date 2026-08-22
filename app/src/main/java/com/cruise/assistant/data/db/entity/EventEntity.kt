@@ -27,4 +27,5 @@ data class EventEntity(
     val isSystemGenerated: Boolean,
     val isActive: Boolean = true,
     val presetKey: String? = null,
+    val waitMinutes: Int? = null,
 )

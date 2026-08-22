@@ -41,7 +41,7 @@ fun EventEntity.toDomain() = CruiseEvent(
     zone = zone?.let { runCatching { ShipZone.valueOf(it) }.getOrNull() },
     placeName = placeName, lane = lane, recurrenceGroupId = recurrenceGroupId,
     reminderMinutesBefore = reminderMinutesBefore, isSystemGenerated = isSystemGenerated,
-    isActive = isActive, presetKey = presetKey,
+    isActive = isActive, presetKey = presetKey, waitMinutes = waitMinutes,
 )
 
 fun CruiseEvent.toEntity() = EventEntity(
@@ -49,7 +49,7 @@ fun CruiseEvent.toEntity() = EventEntity(
     categoryId = categoryId, title = title, deck = deck, zone = zone?.name,
     placeName = placeName, lane = lane, recurrenceGroupId = recurrenceGroupId,
     reminderMinutesBefore = reminderMinutesBefore, isSystemGenerated = isSystemGenerated,
-    isActive = isActive, presetKey = presetKey,
+    isActive = isActive, presetKey = presetKey, waitMinutes = waitMinutes,
 )
 
 fun DayPlanEntity.toDomain() = DayPlan(date, finalized, finalizedAt)

@@ -16,6 +16,7 @@ import com.cruise.assistant.domain.expandRecurrence
 import com.cruise.assistant.domain.findConflicts
 import com.cruise.assistant.domain.isSameShowAs
 import com.cruise.assistant.domain.pickDinnerLinkedTime
+import com.cruise.assistant.domain.resolveDefaultWaitMinutes
 import com.cruise.assistant.domain.showEffectiveRange
 import com.cruise.assistant.domain.showRangeOf
 import com.cruise.assistant.domain.startMinute
@@ -223,7 +224,8 @@ class EventRepository(
                 val occupied = mutableListOf<Triple<Int, Int, Int>>()
                 val updated = showPresetsOnDay.map { entity ->
                     val startMin = entity.startTime.hour * 60 + entity.startTime.minute
-                    val effStart = startMin - SHOW_WAIT_MINUTES
+                    val waitMins = entity.waitMinutes ?: resolveDefaultWaitMinutes(entity.placeName, entity.deck, entity.title, entity.presetKey)
+                    val effStart = startMin - waitMins
                     val effEnd = startMin + entity.durationMinutes
                     val newLane = assignShowLane(effStart, effEnd, occupied)
                     occupied += Triple(newLane, effStart, effEnd)

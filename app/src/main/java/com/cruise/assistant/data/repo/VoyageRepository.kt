@@ -172,7 +172,7 @@ class VoyageRepository(
                     }
                     times.forEach { startTime ->
                         val startMin = startTime.hour * 60 + startTime.minute
-                        val effStart = startMin - SHOW_WAIT_MINUTES
+                        val effStart = startMin - show.defaultWaitMinutes
                         val effEnd = startMin + show.durationMinutes
                         val lane = assignShowLane(
                             effStart,
@@ -192,6 +192,7 @@ class VoyageRepository(
                             lane = lane,
                             isSystemGenerated = false,
                             presetKey = show.key,
+                            waitMinutes = show.defaultWaitMinutes,
                         )
                     }
                 }

@@ -35,11 +35,12 @@ import com.cruise.assistant.data.db.entity.WishlistItemEntity
         PixieLevelEntity::class,
         WishlistItemEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
+        AutoMigration(from = 6, to = 7),
     ],
 )
 @TypeConverters(Converters::class)
