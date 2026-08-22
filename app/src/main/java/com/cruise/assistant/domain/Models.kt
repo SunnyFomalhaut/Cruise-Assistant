@@ -70,6 +70,7 @@ data class CruiseEvent(
     val isSystemGenerated: Boolean = false,
     val isActive: Boolean = true,
     val presetKey: String? = null,
+    val waitMinutes: Int? = null,
 )
 
 val CruiseEvent.startMinute: Int get() = startTime.hour * 60 + startTime.minute

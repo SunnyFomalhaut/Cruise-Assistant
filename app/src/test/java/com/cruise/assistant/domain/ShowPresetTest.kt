@@ -75,12 +75,13 @@ class ShowPresetTest {
                 title = "扬帆起航 Let's Set Sail",
                 deck = 10,
                 zone = ShipZone.MID,
-                placeName = "花园舞台",
+                placeName = "花园舞台 Garden Stage",
                 durationMinutes = 30,
                 dayOffsets = listOf(1),
                 dailyRangeTo = null,
                 startTimes = listOf(LocalTime.of(13, 15), LocalTime.of(14, 0), LocalTime.of(14, 45)),
                 dinnerLinked = false,
+                defaultWaitMinutes = 15,
             ),
             ShowPreset(
                 key = "show_lion_king",
@@ -93,6 +94,7 @@ class ShowPresetTest {
                 dailyRangeTo = null,
                 startTimes = listOf(LocalTime.of(22, 30)),
                 dinnerLinked = false,
+                defaultWaitMinutes = 45,
             ),
             ShowPreset(
                 key = "show_seas_adventure",
@@ -105,6 +107,7 @@ class ShowPresetTest {
                 dailyRangeTo = null,
                 startTimes = listOf(LocalTime.of(18, 0), LocalTime.of(20, 30)),
                 dinnerLinked = true,
+                defaultWaitMinutes = 45,
             ),
             ShowPreset(
                 key = "show_remember",
@@ -117,6 +120,7 @@ class ShowPresetTest {
                 dailyRangeTo = null,
                 startTimes = listOf(LocalTime.of(18, 0), LocalTime.of(20, 30)),
                 dinnerLinked = true,
+                defaultWaitMinutes = 45,
             ),
             ShowPreset(
                 key = "show_moana",
@@ -129,30 +133,33 @@ class ShowPresetTest {
                 dailyRangeTo = 4,
                 startTimes = listOf(LocalTime.of(9, 30), LocalTime.of(10, 0), LocalTime.of(10, 30)),
                 dinnerLinked = false,
+                defaultWaitMinutes = 30,
             ),
             ShowPreset(
                 key = "show_avengers",
                 title = "复仇者集结 Avengers Assemble!",
                 deck = 10,
                 zone = ShipZone.MID,
-                placeName = "花园舞台",
+                placeName = "花园舞台 Garden Stage",
                 durationMinutes = 40,
                 dayOffsets = listOf(2),
                 dailyRangeTo = 4,
                 startTimes = listOf(LocalTime.of(18, 15), LocalTime.of(20, 45)),
                 dinnerLinked = false,
+                defaultWaitMinutes = 15,
             ),
             ShowPreset(
                 key = "show_baymax_expo",
                 title = "大白超级健身世博会 Baymax Super Exercise Expo",
                 deck = 10,
                 zone = ShipZone.MID,
-                placeName = "花园舞台",
+                placeName = "花园舞台 Garden Stage",
                 durationMinutes = 30,
                 dayOffsets = listOf(2),
                 dailyRangeTo = 4,
                 startTimes = listOf(LocalTime.of(8, 45)),
                 dinnerLinked = false,
+                defaultWaitMinutes = 15,
             ),
             ShowPreset(
                 key = "show_duffy_friend_ship",
@@ -165,6 +172,7 @@ class ShowPresetTest {
                 dailyRangeTo = 4,
                 startTimes = listOf(LocalTime.of(9, 45)),
                 dinnerLinked = false,
+                defaultWaitMinutes = 45,
             ),
         )
         assertEquals(expected, DISNEY_ADVENTURE_SHOWS)
@@ -239,7 +247,7 @@ class ShowPresetTest {
         assertEquals("大白超级健身世博会 Baymax Super Exercise Expo", baymax.title)
         assertEquals(10, baymax.deck)
         assertEquals(ShipZone.MID, baymax.zone)
-        assertEquals("花园舞台", baymax.placeName)
+        assertEquals("花园舞台 Garden Stage", baymax.placeName)
         assertEquals(30, baymax.durationMinutes)
         assertEquals(LocalTime.of(8, 45), baymax.startTimes.first())
 
@@ -250,6 +258,16 @@ class ShowPresetTest {
         assertEquals("华特迪士尼剧院 Walt Disney Theatre", duffy.placeName)
         assertEquals(30, duffy.durationMinutes)
         assertEquals(LocalTime.of(9, 45), duffy.startTimes.first())
+    }
+
+    @Test
+    fun defaultWaitMinutes_matchesSpecRules() {
+        assertEquals(45, resolveDefaultWaitMinutes("华特迪士尼剧院 Walt Disney Theatre", deck = 6))
+        assertEquals(45, resolveDefaultWaitMinutes("露天泳池", deck = 17, title = "狮子王烟花"))
+        assertEquals(15, resolveDefaultWaitMinutes("大白剧院 Baymax Cinemas", deck = 7))
+        assertEquals(15, resolveDefaultWaitMinutes("花园舞台 Garden Stage", deck = 10))
+        assertEquals(30, resolveDefaultWaitMinutes("寻路者湾 Wayfinder Bay", deck = 10))
+        assertEquals(30, resolveDefaultWaitMinutes("未知地点", deck = 5))
     }
 
     @Test
@@ -265,7 +283,7 @@ class ShowPresetTest {
                 val times = if (show.dinnerLinked) listOf(pickDinnerLinkedTime(dinnerTime)) else show.startTimes
                 times.forEach { startTime ->
                     val startMin = startTime.hour * 60 + startTime.minute
-                    val effStart = startMin - SHOW_WAIT_MINUTES
+                    val effStart = startMin - show.defaultWaitMinutes
                     val effEnd = startMin + show.durationMinutes
                     val lane = assignShowLane(effStart, effEnd, occupied)
                     occupied += Triple(lane, effStart, effEnd)
@@ -275,7 +293,7 @@ class ShowPresetTest {
         }
 
         val avengersLanes = day2Events.filter { it.first == "show_avengers" }.map { it.second }
-        // 18:15 进第 2 栏 (lane=1)，20:45 与《回忆》(20:30) 冲突进第 3 栏 (lane=2)
+        // 18:15 进第 2 栏 (lane=1)，20:45 与《回忆》(20:30, 45m wait) 冲突进第 3 栏 (lane=2)
         assertEquals(listOf(1, 2), avengersLanes)
     }
 
@@ -292,7 +310,7 @@ class ShowPresetTest {
                 val times = if (show.dinnerLinked) listOf(pickDinnerLinkedTime(dinnerTime)) else show.startTimes
                 times.forEach { startTime ->
                     val startMin = startTime.hour * 60 + startTime.minute
-                    val effStart = startMin - SHOW_WAIT_MINUTES
+                    val effStart = startMin - show.defaultWaitMinutes
                     val effEnd = startMin + show.durationMinutes
                     val lane = assignShowLane(effStart, effEnd, occupied)
                     occupied += Triple(lane, effStart, effEnd)
@@ -302,7 +320,7 @@ class ShowPresetTest {
         }
 
         val avengersLanes = day2Events.filter { it.first == "show_avengers" }.map { it.second }
-        // 18:15 与《回忆》(18:00) 冲突进第 3 栏 (lane=2)，20:45 进第 2 栏 (lane=1)
+        // 18:15 与《回忆》(18:00, 45m wait) 冲突进第 3 栏 (lane=2)，20:45 进第 2 栏 (lane=1)
         assertEquals(listOf(2, 1), avengersLanes)
     }
 

@@ -14,7 +14,7 @@ data class ShowPreset(
     val title: String,
     val deck: Int,
     val zone: ShipZone,
-    /** 演出地点名，如 "花园舞台" */
+    /** 演出地点名，如 "花园舞台 Garden Stage" */
     val placeName: String,
     val durationMinutes: Int,
     /** 相对登船日的天数（第1天 = 1） */
@@ -25,6 +25,8 @@ data class ShowPreset(
     val startTimes: List<LocalTime>,
     /** true = 与晚餐时间绑定，只取与晚餐不冲突的那一场 */
     val dinnerLinked: Boolean = false,
+    /** 默认候场时间（分钟） */
+    val defaultWaitMinutes: Int = 30,
 )
 
 /**
@@ -66,7 +68,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         title = "扬帆起航 Let's Set Sail",
         deck = 10,
         zone = ShipZone.MID,
-        placeName = "花园舞台",
+        placeName = "花园舞台 Garden Stage",
         durationMinutes = 30,
         dayOffsets = listOf(1),
         startTimes = listOf(
@@ -74,6 +76,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
             LocalTime.of(14, 0),
             LocalTime.of(14, 45),
         ),
+        defaultWaitMinutes = 15,
     ),
     ShowPreset(
         key = "show_lion_king",
@@ -84,6 +87,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         durationMinutes = 10,
         dayOffsets = listOf(2),
         startTimes = listOf(LocalTime.of(22, 30)),
+        defaultWaitMinutes = 45,
     ),
     ShowPreset(
         key = "show_seas_adventure",
@@ -95,6 +99,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         dayOffsets = listOf(1),
         startTimes = listOf(LocalTime.of(18, 0), LocalTime.of(20, 30)),
         dinnerLinked = true,
+        defaultWaitMinutes = 45,
     ),
     ShowPreset(
         key = "show_remember",
@@ -106,6 +111,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         dayOffsets = listOf(2),
         startTimes = listOf(LocalTime.of(18, 0), LocalTime.of(20, 30)),
         dinnerLinked = true,
+        defaultWaitMinutes = 45,
     ),
     ShowPreset(
         key = "show_moana",
@@ -121,13 +127,14 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
             LocalTime.of(10, 0),
             LocalTime.of(10, 30),
         ),
+        defaultWaitMinutes = 30,
     ),
     ShowPreset(
         key = "show_avengers",
         title = "复仇者集结 Avengers Assemble!",
         deck = 10,
         zone = ShipZone.MID,
-        placeName = "花园舞台",
+        placeName = "花园舞台 Garden Stage",
         durationMinutes = 40,
         dayOffsets = listOf(2),
         dailyRangeTo = 4,
@@ -135,17 +142,19 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
             LocalTime.of(18, 15),
             LocalTime.of(20, 45),
         ),
+        defaultWaitMinutes = 15,
     ),
     ShowPreset(
         key = "show_baymax_expo",
         title = "大白超级健身世博会 Baymax Super Exercise Expo",
         deck = 10,
         zone = ShipZone.MID,
-        placeName = "花园舞台",
+        placeName = "花园舞台 Garden Stage",
         durationMinutes = 30,
         dayOffsets = listOf(2),
         dailyRangeTo = 4,
         startTimes = listOf(LocalTime.of(8, 45)),
+        defaultWaitMinutes = 15,
     ),
     ShowPreset(
         key = "show_duffy_friend_ship",
@@ -157,6 +166,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         dayOffsets = listOf(2),
         dailyRangeTo = 4,
         startTimes = listOf(LocalTime.of(9, 45)),
+        defaultWaitMinutes = 45,
     ),
 )
 
@@ -168,16 +178,54 @@ fun presetShowsSummary(): String = DISNEY_ADVENTURE_SHOWS.joinToString("\n") { s
     "· ${show.title}（$dayLabel $countLabel）"
 }
 
-/** 演出等待入场的延伸分钟数（提前占位） */
+/** 演出等待入场的默认延伸分钟数（提前占位兜底） */
 const val SHOW_WAIT_MINUTES = 30
 
 /**
+ * 根据演出地点、楼层、标题或预置 key 解析默认候场时间（分钟）：
+ * - D6 华特迪士尼剧院（或任何迪士尼剧院演出）：45 分钟
+ * - 狮子王烟花：45 分钟
+ * - 大白剧院：15 分钟
+ * - 花园舞台：15 分钟
+ * - 寻路者湾：30 分钟
+ * - 兜底：30 分钟
+ */
+fun resolveDefaultWaitMinutes(
+    placeName: String?,
+    deck: Int? = null,
+    title: String? = null,
+    presetKey: String? = null,
+): Int {
+    val text = "${placeName.orEmpty()} ${title.orEmpty()} ${presetKey.orEmpty()}"
+    if (text.contains("迪士尼剧院") || text.contains("Disney Theatre") || text.contains("Disney Theater") || (deck == 6 && text.contains("剧院"))) {
+        return 45
+    }
+    if (text.contains("狮子王") || text.contains("Lion King") || text.contains("show_lion_king")) {
+        return 45
+    }
+    if (text.contains("大白剧院") || text.contains("Baymax Cinema") || text.contains("Baymax Cinemas")) {
+        return 15
+    }
+    if (text.contains("花园舞台") || text.contains("Garden Stage")) {
+        return 15
+    }
+    if (text.contains("寻路者湾") || text.contains("Wayfinder Bay")) {
+        return 30
+    }
+    return 30
+}
+
+/** 事件的实际候场分钟数：优先使用自定义 waitMinutes，未设置时从地点/演出规则派生 */
+val CruiseEvent.effectiveWaitMinutes: Int
+    get() = waitMinutes ?: resolveDefaultWaitMinutes(placeName, deck, title, presetKey)
+
+/**
  * 事件在时间轴上的有效区间（分钟对 [start, end)）。
- * show 类别事件向前延伸 SHOW_WAIT_MINUTES（等待入场占位），其他事件返回原始区间。
+ * show 类别事件向前延伸 effectiveWaitMinutes（等待入场占位），其他事件返回原始区间。
  * 返回值可能为负起点（深夜演出跨午夜），区间比较纯算术、调用方自行处理。
  */
 fun showEffectiveRange(event: CruiseEvent, isShow: Boolean): Pair<Int, Int> =
-    if (isShow) (event.startMinute - SHOW_WAIT_MINUTES) to event.endMinute
+    if (isShow) (event.startMinute - event.effectiveWaitMinutes) to event.endMinute
     else event.startMinute to event.endMinute
 
 /**
@@ -199,10 +247,10 @@ fun CruiseEvent.isSameShowAs(other: CruiseEvent): Boolean =
         placeName == other.placeName
 
 /**
- * 格式化演出开始前的候场时间（默认提前 SHOW_WAIT_MINUTES = 30 分钟）。
- * 例如 20:30 演出返回 "20:00"，09:30 演出返回 "09:00"。
+ * 格式化演出开始前的候场时间（默认使用 event.effectiveWaitMinutes）。
+ * 例如 20:30 演出（提前 45 分钟）返回 "19:45"，09:30 演出（提前 30 分钟）返回 "09:00"。
  */
-fun formatWaitStart(event: CruiseEvent, waitMinutes: Int = SHOW_WAIT_MINUTES): String {
+fun formatWaitStart(event: CruiseEvent, waitMinutes: Int = event.effectiveWaitMinutes): String {
     val waitMin = ((event.startMinute - waitMinutes) % 1440 + 1440) % 1440
     val hour = waitMin / 60
     val minute = waitMin % 60
