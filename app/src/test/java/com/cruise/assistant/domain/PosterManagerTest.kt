@@ -62,6 +62,32 @@ class PosterManagerTest {
     }
 
     @Test
+    fun getFacilityPosterPath_all22DiningVenues_matchCorrectly() {
+        assertEquals("posters/dining/alley_cat_cafe.jpg", PosterManager.getFacilityPosterPath("流浪猫咖啡馆 Alley Cat Café"))
+        assertEquals("posters/dining/bacha_coffee.jpg", PosterManager.getFacilityPosterPath("巴哈咖啡 Bacha Coffee"))
+        assertEquals("posters/dining/bewitching_boba_and_brews.jpg", PosterManager.getFacilityPosterPath("迷魂珍珠奶茶 Bewitching Boba & Brews"))
+        assertEquals("posters/dining/buccaneer_bar.jpg", PosterManager.getFacilityPosterPath("海盗酒吧 Buccaneer Bar"))
+        assertEquals("posters/dining/cosmic_kebabs.jpg", PosterManager.getFacilityPosterPath("宇宙烤肉串 Cosmic Kebabs"))
+        assertEquals("posters/dining/garden_bar.jpg", PosterManager.getFacilityPosterPath("花园酒吧 Garden Bar"))
+        assertEquals("posters/dining/gramma_talas_kitchen.jpg", PosterManager.getFacilityPosterPath("塔拉奶奶的厨房 Gramma Talas Kitchen"))
+        assertEquals("posters/dining/infinity_bar.jpg", PosterManager.getFacilityPosterPath("无边际酒吧 Infinity Bar"))
+        assertEquals("posters/dining/market_bar.jpg", PosterManager.getFacilityPosterPath("市场酒吧 Market Bar"))
+        assertEquals("posters/dining/mike_and_sulleys_flavors_of_asia.jpg", PosterManager.getFacilityPosterPath("怪兽亚洲风味 Mike & Sulley's Flavors of Asia"))
+        assertEquals("posters/dining/mowglis_eatery.jpg", PosterManager.getFacilityPosterPath("莫格利餐厅 Mowgli's Eatery"))
+        assertEquals("posters/dining/palo_cafe.jpg", PosterManager.getFacilityPosterPath("帕洛咖啡 Palo Café"))
+        assertEquals("posters/dining/palo_trattoria.jpg", PosterManager.getFacilityPosterPath("帕洛意大利餐厅 Palo Trattoria"))
+        assertEquals("posters/dining/pixar_market_restaurant.jpg", PosterManager.getFacilityPosterPath("皮克斯市场餐厅 Pixar Market Restaurant"))
+        assertEquals("posters/dining/room_service.jpg", PosterManager.getFacilityPosterPath("客房送餐 Room Service"))
+        assertEquals("posters/dining/spellbound.jpg", PosterManager.getFacilityPosterPath("咒语酒廊 Spellbound"))
+        assertEquals("posters/dining/stitchs_ohana_grill.jpg", PosterManager.getFacilityPosterPath("史迪奇奥哈纳烧烤 Stitch's Ohana Grill"))
+        assertEquals("posters/dining/twg_tea.jpg", PosterManager.getFacilityPosterPath("TWG 茶室 TWG Tea"))
+        assertEquals("posters/dining/taverna_portorosso.jpg", PosterManager.getFacilityPosterPath("波尔托罗索小酒馆 Taverna Portorosso"))
+        assertEquals("posters/dining/tianas_bayou_lounge.jpg", PosterManager.getFacilityPosterPath("蒂安娜河口酒廊 Tiana's Bayou Lounge"))
+        assertEquals("posters/dining/wayfinder_bar.jpg", PosterManager.getFacilityPosterPath("寻路人酒吧 Wayfinder Bar"))
+        assertEquals("posters/dining/wheezys_freezies.jpg", PosterManager.getFacilityPosterPath("威希冰品 Wheezy's Freezies"))
+    }
+
+    @Test
     fun getFacilityPosterPath_majorVenues_matchCorrectly() {
         assertEquals("posters/facilities/hollywood_spotlight_club.jpg", PosterManager.getFacilityPosterPath("好莱坞聚光灯俱乐部 Hollywood Spotlight Club"))
         assertEquals("posters/facilities/animators_palate.jpg", PosterManager.getFacilityPosterPath("动画师味觉餐厅 Animator's Palate"))
@@ -73,11 +99,11 @@ class PosterManagerTest {
     }
 
     @Test
-    fun getFacilityPosterPath_barsAndStores_doNotMatchAreaPosters() {
+    fun getFacilityPosterPath_barsAndStores_matchOwnPosters_notGenericAreaPosters() {
         // 漫威造型工作室是商店，应匹配其专属商店图，而非漫威游乐区域图
         assertEquals("posters/shops/marvel_style_studio.jpg", PosterManager.getFacilityPosterPath("漫威造型工作室 Marvel Style Studio"))
-        // 寻路人酒吧、花园酒吧是酒吧，不应匹配泳池海湾/大舞台图
-        assertNull(PosterManager.getFacilityPosterPath("寻路人酒吧 Wayfinder Bar"))
-        assertNull(PosterManager.getFacilityPosterPath("花园酒吧 Garden Bar"))
+        // 寻路人酒吧、花园酒吧是酒吧，应匹配专属酒吧图，而非露天泳池海湾/大舞台图
+        assertEquals("posters/dining/wayfinder_bar.jpg", PosterManager.getFacilityPosterPath("寻路人酒吧 Wayfinder Bar"))
+        assertEquals("posters/dining/garden_bar.jpg", PosterManager.getFacilityPosterPath("花园酒吧 Garden Bar"))
     }
 }
