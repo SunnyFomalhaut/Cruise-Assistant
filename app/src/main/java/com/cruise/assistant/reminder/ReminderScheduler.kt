@@ -10,6 +10,7 @@ import com.cruise.assistant.data.prefs.SettingsStore
 import com.cruise.assistant.data.repo.CategoryRepository
 import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.effectiveWaitMinutes
 import com.cruise.assistant.domain.formatLocation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -23,9 +24,6 @@ const val EXTRA_BODY_LINE = "body_line"
 /** 一次最多排这么多个闹钟（每事件最多 4 个槽位），其余等 App 下次启动时补。
  * 500 贴近 Android 每应用 ~500 闹钟的软上限；典型航次（几十事件 × 3 槽）远低于此。 */
 private const val MAX_SCHEDULED = 500
-
-/** 演出候场提前量：候场 = 开场前 30 分钟（提醒基准） */
-private const val SHOW_QUEUE_LEAD_MINUTES = 30
 
 /** 提醒槽位：slot 0 = 提前 15 分钟（action null 兼容旧版本）、1 = 5 分钟、2 = 开始时、
  * 3 = 演出"开场前 5 分钟"（仅演出事件生成） */
@@ -106,10 +104,10 @@ class ReminderScheduler(
             .filter { it.isActive }
             .forEach { event ->
                 val showMs = event.date.atTime(event.startTime).atZone(zone).toInstant().toEpochMilli()
-                // 演出：提醒基准 = 候场开始（开场前 30 分钟），三个开关都相对候场；
+                // 演出：提醒基准 = 候场开始（按该演出的候场时间），三个开关都相对候场；
                 // 另加 slot 3"开场前 5 分钟"安全网。非演出保持原语义。
                 val isShow = categories[event.categoryId]?.iconKey == "show"
-                val baseMs = if (isShow) showMs - SHOW_QUEUE_LEAD_MINUTES * 60_000L else showMs
+                val baseMs = if (isShow) showMs - event.effectiveWaitMinutes * 60_000L else showMs
                 enabledSlots.forEach { slot ->
                     val triggerMs = baseMs - SLOT_LEAD_MINUTES[slot] * 60_000L
                     if (triggerMs > nowMs) pendingAlarms += Triple(event, triggerMs, slot)

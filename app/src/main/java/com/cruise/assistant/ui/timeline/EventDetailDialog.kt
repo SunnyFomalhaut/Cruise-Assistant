@@ -53,7 +53,7 @@ import androidx.compose.ui.window.Dialog
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.PosterManager
-import com.cruise.assistant.domain.SHOW_WAIT_MINUTES
+import com.cruise.assistant.domain.effectiveWaitMinutes
 import com.cruise.assistant.domain.formatLocation
 import com.cruise.assistant.domain.formatWaitStart
 import com.cruise.assistant.ui.common.CategoryChip
@@ -228,7 +228,7 @@ fun EventDetailDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "建议候场：$waitStartStr 入场（提前 30 分钟）",
+                                text = "建议候场：$waitStartStr 入场（提前 ${event.effectiveWaitMinutes} 分钟）",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = CruiseMarine,

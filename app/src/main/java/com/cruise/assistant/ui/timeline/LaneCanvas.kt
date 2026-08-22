@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.LANE_COUNT
-import com.cruise.assistant.domain.SHOW_WAIT_MINUTES
 import com.cruise.assistant.domain.TimelineLayout
+import com.cruise.assistant.domain.effectiveWaitMinutes
 import com.cruise.assistant.domain.minuteToDp
 import com.cruise.assistant.domain.showEffectiveRange
 import com.cruise.assistant.ui.theme.NowRed
@@ -72,10 +72,10 @@ fun LaneCanvas(
             if (bottom <= 0f || top >= layout.totalHeightDp) return@forEach
 
             val heightDp = (bottom - top).dp.coerceAtLeast(MIN_CARD_HEIGHT)
-            // 等待段高度（仅 show 事件，按 30 分钟换算；钳制到给标题留出空间，
-            // 否则 15/10 分钟短演出的标题会被 30 分钟等待段挤出卡片裁剪区）
+            // 等待段高度（仅 show 事件，按候场时间换算；钳制到给标题留出空间，
+            // 否则短演出的标题会被候场段挤出卡片裁剪区）
             val waitHeightDp = if (isShow) {
-                val band = (layout.minuteToDp(effStart + SHOW_WAIT_MINUTES) - top).dp
+                val band = (layout.minuteToDp(effStart + event.effectiveWaitMinutes) - top).dp
                 band.coerceAtMost(heightDp - TITLE_RESERVE_DP - SPACER_DP).coerceAtLeast(0.dp)
             } else {
                 0.dp
