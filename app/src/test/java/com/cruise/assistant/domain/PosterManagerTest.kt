@@ -44,6 +44,24 @@ class PosterManagerTest {
     }
 
     @Test
+    fun getFacilityPosterPath_all14Shops_matchCorrectly() {
+        assertEquals("posters/shops/3_wishes.jpg", PosterManager.getFacilityPosterPath("三个愿望 3 Wishes"))
+        assertEquals("posters/shops/bibbidi_bobbidi_boutique.jpg", PosterManager.getFacilityPosterPath("魔法变身精品店 Bibbidi Bobbidi Boutique"))
+        assertEquals("posters/shops/castle_collection.jpg", PosterManager.getFacilityPosterPath("城堡典藏 Castle Collection"))
+        assertEquals("posters/shops/diamonds_and_wishes.jpg", PosterManager.getFacilityPosterPath("钻石与愿望 Diamonds and Wishes"))
+        assertEquals("posters/shops/disney_royal_studio.jpg", PosterManager.getFacilityPosterPath("迪士尼影楼 Disney Studio"))
+        assertEquals("posters/shops/disney_royal_studio.jpg", PosterManager.getFacilityPosterPath("皇家影楼 Royal Studio"))
+        assertEquals("posters/shops/duffy_and_friends_shop.jpg", PosterManager.getFacilityPosterPath("达菲与朋友商店 Duffy and Friends Shop"))
+        assertEquals("posters/shops/marvel_style_studio.jpg", PosterManager.getFacilityPosterPath("漫威造型工作室 Marvel Style Studio"))
+        assertEquals("posters/shops/national_geographic.jpg", PosterManager.getFacilityPosterPath("国家地理 National Geographic"))
+        assertEquals("posters/shops/palace_treasures.jpg", PosterManager.getFacilityPosterPath("宫廷珍宝 Palace Treasures"))
+        assertEquals("posters/shops/pics_photo_shop.jpg", PosterManager.getFacilityPosterPath("快照摄影店 Pics Photo Shop"))
+        assertEquals("posters/shops/treasures_untold.jpg", PosterManager.getFacilityPosterPath("未诉珍宝 Treasures Untold"))
+        assertEquals("posters/shops/world_of_disney.jpg", PosterManager.getFacilityPosterPath("迪士尼世界 World of Disney"))
+        assertEquals("posters/shops/world_of_disney_too.jpg", PosterManager.getFacilityPosterPath("迪士尼世界二号店 World of Disney Too"))
+    }
+
+    @Test
     fun getFacilityPosterPath_majorVenues_matchCorrectly() {
         assertEquals("posters/facilities/hollywood_spotlight_club.jpg", PosterManager.getFacilityPosterPath("好莱坞聚光灯俱乐部 Hollywood Spotlight Club"))
         assertEquals("posters/facilities/animators_palate.jpg", PosterManager.getFacilityPosterPath("动画师味觉餐厅 Animator's Palate"))
@@ -56,8 +74,8 @@ class PosterManagerTest {
 
     @Test
     fun getFacilityPosterPath_barsAndStores_doNotMatchAreaPosters() {
-        // 漫威造型工作室是商店，不应匹配漫威游乐区域图
-        assertNull(PosterManager.getFacilityPosterPath("漫威造型工作室 Marvel Style Studio"))
+        // 漫威造型工作室是商店，应匹配其专属商店图，而非漫威游乐区域图
+        assertEquals("posters/shops/marvel_style_studio.jpg", PosterManager.getFacilityPosterPath("漫威造型工作室 Marvel Style Studio"))
         // 寻路人酒吧、花园酒吧是酒吧，不应匹配泳池海湾/大舞台图
         assertNull(PosterManager.getFacilityPosterPath("寻路人酒吧 Wayfinder Bar"))
         assertNull(PosterManager.getFacilityPosterPath("花园酒吧 Garden Bar"))
