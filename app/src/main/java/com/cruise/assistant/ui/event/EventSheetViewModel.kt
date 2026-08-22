@@ -16,8 +16,10 @@ import com.cruise.assistant.domain.LocationPreset
 import com.cruise.assistant.domain.MealPeriod
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.ShowPreset
+import com.cruise.assistant.domain.effectiveWaitMinutes
 import com.cruise.assistant.domain.isOpenAt
 import com.cruise.assistant.domain.isOpenFor
+import com.cruise.assistant.domain.resolveDefaultWaitMinutes
 import com.cruise.assistant.reminder.ReminderScheduler
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,6 +74,8 @@ data class EventSheetState(
     val hoursCheckMessage: String? = null,
     /** 用户确认"仍要保存"后为 true：跳过本次校验 */
     val hoursCheckOverride: Boolean = false,
+    /** 提前候场时间（分钟），默认 30，演出类别时可选 10~120m */
+    val waitMinutes: Int = 30,
 ) {
     val isEditing: Boolean get() = editingId != 0L
 
@@ -205,6 +209,7 @@ class EventSheetViewModel(
                             isSystemEvent = event.isSystemGenerated,
                             isRecurrenceMember = event.recurrenceGroupId != null,
                             recurrenceGroupId = event.recurrenceGroupId,
+                            waitMinutes = event.waitMinutes ?: event.effectiveWaitMinutes,
                         )
                     }
                     _state.update { current ->
@@ -239,6 +244,11 @@ class EventSheetViewModel(
         val iconKey = it.categories.firstOrNull { c -> c.id == id }?.iconKey
         val presetAvailable = it.builtInShip && LocationCatalog.venuesByCategory().containsKey(iconKey)
         val showPreset = it.builtInShip && iconKey == "show"
+        val waitMins = if (iconKey == "show") {
+            resolveDefaultWaitMinutes(it.placeName, it.deck, it.title)
+        } else {
+            it.waitMinutes
+        }
         it.copy(
             selectedCategoryId = id,
             categoryIconKey = iconKey,
@@ -248,6 +258,7 @@ class EventSheetViewModel(
             // 餐次行仅餐食类别显示；切类别时重置餐次选择
             selectedMealPeriod = null,
             showMealPeriodRow = it.builtInShip && iconKey == "meal",
+            waitMinutes = waitMins,
             errorResId = null,
         )
     }
@@ -298,12 +309,18 @@ class EventSheetViewModel(
     fun onRecurringToggle(value: Boolean) = _state.update { it.copy(recurring = value) }
 
     fun onSelectPresetLocation(entry: com.cruise.assistant.domain.LocationCatalogEntry) = _state.update {
+        val waitMins = if (it.categoryIconKey == "show") {
+            resolveDefaultWaitMinutes(entry.placeName, entry.deck, it.title)
+        } else {
+            it.waitMinutes
+        }
         it.copy(
             deck = entry.deck,
             zone = entry.zone,
             placeName = entry.placeName,
             noLocation = false,
             locationPresetMode = true,
+            waitMinutes = waitMins,
         )
     }
 
@@ -323,12 +340,17 @@ class EventSheetViewModel(
             startTime = start,
             endTime = end,
             showPresetMode = true,
+            waitMinutes = preset.defaultWaitMinutes,
             errorResId = null,
         )
     }
 
     fun onCustomShowSelected() = _state.update {
         it.copy(showPresetMode = false)
+    }
+
+    fun onWaitMinutesChange(value: Int) = _state.update {
+        it.copy(waitMinutes = value)
     }
 
     /**
@@ -441,6 +463,7 @@ class EventSheetViewModel(
             // 必须带上原始 recurrenceGroupId：EventRepository.updateEvent() 靠这个字段
             // （而不是数据库里 target 行的字段）判断 WHOLE_GROUP 是否要 fan out 到整组。
             recurrenceGroupId = s.recurrenceGroupId,
+            waitMinutes = if (s.categoryIconKey == "show") s.waitMinutes else null,
         )
 
         _state.update { it.copy(saving = true) }

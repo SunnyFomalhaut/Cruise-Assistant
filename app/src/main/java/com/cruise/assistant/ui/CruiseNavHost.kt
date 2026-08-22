@@ -302,6 +302,7 @@ fun CruiseNavHost(container: AppContainer) {
                     onShowPresetSelect = sheetVm::onShowPresetSelect,
                     onCustomShowSelected = sheetVm::onCustomShowSelected,
                     onMealPeriodSelect = sheetVm::onMealPeriodSelect,
+                    onWaitMinutesChange = sheetVm::onWaitMinutesChange,
                     onStartChange = sheetVm::onStartChange,
                     onEndChange = sheetVm::onEndChange,
                     onRecurringToggle = sheetVm::onRecurringToggle,

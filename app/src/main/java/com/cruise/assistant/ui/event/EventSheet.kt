@@ -106,6 +106,7 @@ fun EventSheet(
     onShowPresetSelect: (ShowPreset) -> Unit = {},
     onCustomShowSelected: () -> Unit = {},
     onMealPeriodSelect: (MealPeriod?) -> Unit,
+    onWaitMinutesChange: (Int) -> Unit = {},
     onStartChange: (LocalTime) -> Unit,
     onEndChange: (LocalTime) -> Unit,
     onRecurringToggle: (Boolean) -> Unit,
@@ -418,6 +419,72 @@ fun EventSheet(
                             presetMode = state.locationPresetMode,
                             onSelectPreset = onSelectPresetLocation,
                             onCustomLocation = onCustomLocationSelected,
+                        )
+                    }
+                }
+            }
+
+            // ---- 卡片：提前候场时间（仅演出类别显示）----
+            if (!state.isSystemEvent && state.categoryIconKey == "show") {
+                Spacer(Modifier.height(12.dp))
+                Surface(
+                    shape = cardShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        SectionHeader(
+                            title = stringResource(R.string.lead_time_label),
+                            icon = Icons.Outlined.Schedule,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        var waitMenuOpen by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(
+                            expanded = waitMenuOpen,
+                            onExpandedChange = { waitMenuOpen = it },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            OutlinedTextField(
+                                value = stringResource(R.string.lead_time_format, state.waitMinutes),
+                                onValueChange = {},
+                                label = { Text(stringResource(R.string.lead_time_label)) },
+                                readOnly = true,
+                                singleLine = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = waitMenuOpen) },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)
+                                    .fillMaxWidth(),
+                            )
+                            ExposedDropdownMenu(
+                                expanded = waitMenuOpen,
+                                onDismissRequest = { waitMenuOpen = false },
+                            ) {
+                                (10..120 step 5).forEach { mins ->
+                                    val selected = state.waitMinutes == mins
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = stringResource(R.string.lead_time_format, mins),
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (selected) CruiseMarine else Slate900,
+                                            )
+                                        },
+                                        onClick = {
+                                            onWaitMinutesChange(mins)
+                                            waitMenuOpen = false
+                                        },
+                                        modifier = if (selected) Modifier.background(CruiseAzureContainer) else Modifier,
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            stringResource(R.string.lead_time_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Slate500,
                         )
                     }
                 }

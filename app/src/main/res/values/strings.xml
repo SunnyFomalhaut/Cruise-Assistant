@@ -235,4 +235,9 @@
     <string name="wallpaper_custom">自定义</string>
     <string name="wallpaper_custom_desc">从系统相册选取</string>
     <string name="wallpaper_none">无壁纸</string>
+
+    <!-- 候场时间 -->
+    <string name="lead_time_label">提前候场时间</string>
+    <string name="lead_time_format">%d 分钟</string>
+    <string name="lead_time_hint">建议提前候场以获取较好座位</string>
 </resources>
