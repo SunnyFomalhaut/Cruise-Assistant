@@ -88,6 +88,15 @@ class PosterManagerTest {
     }
 
     @Test
+    fun getFacilityPosterPath_all5YouthClubs_matchCorrectly() {
+        assertEquals("posters/youth/its_a_small_world_nursery.jpg", PosterManager.getFacilityPosterPath("小小世界托儿所 it's a small world nursery"))
+        assertEquals("posters/youth/mickey_minnie_captains_deck.jpg", PosterManager.getFacilityPosterPath("米奇米妮船长甲板 Mickey & Minnie Captain's Deck"))
+        assertEquals("posters/youth/disneys_oceaneer_club.jpg", PosterManager.getFacilityPosterPath("迪士尼海洋探险家俱乐部 Disney's Oceaneer Club"))
+        assertEquals("posters/youth/edge.jpg", PosterManager.getFacilityPosterPath("边缘少年俱乐部 Edge"))
+        assertEquals("posters/youth/vibe.jpg", PosterManager.getFacilityPosterPath("活力少年俱乐部 Vibe"))
+    }
+
+    @Test
     fun getFacilityPosterPath_majorVenues_matchCorrectly() {
         assertEquals("posters/facilities/hollywood_spotlight_club.jpg", PosterManager.getFacilityPosterPath("好莱坞聚光灯俱乐部 Hollywood Spotlight Club"))
         assertEquals("posters/facilities/animators_palate.jpg", PosterManager.getFacilityPosterPath("动画师味觉餐厅 Animator's Palate"))

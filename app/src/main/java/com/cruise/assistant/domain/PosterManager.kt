@@ -218,6 +218,24 @@ object PosterManager {
         "威希冰品" to "posters/dining/wheezys_freezies.jpg",
         "wheezy's freezies" to "posters/dining/wheezys_freezies.jpg",
         "wheezys freezies" to "posters/dining/wheezys_freezies.jpg",
+
+        // 47-51. 5 处青少年与儿童活动空间专属海报映射
+        "小小世界托儿所" to "posters/youth/its_a_small_world_nursery.jpg",
+        "it's a small world nursery" to "posters/youth/its_a_small_world_nursery.jpg",
+        "its a small world nursery" to "posters/youth/its_a_small_world_nursery.jpg",
+        "米奇米妮船长甲板" to "posters/youth/mickey_minnie_captains_deck.jpg",
+        "mickey & minnie captain's deck" to "posters/youth/mickey_minnie_captains_deck.jpg",
+        "mickey and minnie captain's deck" to "posters/youth/mickey_minnie_captains_deck.jpg",
+        "captain's deck" to "posters/youth/mickey_minnie_captains_deck.jpg",
+        "迪士尼海洋探险家俱乐部" to "posters/youth/disneys_oceaneer_club.jpg",
+        "海洋探险家俱乐部" to "posters/youth/disneys_oceaneer_club.jpg",
+        "disney's oceaneer club" to "posters/youth/disneys_oceaneer_club.jpg",
+        "disneys oceaneer club" to "posters/youth/disneys_oceaneer_club.jpg",
+        "oceaneer club" to "posters/youth/disneys_oceaneer_club.jpg",
+        "边缘少年俱乐部" to "posters/youth/edge.jpg",
+        "edge" to "posters/youth/edge.jpg",
+        "活力少年俱乐部" to "posters/youth/vibe.jpg",
+        "vibe" to "posters/youth/vibe.jpg",
     )
 
     /**
@@ -310,6 +328,19 @@ object PosterManager {
         "wayfinder bar" to "posters/dining/wayfinder_bar.jpg",
         "威希冰品" to "posters/dining/wheezys_freezies.jpg",
         "wheezy's freezies" to "posters/dining/wheezys_freezies.jpg",
+
+        // 青少年
+        "小小世界托儿所" to "posters/youth/its_a_small_world_nursery.jpg",
+        "it's a small world nursery" to "posters/youth/its_a_small_world_nursery.jpg",
+        "米奇米妮船长甲板" to "posters/youth/mickey_minnie_captains_deck.jpg",
+        "mickey & minnie captain's deck" to "posters/youth/mickey_minnie_captains_deck.jpg",
+        "迪士尼海洋探险家俱乐部" to "posters/youth/disneys_oceaneer_club.jpg",
+        "海洋探险家俱乐部" to "posters/youth/disneys_oceaneer_club.jpg",
+        "disney's oceaneer club" to "posters/youth/disneys_oceaneer_club.jpg",
+        "边缘少年俱乐部" to "posters/youth/edge.jpg",
+        "edge" to "posters/youth/edge.jpg",
+        "活力少年俱乐部" to "posters/youth/vibe.jpg",
+        "vibe" to "posters/youth/vibe.jpg",
     )
 
     /**
