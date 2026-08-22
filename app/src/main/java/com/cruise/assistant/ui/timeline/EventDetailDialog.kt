@@ -111,6 +111,7 @@ fun EventDetailDialog(
                         bitmap = posterBitmap.asImageBitmap(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
+                        alignment = Alignment.TopCenter,
                         modifier = Modifier
                             .matchParentSize()
                             .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
@@ -119,8 +120,8 @@ fun EventDetailDialog(
                                 drawRect(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(
-                                            Color.Black.copy(alpha = 0.35f),
-                                            Color.Black.copy(alpha = 0.12f),
+                                            Color.Black.copy(alpha = 0.38f),
+                                            Color.Black.copy(alpha = 0.15f),
                                             Color.Transparent
                                         ),
                                         startY = 0f,
