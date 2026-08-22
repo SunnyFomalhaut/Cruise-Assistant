@@ -56,6 +56,15 @@ object PosterManager {
         "寻路人海滩" to "posters/facilities/wayfinder_bay.jpg",
         "wayfinder beach" to "posters/facilities/wayfinder_bay.jpg",
 
+        // 华特迪士尼剧院
+        "华特迪士尼剧院" to "posters/facilities/walt_disney_theatre.jpg",
+        "walt disney theatre" to "posters/facilities/walt_disney_theatre.jpg",
+        "walt disney theater" to "posters/facilities/walt_disney_theatre.jpg",
+
+        // 无边际泳池（严格区分于无边际酒吧）
+        "无边际泳池" to "posters/facilities/infinity_pool.jpg",
+        "infinity pool" to "posters/facilities/infinity_pool.jpg",
+
         // 2. 花园舞台
         "花园舞台" to "posters/facilities/garden_stage.jpg",
         "garden stage" to "posters/facilities/garden_stage.jpg",

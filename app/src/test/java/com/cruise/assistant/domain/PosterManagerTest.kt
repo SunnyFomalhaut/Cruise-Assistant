@@ -96,6 +96,21 @@ class PosterManagerTest {
         assertEquals("posters/facilities/garden_stage.jpg", PosterManager.getFacilityPosterPath("花园舞台 Garden Stage"))
         assertEquals("posters/facilities/wayfinder_bay.jpg", PosterManager.getFacilityPosterPath("寻路者湾 Wayfinder Bay"))
         assertEquals("posters/facilities/marvel_landing.jpg", PosterManager.getFacilityPosterPath("格鲁特银河旋风 Groot Galaxy Spin"))
+        assertEquals("posters/facilities/walt_disney_theatre.jpg", PosterManager.getFacilityPosterPath("华特迪士尼剧院 Walt Disney Theatre"))
+        assertEquals("posters/facilities/infinity_pool.jpg", PosterManager.getFacilityPosterPath("无边际泳池 Infinity Pool"))
+    }
+
+    @Test
+    fun getFacilityPosterPath_theatreAndPool_strictIsolation() {
+        // 1. 无边泳池与无边酒吧严格隔离
+        assertEquals("posters/facilities/infinity_pool.jpg", PosterManager.getFacilityPosterPath("无边际泳池 Infinity Pool"))
+        assertEquals("posters/dining/infinity_bar.jpg", PosterManager.getFacilityPosterPath("无边际酒吧 Infinity Bar"))
+
+        // 2. 剧院设施底图 vs 剧院内演出专属底图：演出优先，不被剧院底图覆盖
+        assertEquals("posters/facilities/walt_disney_theatre.jpg", PosterManager.getFacilityPosterPath("华特迪士尼剧院 Walt Disney Theatre"))
+        assertEquals("posters/shows/show_seas_adventure.jpg", PosterManager.getEventPosterPath("海洋奇遇 Disney Seas The Adventure", "show_seas_adventure"))
+        assertEquals("posters/shows/show_remember.jpg", PosterManager.getEventPosterPath("回忆：瓦力与伊芙 Remember", "show_remember"))
+        assertEquals("posters/shows/show_duffy_friend_ship.jpg", PosterManager.getEventPosterPath("达菲与友谊之船 Duffy and The Friend Ship", "show_duffy_friend_ship"))
     }
 
     @Test
