@@ -42,4 +42,24 @@ class PosterManagerTest {
     fun getEventPosterPath_nonShowEvent_fallsBackToNull() {
         assertNull(PosterManager.getEventPosterPath("自由活动", null))
     }
+
+    @Test
+    fun getFacilityPosterPath_majorVenues_matchCorrectly() {
+        assertEquals("posters/facilities/hollywood_spotlight_club.jpg", PosterManager.getFacilityPosterPath("好莱坞聚光灯俱乐部 Hollywood Spotlight Club"))
+        assertEquals("posters/facilities/animators_palate.jpg", PosterManager.getFacilityPosterPath("动画师味觉餐厅 Animator's Palate"))
+        assertEquals("posters/facilities/enchanted_summer.jpg", PosterManager.getFacilityPosterPath("魔法盛夏餐厅 Enchanted Summer Restaurant"))
+        assertEquals("posters/facilities/navigators_club.jpg", PosterManager.getFacilityPosterPath("航海家俱乐部 Navigator's Club"))
+        assertEquals("posters/facilities/garden_stage.jpg", PosterManager.getFacilityPosterPath("花园舞台 Garden Stage"))
+        assertEquals("posters/facilities/wayfinder_bay.jpg", PosterManager.getFacilityPosterPath("寻路者湾 Wayfinder Bay"))
+        assertEquals("posters/facilities/marvel_landing.jpg", PosterManager.getFacilityPosterPath("格鲁特银河旋风 Groot Galaxy Spin"))
+    }
+
+    @Test
+    fun getFacilityPosterPath_barsAndStores_doNotMatchAreaPosters() {
+        // 漫威造型工作室是商店，不应匹配漫威游乐区域图
+        assertNull(PosterManager.getFacilityPosterPath("漫威造型工作室 Marvel Style Studio"))
+        // 寻路人酒吧、花园酒吧是酒吧，不应匹配泳池海湾/大舞台图
+        assertNull(PosterManager.getFacilityPosterPath("寻路人酒吧 Wayfinder Bar"))
+        assertNull(PosterManager.getFacilityPosterPath("花园酒吧 Garden Bar"))
+    }
 }

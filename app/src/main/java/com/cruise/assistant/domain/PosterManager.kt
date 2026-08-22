@@ -55,24 +55,20 @@ object PosterManager {
         "wayfinder bay" to "posters/facilities/wayfinder_bay.jpg",
         "寻路人海滩" to "posters/facilities/wayfinder_bay.jpg",
         "wayfinder beach" to "posters/facilities/wayfinder_bay.jpg",
-        "寻路人酒吧" to "posters/facilities/wayfinder_bay.jpg",
-        "wayfinder bar" to "posters/facilities/wayfinder_bay.jpg",
 
         // 2. 花园舞台
         "花园舞台" to "posters/facilities/garden_stage.jpg",
         "garden stage" to "posters/facilities/garden_stage.jpg",
         "迪士尼探索庭园" to "posters/facilities/garden_stage.jpg",
         "imagination garden" to "posters/facilities/garden_stage.jpg",
-        "花园酒吧" to "posters/facilities/garden_stage.jpg",
-        "garden bar" to "posters/facilities/garden_stage.jpg",
 
         // 3. 玩具总动员区域（Sunnyside Pool, Wild Slides, Flying Saucer, Toy Story Splash Pad 等共用）
         "阳光泳池" to "posters/facilities/toy_story_place.jpg",
+        "sunnyside pool" to "posters/facilities/toy_story_place.jpg",
         "sunnyside" to "posters/facilities/toy_story_place.jpg",
         "狂野滑梯" to "posters/facilities/toy_story_place.jpg",
         "狂野滑道" to "posters/facilities/toy_story_place.jpg",
         "wild slides" to "posters/facilities/toy_story_place.jpg",
-        "woody" to "posters/facilities/toy_story_place.jpg",
         "飞碟戏水区" to "posters/facilities/toy_story_place.jpg",
         "flying saucer" to "posters/facilities/toy_story_place.jpg",
         "玩具总动员戏水区" to "posters/facilities/toy_story_place.jpg",
@@ -82,20 +78,20 @@ object PosterManager {
         "威希冰品" to "posters/facilities/toy_story_place.jpg",
         "wheezy" to "posters/facilities/toy_story_place.jpg",
 
-        // 4. 漫威区域（Groot Galaxy Spin, Pym Quantum Racers 等共用）
+        // 4. 漫威区域（Groot Galaxy Spin, Pym Quantum Racers 等设施共用，不含商店）
+        "格鲁特银河旋风" to "posters/facilities/marvel_landing.jpg",
+        "groot galaxy spin" to "posters/facilities/marvel_landing.jpg",
         "格鲁特" to "posters/facilities/marvel_landing.jpg",
-        "groot" to "posters/facilities/marvel_landing.jpg",
         "皮姆量子赛车" to "posters/facilities/marvel_landing.jpg",
-        "pym" to "posters/facilities/marvel_landing.jpg",
-        "漫威造型工作室" to "posters/facilities/marvel_landing.jpg",
-        "marvel" to "posters/facilities/marvel_landing.jpg",
-        "漫威" to "posters/facilities/marvel_landing.jpg",
+        "pym quantum racers" to "posters/facilities/marvel_landing.jpg",
+        "漫威着陆区" to "posters/facilities/marvel_landing.jpg",
+        "marvel landing" to "posters/facilities/marvel_landing.jpg",
 
         // 5. 旧金山街道
         "旧金山街道" to "posters/facilities/san_fransokyo_street.jpg",
-        "san fransokyo" to "posters/facilities/san_fransokyo_street.jpg",
+        "san fransokyo street" to "posters/facilities/san_fransokyo_street.jpg",
         "大白剧院" to "posters/facilities/san_fransokyo_street.jpg",
-        "baymax" to "posters/facilities/san_fransokyo_street.jpg",
+        "baymax theatre" to "posters/facilities/san_fransokyo_street.jpg",
 
         // 6. 披萨星球
         "披萨星球" to "posters/facilities/pizza_planet.jpg",
@@ -109,10 +105,13 @@ object PosterManager {
 
         // 8. 好莱坞聚光灯俱乐部
         "好莱坞聚光灯俱乐部" to "posters/facilities/hollywood_spotlight_club.jpg",
+        "好莱坞聚光灯" to "posters/facilities/hollywood_spotlight_club.jpg",
+        "hollywood spotlight club" to "posters/facilities/hollywood_spotlight_club.jpg",
         "hollywood spotlight" to "posters/facilities/hollywood_spotlight_club.jpg",
 
         // 9. 魔法盛夏餐厅
         "魔法盛夏餐厅" to "posters/facilities/enchanted_summer.jpg",
+        "魔法盛夏" to "posters/facilities/enchanted_summer.jpg",
         "魔法夏日" to "posters/facilities/enchanted_summer.jpg",
         "enchanted summer" to "posters/facilities/enchanted_summer.jpg",
 
@@ -122,7 +121,6 @@ object PosterManager {
         "animator's palate" to "posters/facilities/animators_palate.jpg",
         "animator's table" to "posters/facilities/animators_palate.jpg",
         "animators palate" to "posters/facilities/animators_palate.jpg",
-        "动画师" to "posters/facilities/animators_palate.jpg",
     )
 
     /**
@@ -188,14 +186,19 @@ object PosterManager {
     }
 
     /**
+     * 获取设施海报的 asset 相对路径
+     */
+    fun getFacilityPosterPath(placeName: String): String? {
+        val trimmed = placeName.trim().lowercase()
+        return facilityPosterRegistry[trimmed]
+            ?: facilityPosterRegistry.entries.firstOrNull { trimmed.contains(it.key) }?.value
+    }
+
+    /**
      * 加载设施对应的背景海报位图（若存在）
      */
     fun loadFacilityPoster(context: Context, placeName: String): Bitmap? {
-        val trimmed = placeName.trim().lowercase()
-        val path = facilityPosterRegistry[trimmed]
-            ?: facilityPosterRegistry.entries.firstOrNull { trimmed.contains(it.key) }?.value
-            ?: return null
-
+        val path = getFacilityPosterPath(placeName) ?: return null
         return loadFromAsset(context, path)
     }
 
