@@ -97,6 +97,15 @@ class PosterManagerTest {
     }
 
     @Test
+    fun getFacilityPosterPath_spaAndConcierge_matchCorrectly() {
+        assertEquals("posters/facilities/infinite_bliss_spa.jpg", PosterManager.getFacilityPosterPath("无限幸福水疗 Infinite Bliss Spa - Elemis at Sea"))
+        assertEquals("posters/facilities/opulence_spa.jpg", PosterManager.getFacilityPosterPath("奢华水疗（礼宾） Opulence Spa - Elemis at Sea"))
+        assertEquals("posters/facilities/concierge_lounge.jpg", PosterManager.getFacilityPosterPath("礼宾休息室 Concierge Lounge"))
+        assertEquals("posters/facilities/concierge_lounge.jpg", PosterManager.getFacilityPosterPath("礼宾户外休息室 Concierge Lounge Outdoor"))
+        assertEquals("posters/facilities/concierge_sundeck.jpg", PosterManager.getFacilityPosterPath("礼宾阳光甲板 Concierge Sundeck"))
+    }
+
+    @Test
     fun getFacilityPosterPath_majorVenues_matchCorrectly() {
         assertEquals("posters/facilities/hollywood_spotlight_club.jpg", PosterManager.getFacilityPosterPath("好莱坞聚光灯俱乐部 Hollywood Spotlight Club"))
         assertEquals("posters/facilities/animators_palate.jpg", PosterManager.getFacilityPosterPath("动画师味觉餐厅 Animator's Palate"))

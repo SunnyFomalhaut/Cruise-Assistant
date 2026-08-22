@@ -65,6 +65,19 @@ object PosterManager {
         "无边际泳池" to "posters/facilities/infinity_pool.jpg",
         "infinity pool" to "posters/facilities/infinity_pool.jpg",
 
+        // 水疗与礼宾服务
+        "无限幸福水疗" to "posters/facilities/infinite_bliss_spa.jpg",
+        "infinite bliss spa" to "posters/facilities/infinite_bliss_spa.jpg",
+        "infinite bliss" to "posters/facilities/infinite_bliss_spa.jpg",
+        "奢华水疗" to "posters/facilities/opulence_spa.jpg",
+        "opulence spa" to "posters/facilities/opulence_spa.jpg",
+        "礼宾休息室" to "posters/facilities/concierge_lounge.jpg",
+        "礼宾户外休息室" to "posters/facilities/concierge_lounge.jpg",
+        "concierge lounge" to "posters/facilities/concierge_lounge.jpg",
+        "concierge lounge outdoor" to "posters/facilities/concierge_lounge.jpg",
+        "礼宾阳光甲板" to "posters/facilities/concierge_sundeck.jpg",
+        "concierge sundeck" to "posters/facilities/concierge_sundeck.jpg",
+
         // 2. 花园舞台
         "花园舞台" to "posters/facilities/garden_stage.jpg",
         "garden stage" to "posters/facilities/garden_stage.jpg",
@@ -341,6 +354,17 @@ object PosterManager {
         "edge" to "posters/youth/edge.jpg",
         "活力少年俱乐部" to "posters/youth/vibe.jpg",
         "vibe" to "posters/youth/vibe.jpg",
+
+        // 水疗与礼宾
+        "无限幸福水疗" to "posters/facilities/infinite_bliss_spa.jpg",
+        "infinite bliss spa" to "posters/facilities/infinite_bliss_spa.jpg",
+        "奢华水疗" to "posters/facilities/opulence_spa.jpg",
+        "opulence spa" to "posters/facilities/opulence_spa.jpg",
+        "礼宾休息室" to "posters/facilities/concierge_lounge.jpg",
+        "礼宾户外休息室" to "posters/facilities/concierge_lounge.jpg",
+        "concierge lounge" to "posters/facilities/concierge_lounge.jpg",
+        "礼宾阳光甲板" to "posters/facilities/concierge_sundeck.jpg",
+        "concierge sundeck" to "posters/facilities/concierge_sundeck.jpg",
     )
 
     /**
