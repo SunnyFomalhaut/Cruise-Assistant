@@ -131,6 +131,10 @@ object DeckMapRepository {
                     var words = target.toLowerCase().split(/[\s·,]+/g).filter(function(w) {
                         return w.length > 1 && !['deck', 'the', 'and', 'restaurant', 'club'].includes(w);
                     });
+                    if (target.indexOf('花园舞台') !== -1) { words.push('garden', 'stage'); }
+                    if (target.indexOf('迪士尼剧院') !== -1) { words.push('walt', 'disney', 'theatre', 'theater'); }
+                    if (target.indexOf('寻路者') !== -1) { words.push('wayfinder'); }
+                    if (target.indexOf('大白剧院') !== -1) { words.push('baymax', 'cinemas', 'cinema'); }
                     if (words.length === 0) words = [target.toLowerCase()];
 
                     var bestNode = null;
