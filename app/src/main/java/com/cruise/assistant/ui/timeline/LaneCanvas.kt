@@ -72,11 +72,14 @@ fun LaneCanvas(
             if (bottom <= 0f || top >= layout.totalHeightDp) return@forEach
 
             val heightDp = (bottom - top).dp.coerceAtLeast(MIN_CARD_HEIGHT)
-            // 等待段高度（仅 show 事件，按候场时间换算；钳制到给标题留出空间，
-            // 否则短演出的标题会被候场段挤出卡片裁剪区）
+            // 等待段高度（仅 show 事件，按候场时间换算；极限缩放下给 16dp 保底；
+            // 钳制到给标题留出空间，否则短演出的标题会被候场段挤出卡片裁剪区）
             val waitHeightDp = if (isShow) {
                 val band = (layout.minuteToDp(effStart + event.effectiveWaitMinutes) - top).dp
-                band.coerceAtMost(heightDp - TITLE_RESERVE_DP - SPACER_DP).coerceAtLeast(0.dp)
+                val minWaitHeight = if (band > 0.dp) 16.dp else 0.dp
+                band.coerceAtLeast(minWaitHeight)
+                    .coerceAtMost(heightDp - TITLE_RESERVE_DP - SPACER_DP)
+                    .coerceAtLeast(0.dp)
             } else {
                 0.dp
             }

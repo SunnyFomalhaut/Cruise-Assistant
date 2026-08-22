@@ -129,13 +129,23 @@ fun EventCard(
         ) {
             // 等待段：淡色斜纹 + 随分级自适应的文案与排版
             if (hasWaitSegment) {
+                val isExtremelyCompactWait = waitSegmentHeightDp < 20.dp
+                val waitSingleLineStyle = if (isExtremelyCompactWait) {
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.5.sp,
+                        lineHeight = 11.sp,
+                        platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
+                    )
+                } else {
+                    MaterialTheme.typography.labelSmall
+                }
                 Column(
                     Modifier
                         .fillMaxWidth()
                         .height(waitSegmentHeightDp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(waitSegmentBrush(colorArgb))
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                        .padding(horizontal = 4.dp, vertical = if (isExtremelyCompactWait) 0.dp else 2.dp),
                     verticalArrangement = Arrangement.Center,
                 ) {
                     when {
@@ -143,7 +153,7 @@ fun EventCard(
                             // Case 1: 候场段 1 行
                             Text(
                                 text = "${formatWaitStart(event)} 候场",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = waitSingleLineStyle,
                                 fontStyle = FontStyle.Italic,
                                 fontWeight = FontWeight.Bold,
                                 color = textColor.copy(alpha = 0.9f),
@@ -212,7 +222,7 @@ fun EventCard(
                             }
                             Text(
                                 text = singleLineText,
-                                style = MaterialTheme.typography.labelSmall,
+                                style = waitSingleLineStyle,
                                 fontStyle = FontStyle.Italic,
                                 fontWeight = FontWeight.Bold,
                                 color = textColor.copy(alpha = 0.9f),
