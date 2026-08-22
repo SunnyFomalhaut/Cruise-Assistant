@@ -150,9 +150,9 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
     ShowPreset(
         key = "show_duffy_friend_ship",
         title = "达菲与友谊之船 Duffy and The Friend Ship",
-        deck = 10,
-        zone = ShipZone.MID,
-        placeName = "花园舞台",
+        deck = 6,
+        zone = ShipZone.BOW,
+        placeName = "华特迪士尼剧院 Walt Disney Theatre",
         durationMinutes = 30,
         dayOffsets = listOf(2),
         dailyRangeTo = 4,

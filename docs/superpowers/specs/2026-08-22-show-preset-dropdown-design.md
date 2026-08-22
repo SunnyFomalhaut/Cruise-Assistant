@@ -18,7 +18,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `show_baymax_expo` | **大白超级健身世博会 Baymax Super Exercise Expo** | 花园舞台 | Deck 10 中部 | **08:45 - 09:15** | 30 分钟 | 08:45 |
 | `show_moana` | **海洋奇缘 Moana: Call of the Sea** | 寻路者湾 Wayfinder Bay | Deck 10 船尾 | **09:30 - 09:45** | 15 分钟 | 09:30, 10:00, 10:30 |
-| `show_duffy_friend_ship` | **达菲与友谊之船 Duffy and The Friend Ship** | 花园舞台 | Deck 10 中部 | **09:45 - 10:15** | 30 分钟 | 09:45 |
+| `show_duffy_friend_ship` | **达菲与友谊之船 Duffy and The Friend Ship** | 华特迪士尼剧院 Walt Disney Theatre | Deck 6 船头 | **09:45 - 10:15** | 30 分钟 | 09:45 |
 | `show_set_sail` | **扬帆起航 Let's Set Sail** | 花园舞台 | Deck 10 中部 | **13:15 - 13:45** | 30 分钟 | 13:15, 14:00, 14:45 |
 | `show_seas_adventure` | **海洋奇遇 Disney Seas The Adventure** | 华特迪士尼剧院 Walt Disney Theatre | Deck 6 船头 | **18:00 - 19:00** | 60 分钟 | 18:00, 20:30 (晚餐联动) |
 | `show_remember` | **回忆：瓦力与伊芙 Remember** | 华特迪士尼剧院 Walt Disney Theatre | Deck 6 船头 | **18:00 - 19:00** | 60 分钟 | 18:00, 20:30 (晚餐联动) |

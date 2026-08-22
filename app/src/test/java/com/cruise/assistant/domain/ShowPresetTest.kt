@@ -157,9 +157,9 @@ class ShowPresetTest {
             ShowPreset(
                 key = "show_duffy_friend_ship",
                 title = "达菲与友谊之船 Duffy and The Friend Ship",
-                deck = 10,
-                zone = ShipZone.MID,
-                placeName = "花园舞台",
+                deck = 6,
+                zone = ShipZone.BOW,
+                placeName = "华特迪士尼剧院 Walt Disney Theatre",
                 durationMinutes = 30,
                 dayOffsets = listOf(2),
                 dailyRangeTo = 4,
@@ -245,9 +245,9 @@ class ShowPresetTest {
 
         val duffy = shows.first { it.key == "show_duffy_friend_ship" }
         assertEquals("达菲与友谊之船 Duffy and The Friend Ship", duffy.title)
-        assertEquals(10, duffy.deck)
-        assertEquals(ShipZone.MID, duffy.zone)
-        assertEquals("花园舞台", duffy.placeName)
+        assertEquals(6, duffy.deck)
+        assertEquals(ShipZone.BOW, duffy.zone)
+        assertEquals("华特迪士尼剧院 Walt Disney Theatre", duffy.placeName)
         assertEquals(30, duffy.durationMinutes)
         assertEquals(LocalTime.of(9, 45), duffy.startTimes.first())
     }
