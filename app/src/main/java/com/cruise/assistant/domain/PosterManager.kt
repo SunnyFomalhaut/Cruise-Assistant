@@ -14,9 +14,42 @@ object PosterManager {
     private val cache = ConcurrentHashMap<String, Bitmap>()
 
     /**
+     * 8 部演出专属海报 asset 路径映射表（presetKey / 标题 / 核心关键词）
+     */
+    private val showPosterRegistry = mapOf(
+        "show_set_sail" to "posters/shows/show_set_sail.jpg",
+        "show_lion_king" to "posters/shows/show_lion_king.jpg",
+        "show_seas_adventure" to "posters/shows/show_seas_adventure.jpg",
+        "show_remember" to "posters/shows/show_remember.jpg",
+        "show_moana" to "posters/shows/show_moana.jpg",
+        "show_avengers" to "posters/shows/show_avengers.jpg",
+        "show_baymax_expo" to "posters/shows/show_baymax_expo.jpg",
+        "show_duffy_friend_ship" to "posters/shows/show_duffy_friend_ship.jpg",
+    )
+
+    private val showKeywordRegistry = listOf(
+        // 1. 扬帆起航
+        listOf("show_set_sail", "扬帆起航", "let's set sail", "lets set sail", "set sail") to "posters/shows/show_set_sail.jpg",
+        // 2. 狮子王烟花
+        listOf("show_lion_king", "狮子王", "烟花", "celebration in the sky", "lion king") to "posters/shows/show_lion_king.jpg",
+        // 3. 海洋奇遇
+        listOf("show_seas_adventure", "海洋奇遇", "seas the adventure", "disney seas") to "posters/shows/show_seas_adventure.jpg",
+        // 4. 回忆：瓦力与伊芙
+        listOf("show_remember", "回忆", "瓦力", "伊芙", "remember") to "posters/shows/show_remember.jpg",
+        // 5. 海洋奇缘
+        listOf("show_moana", "海洋奇缘", "moana", "call of the sea") to "posters/shows/show_moana.jpg",
+        // 6. 复仇者集结
+        listOf("show_avengers", "复仇者", "avengers") to "posters/shows/show_avengers.jpg",
+        // 7. 大白超级健身世博会
+        listOf("show_baymax_expo", "大白", "健身", "baymax", "exercise expo") to "posters/shows/show_baymax_expo.jpg",
+        // 8. 达菲与友谊之船
+        listOf("show_duffy_friend_ship", "达菲", "友谊之船", "duffy", "friend ship") to "posters/shows/show_duffy_friend_ship.jpg",
+    )
+
+    /**
      * 设施名称 -> 海报 asset 路径映射表
      */
-    private val facilityPosterRegistry = mutableMapOf<String, String>(
+    private val facilityPosterRegistry = mutableMapOf(
         // 1. 寻路者湾
         "寻路者湾" to "posters/facilities/wayfinder_bay.jpg",
         "wayfinder bay" to "posters/facilities/wayfinder_bay.jpg",
@@ -93,16 +126,9 @@ object PosterManager {
     )
 
     /**
-     * 事件标题 / presetKey -> 海报 asset 路径映射表
+     * 其他非演出类事件标题 / 俱乐部等映射
      */
-    private val eventPosterRegistry = mutableMapOf<String, String>(
-        "moana" to "posters/facilities/wayfinder_bay.jpg",
-        "海洋奇缘" to "posters/facilities/wayfinder_bay.jpg",
-        "avengers" to "posters/facilities/marvel_landing.jpg",
-        "复仇者" to "posters/facilities/marvel_landing.jpg",
-        "漫威" to "posters/facilities/marvel_landing.jpg",
-        "baymax" to "posters/facilities/san_fransokyo_street.jpg",
-        "大白" to "posters/facilities/san_fransokyo_street.jpg",
+    private val eventPosterRegistry = mutableMapOf(
         "航海家" to "posters/facilities/navigators_club.jpg",
         "navigator" to "posters/facilities/navigators_club.jpg",
         "动画师" to "posters/facilities/animators_palate.jpg",
@@ -111,10 +137,6 @@ object PosterManager {
         "enchanted summer" to "posters/facilities/enchanted_summer.jpg",
         "好莱坞聚光灯" to "posters/facilities/hollywood_spotlight_club.jpg",
         "hollywood spotlight" to "posters/facilities/hollywood_spotlight_club.jpg",
-        "花园舞台" to "posters/facilities/garden_stage.jpg",
-        "garden stage" to "posters/facilities/garden_stage.jpg",
-        "玩具总动员" to "posters/facilities/toy_story_place.jpg",
-        "toy story" to "posters/facilities/toy_story_place.jpg",
         "披萨星球" to "posters/facilities/pizza_planet.jpg",
         "pizza planet" to "posters/facilities/pizza_planet.jpg",
     )
@@ -134,6 +156,38 @@ object PosterManager {
     }
 
     /**
+     * 获取事件海报的 asset 相对路径
+     */
+    fun getEventPosterPath(eventTitle: String, presetKey: String?): String? {
+        val key = presetKey?.trim()?.lowercase()
+        val title = eventTitle.trim().lowercase()
+
+        // 1. PresetKey 精确匹配演出海报
+        if (key != null) {
+            showPosterRegistry[key]?.let { return it }
+        }
+
+        // 2. 演出关键词/标题匹配
+        for ((keywords, path) in showKeywordRegistry) {
+            if (keywords.any { kw -> title.contains(kw) || (key != null && key.contains(kw)) }) {
+                return path
+            }
+        }
+
+        // 3. 其他非演出事件自定义注册表
+        if (key != null && eventPosterRegistry.containsKey(key)) {
+            return eventPosterRegistry[key]
+        }
+        val customEventMatch = eventPosterRegistry[title]
+            ?: eventPosterRegistry.entries.firstOrNull { title.contains(it.key) }?.value
+        if (customEventMatch != null) {
+            return customEventMatch
+        }
+
+        return null
+    }
+
+    /**
      * 加载设施对应的背景海报位图（若存在）
      */
     fun loadFacilityPoster(context: Context, placeName: String): Bitmap? {
@@ -149,14 +203,7 @@ object PosterManager {
      * 加载事件对应的背景海报位图（若存在）
      */
     fun loadEventPoster(context: Context, eventTitle: String, presetKey: String?): Bitmap? {
-        val key = presetKey?.lowercase()
-        val title = eventTitle.trim().lowercase()
-
-        val path = (key?.let { eventPosterRegistry[it] })
-            ?: eventPosterRegistry[title]
-            ?: eventPosterRegistry.entries.firstOrNull { title.contains(it.key) }?.value
-            ?: return null
-
+        val path = getEventPosterPath(eventTitle, presetKey) ?: return null
         return loadFromAsset(context, path)
     }
 
