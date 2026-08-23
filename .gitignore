@@ -10,3 +10,8 @@ keystore.properties
 *.jks
 *.keystore
 .superpowers/
+.kotlin/
+.DS_Store
+Thumbs.db
+*.pyc
+__pycache__/

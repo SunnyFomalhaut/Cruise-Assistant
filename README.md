@@ -1,102 +1,116 @@
 # Cruise Assistant（游轮行程助手）
 
-一款完全离线的 Android 游轮行程规划应用。行程尚在规划阶段时，时间轴以 **3 车道**布局展示当天事件，
-时间重叠的事件并排显示而不会相互遮挡；点击"生成计划表"定稿后，当天切换为**单列只读**视图；
-出海期间即使没有网络，本地通知也会在事件开始前按设定的提前量提醒你。
+[![Android](https://img.shields.io/badge/Platform-Android%208.0%2B-blue.svg)](https://developer.android.com)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1.21-purple.svg)](https://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.06.01-green.svg)](https://developer.android.com/jetpack/compose)
+[![Version](https://img.shields.io/badge/Version-v1.10.13-orange.svg)](https://github.com/SunnyFomalhaut/Cruise-Assistant)
+[![License](https://img.shields.io/badge/License-Private-red.svg)]()
 
-## 环境要求
+一款专为大型游轮（如迪士尼探险号 Disney Adventure）航程打造的**全离线、高并发、多车道行程规划与邮轮生活助手**。
 
-- Android Studio（建议使用最新稳定版）
-- Android SDK Platform 36
-- JDK 21 —— 项目使用 Android Studio 自带的 JBR（JetBrains Runtime）21，已经在 `gradle.properties`
-  中通过 `org.gradle.java.home` 固定指向该运行时。这是因为系统默认的 JDK 19 版本过低，无法运行
-  AGP 8.9.3，因此**不需要**额外安装或配置 JDK，只要 Android Studio 已安装即可。
-- minSdk 26（Android 8.0 及以上）
+在公海无网络环境下，应用提供零延迟的 3 车道时间线编排、SVG 矢量甲板图导航、5 大类设施海报指南、Pixie Dust 互赠礼品房号记录、演出自动候场计算与离线精确本地通知。
 
-工具链版本：Gradle 8.13、AGP 8.9.3、Kotlin 2.1.21、KSP 2.1.21-2.0.2、Room 2.8.4、
-Compose BOM 2026.06.01，compileSdk / targetSdk 均为 36，JVM target 17。
+---
 
-## 构建
+## 🌟 核心功能特性
+
+### 1. 动态 3 车道时间线（Timeline & LaneCanvas）
+- **智能多车道排版**：采用 3 车道动态排版算法（车道 0/1 等宽居左，车道 2 窄幅靠右），时间重叠的活动自动并排展示，彻底告别遮挡。
+- **候场时间段自适应**：演出/活动支持配置提前候场时间（10–120 分钟），时间线上以半透明紧凑色块与虚线无缝连接。
+- **实时指示与今天锚定**：红色高亮「当前时间线」与「正在进行 / 即将开始」提示条，支持多日滑动与快速回弹。
+- **冲突检测与定稿锁定**：一键生成定稿计划表，自动扫描时间重叠冲突；定稿后切换为单列只读防误触模式，支持随时解锁修改。
+
+### 2. 迪士尼探险号甲板地图与离线检索（DeckMap）
+- **矢量甲板图（Deck 5 – Deck 19）**：离线内置 14 张高精度 SVG 矢量甲板图，支持手势缩放、拖拽与楼层切换。
+- **房号与设施检索**：离线房号数据库（`staterooms.json`）与设施地点库（`locations.json`），输入房号或设施名称即刻高亮定位船头/船中/船尾与所在甲板。
+
+### 3. 预设演出库与一键编排（ShowPreset）
+- **一键导入官方大秀**：内置《海洋奇缘》、《超能陆战队》、《复仇者联盟》、《狮子王》等热门演出预设。
+- **智能填充参数**：自动填入官方演出时长、默认举办场地（如华特迪士尼剧院）、建议提前候场时间。
+
+### 4. 邮轮设施海报指南（FacilityGuide）
+- **5 大类设施画廊**：覆盖公共设施、餐饮美馔、青少年俱乐部、精品商店、精彩大秀 50+ 处高清海报。
+- **多维度筛选与详情**：支持按分类、甲板、船体区域检索，点击卡片直达甲板定位与愿望单收藏。
+
+### 5. Pixie Dust 鱼袋互赠与房号九宫格（PixieDust）
+- **专属九宫格房号键盘**：专为快速录入 4-5 位邮轮房号设计的数字键盘，支持触觉震动反馈。
+- **互赠礼品记录**：清晰记录送出（Given）与收到（Received）的互赠礼品与回赠等级。
+- **房号关联与状态标记**：直观查看特定房号的历史互动记录与备注。
+
+### 6. 愿望单与行程转化（Wishlist）
+- 浏览设施与演出时随时加入愿望单，支持按优先级排序与一键生成至指定日期的时间线。
+
+### 7. 个性化主题与壁纸（Customization）
+- **达菲家族精选壁纸**：内置 7 款达菲与朋友们（Duffy, ShellieMay, StellaLou, Gelatoni, CookieAnn, Olu Mel, LinaBell）专属壁纸与自定义上传。
+- **多套色彩主题**：支持切换柔和、海洋、庆典等多套设计系统调色板。
+
+### 8. 离线精确闹钟提醒（Local Notifications）
+- 基于系统底层精确闹钟（`AlarmManager`），支持提前 5/10/15/30/60 分钟离线推送，即便锁屏、离线或重启设备亦能精准提醒。
+
+---
+
+## 🏗️ 架构设计
+
+应用遵循 Clean Architecture + MVVM + MVI 架构，业务领域逻辑完全解耦，易于跨端移植：
+
+```
+com.cruise.assistant/
+├── ui/                 # Jetpack Compose 声明式 UI 层
+│   ├── timeline/       # 3 车道时间线 (LaneCanvas, EventCard, TimeRuler)
+│   ├── event/          # 事件编辑 Sheet、位置选择器、候场时间选择
+│   ├── deckmap/        # SVG 甲板交互图与全船搜索
+│   ├── facilities/     # 设施/餐饮/商店/演出海报指南
+│   ├── pixiedust/      # 鱼袋互赠、房号九宫格键盘与记录管理
+│   ├── wishlist/       # 愿望单列表与转日程
+│   ├── settings/       # 航次管理、壁纸切换、数据备份/恢复
+│   └── theme/          # 颜色、字体与 Material3 主题
+├── domain/             # 纯 Kotlin 业务逻辑与算法 (零 Android Framework 依赖)
+│   ├── LaneAssigner.kt # 3 车道动态排版算法
+│   ├── ConflictDetector# 时间冲突检测算法
+│   ├── ShowPreset.kt   # 演出预设与候场逻辑
+│   ├── StateroomCatalog# 房号离线索引
+│   └── Models.kt       # 领域核心实体
+├── data/               # 数据持久层
+│   ├── db/             # Room 数据库 (8 张实体表与 DAO)
+│   ├── repo/           # Repository 仓库层
+│   └── prefs/          # DataStore 用户配置
+└── reminder/           # 离线精确本地通知与系统广播接收器
+```
+
+---
+
+## 🛠️ 环境要求与构建
+
+### 开发环境
+- **IDE**：Android Studio Ladybug / Meerkat (或最新稳定版)
+- **JDK**：JDK 21（推荐使用 Android Studio 内置 JBR 21）
+- **Android SDK**：Compile SDK 36, Target SDK 36, Min SDK 26 (Android 8.0+)
+- **构建工具**：Gradle 8.13, AGP 8.9.3, Kotlin 2.1.21, Compose BOM 2026.06.01
+
+### 常用编译指令
 
 ```bash
-# 编译 Debug 版
+# 编译 Debug APK
 ./gradlew assembleDebug
 
-# 运行单元测试
+# 执行全量单元测试 (涵盖车道排版、冲突算法、预设解析等 55+ 单元测试)
 ./gradlew testDebugUnitTest
 
-# 安装到已连接的设备/模拟器
+# 编译 Release 签名包 (需配置 keystore.properties)
+./gradlew assembleRelease
+
+# 直接安装到已连接的手机或模拟器
 ./gradlew installDebug
 ```
 
-已验证：`testDebugUnitTest` 55 个测试全部通过、0 个失败、0 个跳过；`lintDebug` 0 个错误。
+---
 
-## 签名 release 版
+## 📱 iOS 版本规划
 
-1. 在 Android Studio 中通过 **Build → Generate Signed App Bundle / APK** 创建你自己的签名密钥库
-   （keystore）。本项目不会替你生成任何密钥库。
-2. 在项目根目录创建 `keystore.properties`（该文件已被 `.gitignore` 忽略，不会被提交），内容格式：
+本项目已预留 `IOS/` 目录，计划采用 **SwiftUI + SwiftData / GRDB** 1:1 原生实现 iOS 平台版本，提供同等出色的 120Hz 极速离线体验与灵动岛实时日程提醒。
 
-   ```properties
-   storeFile=/path/to/your.keystore
-   storePassword=your-store-password
-   keyAlias=your-key-alias
-   keyPassword=your-key-password
-   ```
+---
 
-3. 执行签名构建：
+## 📄 许可协议
 
-   ```bash
-   ./gradlew assembleRelease
-   ```
-
-   产物位于 `app/build/outputs/apk/release/`。
-
-**注意**：若不提供 `keystore.properties`，`assembleRelease` 仍会成功构建（已验证），但会产出一个
-**未签名**的 `app-release-unsigned.apk`（约 2.1 MB），无法直接安装到设备上。要获得可安装、可分发的
-release APK，必须完成上述签名配置。
-
-## 功能
-
-- **引导流程（Onboarding）**：选择登船日期/时间、下船日期、最大甲板层数后，自动生成整个航次、
-  为每一天创建一个 `day_plan`（含首末两天）、预置 6 个内置分类，并插入两个系统事件：所选时间点的
-  "登船"（15 分钟，无地点）和"下船"当天 07:00 的"下船"（30 分钟，无地点）。
-- **时间轴（Timeline）**：左侧为可配置显示范围的小时刻度尺；事件区域分为 **3 条车道**——
-  车道 0 和 1 等宽居左，车道 2 较窄靠右固定——使时间重叠的事件并排显示而不是互相覆盖。
-  仅在"今天"显示红色"现在"线以及"进行中 / 下一个"提示条。日期条上实心点表示已定稿，空心点表示规划中。
-- **事件卡片**：三行信息——`[类别] 事件内容` / 地点（如 `9F船尾剧场`，无地点时整行省略，
-  如登船/下船）/ `13:15 – 13:45  30m`。短事件会折叠为单行；在较窄的车道中仅显示标题。
-- **新增/编辑事件**：分类图标网格、标题、**地点选择器**（1F–最大层甲板 + 船头/船中/船尾 +
-  可记住历史输入的自由文本地点名）、起止时间滚轮，以及"每日同一时间循环"开关——从创建当天重复至
-  **下船前一天**（下船当天只保留"下船"这一事件）。
-- **系统事件仅时间可编辑**：登船/下船的标题和分类被锁定且不可删除，只能修改时间。
-- **分类管理**：6 个内置分类（餐食 / 演出 / 重要事项 / 琐事 / 娱乐项目 / 见面会），各有专属颜色；
-  可通过 8 色调色板和图标网格创建自定义分类，支持子分类和归档。内置分类不可删除；删除自定义分类时，
-  其下的事件会被重新归入"琐事"而不是变成孤立数据。**没有"计时模式"相关功能**（已刻意移除）。
-- **生成计划表（定稿）**：检查当天的事件时间冲突并列出所有冲突配对。"去修改"会关闭对话框但保留
-  冲突事件卡片上的 `!` 标记；"忽略冲突继续生成"则直接定稿。定稿后的一天会变为**单列只读**布局，
-  带有"已定稿"徽章和"解锁"按钮，点击解锁可返回 3 车道规划状态。首尾相接（一个事件结束时间正好等于
-  下一个事件开始时间）的事件不会被判定为冲突。
-- **设置**：时间轴显示范围（含快捷预设及至少 2 小时的校验）、每小时高度滑块、自动隐藏空白时段、
-  提醒开关及提前提醒时长（5/10/15/30/60 分钟）、只读的航次概览、"重建航次"（具有破坏性，需二次确认）
-  以及"事项管理"。
-- **提醒**：使用精确本地闹钟，在每个事件开始前 N 分钟推送通知（内容格式如 `类别 · 事件内容` /
-  `13:15 · 9F船尾剧场`）。在事件变更、设置变更、定稿/解锁、设备重启、应用启动时都会重新调度。
-  仅为未来事件排期，且最多同时安排最近的 100 个。删除事件或重建航次后对应的闹钟会被正确取消。
-  应用完全离线运行——无网络请求、无账号体系。
-
-## 架构
-
-```
-ui/        Compose 界面 + ViewModel（StateFlow）
-domain/    纯 Kotlin 业务逻辑（车道分配、冲突检测、循环规则、时间轴计算）
-data/      Room 数据库 + DataStore 设置 + 仓库（Repository）层
-reminder/  AlarmManager 调度 + 通知
-```
-
-`domain/` 模块不依赖任何 Android API，因此所有易出错的计算逻辑都被 55 个快速的 JVM 单元测试覆盖。
-
-## 已知限制
-
-不支持多航次管理、云同步、账号体系、行程导出/分享、统计报表、深色模式（属规格中明确排除的范围）、
-跨天事件；也没有在应用内直接修改航次起止日期的方式，只能通过"重建航次"整体重建。
+本项目为个人私有项目，保留所有权利。未经许可不得公开分发或商用。
