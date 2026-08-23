@@ -132,6 +132,17 @@ public struct SettingsView: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(palette.primary)
                 }
+
+                Button {
+                    viewModel.addPresetShows()
+                } label: {
+                    HStack {
+                        Image(systemName: "sparkles.tv")
+                        Text("一键预添加迪士尼探险号官方演出")
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(palette.primary)
+                }
             } else {
                 Text("暂无有效航次数据")
                     .foregroundColor(Slate500)

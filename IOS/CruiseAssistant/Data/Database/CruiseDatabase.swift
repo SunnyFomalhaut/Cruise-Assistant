@@ -127,6 +127,13 @@ public final class CruiseDatabase: @unchecked Sendable {
         }
         saveToDisk()
     }
+    public func deleteDayPlan(for date: SimpleDate) {
+        lock.lock()
+        defer { lock.unlock() }
+        state.dayPlans.removeAll { $0.date == date }
+        saveToDisk()
+    }
+
 
     public func saveDayPlans(_ plans: [DayPlan]) {
         lock.lock()
@@ -140,14 +147,6 @@ public final class CruiseDatabase: @unchecked Sendable {
         }
         saveToDisk()
     }
-
-    public func deleteDayPlan(for date: SimpleDate) {
-        lock.lock()
-        defer { lock.unlock() }
-        state.dayPlans.removeAll { $0.date == date }
-        saveToDisk()
-    }
-
     public func clearDayPlans() {
         lock.lock()
         defer { lock.unlock() }
@@ -463,6 +462,7 @@ public final class CruiseDatabase: @unchecked Sendable {
         state.pixieDustRecords.removeAll()
         saveToDisk()
     }
+
 
     // MARK: - PixieLevel Operations
 

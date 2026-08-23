@@ -158,6 +158,13 @@ public final class SettingsViewModel: ObservableObject {
         self.voyage = current
         triggerRescheduleNotifications()
     }
+    // MARK: - Preset Shows
+
+    public func addPresetShows() {
+        voyageRepository.addPresetShows(dinnerTime: settings.dinnerTime)
+        triggerRescheduleNotifications()
+    }
+
 
     // MARK: - Data Management & Backup
 

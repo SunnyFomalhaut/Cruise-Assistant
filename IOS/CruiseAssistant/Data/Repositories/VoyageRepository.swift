@@ -18,6 +18,7 @@ public protocol VoyageRepositoryProtocol: Sendable {
     func resetVoyage()
     func getDayPlans() -> [SimpleDate: DayPlan]
     func setFinalized(date: SimpleDate, finalized: Bool, nowMs: Int64)
+    func addPresetShows(dinnerTime: SimpleTime?)
 }
 
 /// Fixed duration and schedule constants matching cruise specifications.
@@ -106,7 +107,7 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
         )
         database.saveEvent(disembarkEvent)
 
-        // 4. Built-in ship preset events (Safety drill and daily dinners)
+        // 4. Built-in ship preset events (Safety drill, daily dinners, and preset shows)
         if shipPresetName != nil {
             let mealId = categories.first(where: { $0.iconKey == "meal" })?.id ?? importantId
 
@@ -141,9 +142,114 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
                 )
                 database.saveEvent(dinner)
             }
+
+            // 5. Official Disney Adventure Shows (scheduled if ship is Disney Adventure)
+            let isAdventure = shipPresetName?.localizedCaseInsensitiveContains("adventure") == true
+                || shipPresetName?.localizedCaseInsensitiveContains("探险") == true
+                || shipName?.localizedCaseInsensitiveContains("adventure") == true
+                || shipName?.localizedCaseInsensitiveContains("探险") == true
+
+            if isAdventure {
+                let showId = categories.first(where: { $0.iconKey == "show" })?.id ?? importantId
+                var showLanesByDay: [SimpleDate: [(lane: Int, start: Int, end: Int)]] = [:]
+
+                for show in DISNEY_ADVENTURE_SHOWS {
+                    let showDates = show.resolveDates(boardDate: boardDate, dayCount: voyage.dayCount)
+                    for date in showDates {
+                        let times: [SimpleTime]
+                        if show.dinnerLinked {
+                            times = [pickDinnerLinkedTime(dinnerTime: dinnerTime)]
+                        } else {
+                            times = show.startTimes
+                        }
+
+                        for startTime in times {
+                            let startMin = startTime.totalMinutes
+                            let effStart = startMin - show.defaultWaitMinutes
+                            let effEnd = startMin + show.durationMinutes
+                            let occupied = showLanesByDay[date] ?? []
+                            let lane = assignShowLane(startMinute: effStart, endMinute: effEnd, occupied: occupied)
+                            showLanesByDay[date, default: []].append((lane: lane, start: effStart, end: effEnd))
+
+                            let showEvent = CruiseEvent(
+                                id: 0,
+                                date: date,
+                                startTime: startTime,
+                                durationMinutes: show.durationMinutes,
+                                categoryId: showId,
+                                title: show.title,
+                                deck: show.deck,
+                                zone: show.zone,
+                                placeName: show.placeName,
+                                lane: lane,
+                                isSystemGenerated: false,
+                                presetKey: show.key,
+                                waitMinutes: show.defaultWaitMinutes
+                            )
+                            database.saveEvent(showEvent)
+                        }
+                    }
+                }
+            }
         }
 
         return voyage
+    }
+
+    /// 一键预添加或补全迪士尼探险号预置演出
+    public func addPresetShows(dinnerTime: SimpleTime? = nil) {
+        guard let voyage = getVoyage() else { return }
+        let currentDinnerTime = dinnerTime ?? SimpleTime(hour: 17, minute: 45)
+        let categories = database.getCategories()
+        let showId = categories.first(where: { $0.iconKey == "show" })?.id
+            ?? categories.first(where: { $0.name == "演出" })?.id
+            ?? 1
+
+        let existingEvents = database.getAllEvents()
+        var showLanesByDay: [SimpleDate: [(lane: Int, start: Int, end: Int)]] = [:]
+
+        for show in DISNEY_ADVENTURE_SHOWS {
+            let showDates = show.resolveDates(boardDate: voyage.boardDate, dayCount: voyage.dayCount)
+            for date in showDates {
+                let times: [SimpleTime]
+                if show.dinnerLinked {
+                    times = [pickDinnerLinkedTime(dinnerTime: currentDinnerTime)]
+                } else {
+                    times = show.startTimes
+                }
+
+                for startTime in times {
+                    let isAlreadyAdded = existingEvents.contains { ev in
+                        ev.date == date && ev.presetKey == show.key && ev.startTime == startTime
+                    }
+                    if isAlreadyAdded { continue }
+
+                    let startMin = startTime.totalMinutes
+                    let effStart = startMin - show.defaultWaitMinutes
+                    let effEnd = startMin + show.durationMinutes
+                    let occupied = showLanesByDay[date] ?? []
+                    let lane = assignShowLane(startMinute: effStart, endMinute: effEnd, occupied: occupied)
+                    showLanesByDay[date, default: []].append((lane: lane, start: effStart, end: effEnd))
+
+                    let showEvent = CruiseEvent(
+                        id: 0,
+                        date: date,
+                        startTime: startTime,
+                        durationMinutes: show.durationMinutes,
+                        categoryId: showId,
+                        title: show.title,
+                        deck: show.deck,
+                        zone: show.zone,
+                        placeName: show.placeName,
+                        lane: lane,
+                        isSystemGenerated: false,
+                        presetKey: show.key,
+                        waitMinutes: show.defaultWaitMinutes
+                    )
+                    database.saveEvent(showEvent)
+                }
+            }
+        }
     }
 
     public func updateVoyage(_ voyage: Voyage) {
@@ -151,48 +257,53 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
 
         let validDates = Set(voyage.datesInVoyage())
         let existingPlans = database.getDayPlans()
-
-        // Add missing day plans
-        for date in validDates where existingPlans[date] == nil {
-            database.saveDayPlan(DayPlan(date: date, finalized: false, finalizedAt: nil))
+        // Delete non-system events falling outside the new voyage range
+        let allEvents = database.getAllEvents()
+        for event in allEvents where !event.isSystemGenerated && !validDates.contains(event.date) {
+            database.deleteEvent(id: event.id)
         }
 
-        // Remove out-of-range day plans
+        // Delete day plans outside the new voyage range
         for date in existingPlans.keys where !validDates.contains(date) {
             database.deleteDayPlan(for: date)
         }
 
-        // Handle events: update system events, remove out-of-range non-system events
-        let allEvents = database.getAllEvents()
 
-        // 1. Remove non-system events outside new date range
-        let outOfRangeEvents = allEvents.filter { !validDates.contains($0.date) && !$0.isSystemGenerated }
-        database.deleteEvents(ids: outOfRangeEvents.map(\.id))
-
-        // 2. Move system events to updated times
-        for var event in allEvents where event.isSystemGenerated {
-            if event.title == "登船" || event.title == "上船" {
-                event.title = "登船"
-                event.date = voyage.boardDate
-                event.startTime = voyage.boardTime
-                database.updateEvent(event)
+        // Relocate boarding and disembarkation system events
+        for event in database.getAllEvents() where event.isSystemGenerated {
+            if event.title == "登船" {
+                let updated = CruiseEvent(
+                    id: event.id,
+                    date: voyage.boardDate,
+                    startTime: voyage.boardTime,
+                    durationMinutes: event.durationMinutes,
+                    categoryId: event.categoryId,
+                    title: event.title,
+                    isSystemGenerated: true
+                )
+                database.saveEvent(updated)
             } else if event.title == "下船" {
-                event.date = voyage.disembarkDate
-                event.startTime = voyage.disembarkTime
-                database.updateEvent(event)
+                let updated = CruiseEvent(
+                    id: event.id,
+                    date: voyage.disembarkDate,
+                    startTime: voyage.disembarkTime,
+                    durationMinutes: event.durationMinutes,
+                    categoryId: event.categoryId,
+                    title: event.title,
+                    isSystemGenerated: true
+                )
+                database.saveEvent(updated)
             }
         }
     }
 
     public func resetVoyage() {
-        database.clearEvents()
-        database.clearDayPlans()
         database.clearVoyage()
+        database.clearDayPlans()
+        database.clearEvents()
         database.clearLocationPresets()
         database.clearPixieDustRecords()
-        database.clearPixieLevels()
-
-        // Reseed default 3 pixie levels
+        categoryRepository.seedBuiltInCategories()
         for level in PixieLevel.BUILT_IN_PIXIE_LEVELS {
             database.savePixieLevel(level)
         }

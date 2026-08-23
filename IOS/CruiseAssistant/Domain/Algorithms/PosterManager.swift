@@ -63,11 +63,13 @@ public final class PosterManager: @unchecked Sendable {
         "opulence spa": "posters/facilities/opulence_spa.jpg",
         "礼宾休息室": "posters/facilities/concierge_lounge.jpg",
         "礼宾户外休息室": "posters/facilities/concierge_lounge.jpg",
+        "礼宾健身中心": "posters/facilities/concierge_lounge.jpg",
+        "concierge fitness center": "posters/facilities/concierge_lounge.jpg",
+        "concierge fitness": "posters/facilities/concierge_lounge.jpg",
         "concierge lounge": "posters/facilities/concierge_lounge.jpg",
         "concierge lounge outdoor": "posters/facilities/concierge_lounge.jpg",
         "礼宾阳光甲板": "posters/facilities/concierge_sundeck.jpg",
         "concierge sundeck": "posters/facilities/concierge_sundeck.jpg",
-
         // 2. 花园舞台
         "花园舞台": "posters/facilities/garden_stage.jpg",
         "garden stage": "posters/facilities/garden_stage.jpg",
@@ -449,28 +451,46 @@ public final class PosterManager: @unchecked Sendable {
 
     /// 解析 Bundle 中的海报 URL
     public func urlForPoster(path: String, bundle: Bundle? = nil) -> URL? {
-        let targetBundle = bundle ?? CruiseAssistant.bundle
         let clean = (path as NSString).lastPathComponent
         let name = (clean as NSString).deletingPathExtension
         let ext = (clean as NSString).pathExtension.isEmpty ? "jpg" : (clean as NSString).pathExtension
 
-        let directoryCandidates = [
-            (path as NSString).deletingLastPathComponent,
-            "Posters/\((path as NSString).deletingLastPathComponent)",
+        let parentDir = (path as NSString).deletingLastPathComponent
+        let subCategory = (parentDir as NSString).lastPathComponent
+
+        let bundlesToTry: [Bundle] = [
+            bundle,
+            CruiseAssistant.bundle,
+            Bundle.main,
+            Bundle(for: CruiseAssistantBundleMarker.self)
+        ].compactMap { $0 }
+
+        let directoryCandidates: [String?] = [
+            "Posters/\(subCategory)",
+            "posters/\(subCategory)",
+            subCategory,
+            "Resources/Posters/\(subCategory)",
+            "Resources/posters/\(subCategory)",
             "Posters",
-            "Resources/Posters/\((path as NSString).deletingLastPathComponent)",
-            nil,
+            "posters",
+            "Resources/Posters",
+            parentDir,
+            nil
         ]
 
-        for sub in directoryCandidates {
-            if let url = targetBundle.url(forResource: name, withExtension: ext, subdirectory: sub) {
+        for b in bundlesToTry {
+            for sub in directoryCandidates {
+                if let url = b.url(forResource: name, withExtension: ext, subdirectory: sub) {
+                    return url
+                }
+            }
+            if let url = b.url(forResource: name, withExtension: ext) {
                 return url
             }
         }
 
-        return targetBundle.url(forResource: name, withExtension: ext)
+        return nil
     }
-
     public func posterUrl(for placeName: String, bundle: Bundle? = nil) -> URL? {
         guard let path = findPosterPath(for: placeName) else { return nil }
         return urlForPoster(path: path, bundle: bundle)
