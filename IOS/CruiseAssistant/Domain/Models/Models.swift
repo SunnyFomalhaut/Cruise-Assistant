@@ -8,6 +8,9 @@ public enum ShipZone: String, Codable, CaseIterable, Sendable {
     case bow = "BOW"
     case mid = "MID"
     case stern = "STERN"
+    public static let BOW = ShipZone.bow
+    public static let MID = ShipZone.mid
+    public static let STERN = ShipZone.stern
 
     public var label: String {
         switch self {

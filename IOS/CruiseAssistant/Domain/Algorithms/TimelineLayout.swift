@@ -12,65 +12,6 @@ public let EVENT_PADDING_MINUTES: Int = 30
 /// Minimum timeline range span in minutes (2 hours).
 public let MIN_RANGE_MINUTES: Int = 120
 
-/// Default show waiting duration before start time.
-public let SHOW_WAIT_MINUTES: Int = 30
-
-/// Resolves the default wait minutes for show arrival:
-/// - Deck 6 Walt Disney Theatre (or any Disney Theatre show): 45 min
-/// - Lion King Fireworks: 45 min
-/// - Baymax Cinema: 15 min
-/// - Garden Stage: 15 min
-/// - Wayfinder Bay: 30 min
-/// - Fallback: 30 min
-public func resolveDefaultWaitMinutes(
-    placeName: String? = nil,
-    deck: Int? = nil,
-    title: String? = nil,
-    presetKey: String? = nil
-) -> Int {
-    let text = "\(placeName ?? "") \(title ?? "") \(presetKey ?? "")"
-    if text.contains("迪士尼剧院") || text.contains("Disney Theatre") || text.contains("Disney Theater") || (deck == 6 && text.contains("剧院")) {
-        return 45
-    }
-    if text.contains("狮子王") || text.contains("Lion King") || text.contains("show_lion_king") {
-        return 45
-    }
-    if text.contains("大白剧院") || text.contains("Baymax Cinema") || text.contains("Baymax Cinemas") {
-        return 15
-    }
-    if text.contains("花园舞台") || text.contains("Garden Stage") {
-        return 15
-    }
-    if text.contains("寻路者湾") || text.contains("Wayfinder Bay") {
-        return 30
-    }
-    return 30
-}
-
-extension CruiseEvent {
-    /// Effective wait minutes before show start; uses custom waitMinutes if set, otherwise derives from venue/preset.
-    public var effectiveWaitMinutes: Int {
-        waitMinutes ?? resolveDefaultWaitMinutes(placeName: placeName, deck: deck, title: title, presetKey: presetKey)
-    }
-}
-
-/// Effective range of an event in minutes: [start, end).
-/// Show category events extend earlier by effectiveWaitMinutes to account for arrival time.
-public func showEffectiveRange(_ event: CruiseEvent, isShow: Bool) -> (start: Int, end: Int) {
-    if isShow {
-        return (event.startMinute - event.effectiveWaitMinutes, event.endMinute)
-    } else {
-        return (event.startMinute, event.endMinute)
-    }
-}
-
-/// Constructs a closure mapping an event to its effective time range based on show category IDs.
-public func showRangeOf(_ showCategoryIds: Set<Int64>) -> (CruiseEvent) -> (start: Int, end: Int) {
-    return { event in
-        showEffectiveRange(event, isShow: showCategoryIds.contains(event.categoryId))
-    }
-}
-
 /// A segment of the timeline. Collapsed segments have a fixed height; uncollapsed segments scale proportionally.
 public struct Segment: Hashable, Sendable {
     public let startMinute: Int
@@ -327,34 +268,3 @@ public func buildCollapsedSpans(
     return merged
 }
 
-/// Finds all overlapping event pairs on the same day.
-public func findConflicts(
-    _ events: [CruiseEvent],
-    rangeOf: (CruiseEvent) -> (start: Int, end: Int) = { ($0.startMinute, $0.endMinute) }
-) -> [(first: CruiseEvent, second: CruiseEvent)] {
-    let activeEvents = events.filter { $0.isActive }
-    let sorted = activeEvents.sorted {
-        let r1 = rangeOf($0)
-        let r2 = rangeOf($1)
-        if r1.start != r2.start {
-            return r1.start < r2.start
-        }
-        return $0.id < $1.id
-    }
-    var result: [(first: CruiseEvent, second: CruiseEvent)] = []
-    for i in 0..<sorted.count {
-        let a = sorted[i]
-        let aRange = rangeOf(a)
-        for j in (i + 1)..<sorted.count {
-            let b = sorted[j]
-            let bRange = rangeOf(b)
-            if bRange.start >= aRange.end {
-                break
-            }
-            if overlaps(aRange.start, aRange.end, bRange.start, bRange.end) {
-                result.append((first: a, second: b))
-            }
-        }
-    }
-    return result
-}
