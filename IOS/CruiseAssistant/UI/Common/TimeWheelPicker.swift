@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A two-column wheel picker for selecting hours (00-23) and minutes (00-59 with configurable step).
+/// A clean, full-width two-column wheel picker for selecting hours (00-23) and minutes (00-59 with configurable step).
 public struct TimeWheelPicker: View {
     @Binding public var hour: Int
     @Binding public var minute: Int
@@ -34,10 +34,8 @@ public struct TimeWheelPicker: View {
         self._minute = Binding(
             get: {
                 let current = time.wrappedValue.minute
-                if minuteStep > 1 {
-                    return (current / minuteStep) * minuteStep
-                }
-                return current
+                let step = max(1, min(30, minuteStep))
+                return (current / step) * step
             },
             set: { newMinute in
                 time.wrappedValue = SimpleTime(hour: time.wrappedValue.hour, minute: newMinute)
@@ -52,67 +50,68 @@ public struct TimeWheelPicker: View {
     }
 
     public var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             // Hours Wheel
-            HStack(spacing: 4) {
-                let hourPicker = Picker("", selection: $hour) {
+            HStack(spacing: 6) {
+                Picker("", selection: $hour) {
                     ForEach(0..<24, id: \.self) { h in
                         Text(String(format: "%02d", h))
-                            .font(.system(size: 20, weight: .semibold, design: .monospaced))
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundColor(Slate900)
                             .tag(h)
                     }
                 }
                 #if os(iOS)
-                hourPicker
-                    .pickerStyle(.wheel)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
+                .pickerStyle(.wheel)
+                .frame(width: 85, height: 130)
+                .clipped()
                 #else
-                hourPicker
-                    .pickerStyle(.automatic)
-                    .frame(maxWidth: .infinity)
+                .pickerStyle(.automatic)
+                .frame(width: 85)
                 #endif
 
                 if showLabels {
                     Text("时")
-                        .font(.subheadline)
-                        .foregroundColor(Slate500)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Slate600)
+                        .fixedSize()
                 }
             }
 
             Text(":")
-                .font(.system(size: 20, weight: .bold))
+                .font(.system(size: 24, weight: .heavy, design: .rounded))
                 .foregroundColor(Slate400)
-                .padding(.horizontal, 2)
+                .padding(.horizontal, 4)
 
             // Minutes Wheel
-            HStack(spacing: 4) {
-                let minutePicker = Picker("", selection: $minute) {
+            HStack(spacing: 6) {
+                Picker("", selection: $minute) {
                     ForEach(minuteOptions, id: \.self) { m in
                         Text(String(format: "%02d", m))
-                            .font(.system(size: 20, weight: .semibold, design: .monospaced))
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundColor(Slate900)
                             .tag(m)
                     }
                 }
                 #if os(iOS)
-                minutePicker
-                    .pickerStyle(.wheel)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
+                .pickerStyle(.wheel)
+                .frame(width: 85, height: 130)
+                .clipped()
                 #else
-                minutePicker
-                    .pickerStyle(.automatic)
-                    .frame(maxWidth: .infinity)
+                .pickerStyle(.automatic)
+                .frame(width: 85)
                 #endif
 
                 if showLabels {
                     Text("分")
-                        .font(.subheadline)
-                        .foregroundColor(Slate500)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Slate600)
+                        .fixedSize()
                 }
             }
         }
-        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 4)
     }
 }
 
