@@ -230,7 +230,7 @@ final class ShowPresetTests: XCTestCase {
     func testPresetShowsSummary_listsAllShowsWithDayAndCount() {
         let summary = presetShowsSummary()
         let lines = summary.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        XCTAssertEqual(8, lines.count)
+        XCTAssertEqual(6, lines.count)
         XCTAssertTrue(lines[0].contains("扬帆起航 Let's Set Sail"))
         XCTAssertTrue(lines[0].contains("第1天"))
         XCTAssertTrue(lines[0].contains("3场"))
@@ -245,14 +245,7 @@ final class ShowPresetTests: XCTestCase {
         XCTAssertTrue(lines[5].contains("复仇者集结 Avengers Assemble!"))
         XCTAssertTrue(lines[5].contains("第2天起每天"))
         XCTAssertTrue(lines[5].contains("2场"))
-        XCTAssertTrue(lines[6].contains("大白超级健身世博会 Baymax Super Exercise Expo"))
-        XCTAssertTrue(lines[6].contains("第2天起每天"))
-        XCTAssertTrue(lines[6].contains("1场"))
-        XCTAssertTrue(lines[7].contains("达菲与友谊之船 Duffy and The Friend Ship"))
-        XCTAssertTrue(lines[7].contains("第2天起每天"))
-        XCTAssertTrue(lines[7].contains("1场"))
     }
-
     func testDisneyAdventureShows_contains8ShowsWithEarliestTimes() {
         let shows = DISNEY_ADVENTURE_SHOWS
         XCTAssertEqual(8, shows.count)

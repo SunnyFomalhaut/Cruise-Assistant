@@ -196,9 +196,14 @@ public let DISNEY_ADVENTURE_SHOWS: [ShowPreset] = [
     ),
 ]
 
+/** 迪士尼探险号自动生成的演出目录（排除非固定上演的大白健身与达菲演出） */
+public let AUTO_GENERATED_DISNEY_ADVENTURE_SHOWS: [ShowPreset] = DISNEY_ADVENTURE_SHOWS.filter {
+    $0.key != "show_baymax_expo" && $0.key != "show_duffy_friend_ship"
+}
+
 /** 弹窗消息中的演出列表摘要：每行 "· {title}（{天数} {场次数}）"，行间 \n 连接 */
 public func presetShowsSummary() -> String {
-    DISNEY_ADVENTURE_SHOWS.map { show in
+    AUTO_GENERATED_DISNEY_ADVENTURE_SHOWS.map { show in
         let dayLabel = show.dailyRangeTo != nil
             ? "第\(show.dayOffsets.first ?? 1)天起每天"
             : "第\(show.dayOffsets.map(String.init).joined(separator: "、"))天"

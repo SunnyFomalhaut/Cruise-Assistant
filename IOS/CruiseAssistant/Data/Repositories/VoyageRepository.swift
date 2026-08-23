@@ -153,8 +153,7 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
             if isAdventure {
                 let showId = categories.first(where: { $0.iconKey == "show" })?.id ?? importantId
                 var showLanesByDay: [SimpleDate: [(lane: Int, start: Int, end: Int)]] = [:]
-
-                for show in DISNEY_ADVENTURE_SHOWS {
+                for show in AUTO_GENERATED_DISNEY_ADVENTURE_SHOWS {
                     let showDates = show.resolveDates(boardDate: boardDate, dayCount: voyage.dayCount)
                     for date in showDates {
                         let times: [SimpleTime]
@@ -208,8 +207,7 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
 
         let existingEvents = database.getAllEvents()
         var showLanesByDay: [SimpleDate: [(lane: Int, start: Int, end: Int)]] = [:]
-
-        for show in DISNEY_ADVENTURE_SHOWS {
+        for show in AUTO_GENERATED_DISNEY_ADVENTURE_SHOWS {
             let showDates = show.resolveDates(boardDate: voyage.boardDate, dayCount: voyage.dayCount)
             for date in showDates {
                 let times: [SimpleTime]
