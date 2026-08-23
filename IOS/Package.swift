@@ -19,6 +19,7 @@ let package = Package(
             name: "CruiseAssistant",
             dependencies: [],
             path: "CruiseAssistant",
+            exclude: ["Info.plist"],
             resources: [
                 .process("Resources")
             ]
