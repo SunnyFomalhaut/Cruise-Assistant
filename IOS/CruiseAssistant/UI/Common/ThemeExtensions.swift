@@ -278,4 +278,32 @@ extension SimpleDate {
     public var chineseFormatted: String {
         "\(year)年\(month)月\(day)日"
     }
+
+    /// Creates today's date in local calendar.
+    public static func today() -> SimpleDate {
+        SimpleDate(date: Date())
+    }
+
+    /// Construct SimpleDate from Swift standard Date.
+    public static func fromDate(_ date: Date, calendar: Calendar = .current) -> SimpleDate {
+        SimpleDate(date: date, calendar: calendar)
+    }
+
+    /// Returns short Chinese weekday name (e.g. "周一").
+    public var dayOfWeekShort: String {
+        weekdayChinese(for: self)
+    }
+}
+
+// MARK: - Navigation Bar Display Mode Helper
+
+extension View {
+    @ViewBuilder
+    public func inlineNavigationBarTitle() -> some View {
+        #if os(iOS)
+        self.navigationBarTitleDisplayMode(.inline)
+        #else
+        self
+        #endif
+    }
 }

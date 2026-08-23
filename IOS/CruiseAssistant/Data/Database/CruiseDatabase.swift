@@ -572,4 +572,21 @@ public final class CruiseDatabase: @unchecked Sendable {
         state.wishlistItems.removeAll()
         saveToDisk()
     }
+
+    // MARK: - Backup & Export
+
+    public func getState() -> CruiseDatabaseState {
+        lock.lock()
+        defer { lock.unlock() }
+        return state
+    }
+
+    public func exportBackupJSON() -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(state) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
 }

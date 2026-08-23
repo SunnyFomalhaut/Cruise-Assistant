@@ -19,6 +19,10 @@ public enum ShipZone: String, Codable, CaseIterable, Sendable {
         case .stern: return "船尾"
         }
     }
+
+    public var displayName: String {
+        label
+    }
 }
 
 /// A lightweight, calendar-independent date representation (Year-Month-Day).
