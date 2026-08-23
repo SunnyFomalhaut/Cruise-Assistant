@@ -19,6 +19,20 @@ enum class DuffyCharacter(
     }
 }
 
+enum class DollTier(val folderName: String) {
+    HEAD("head"),
+    HALF_BODY("half_body"),
+    FULL_BODY("full_body");
+
+    companion object {
+        fun forCardHeight(heightDp: Float): DollTier = when {
+            heightDp < 44f -> HEAD
+            heightDp < 72f -> HALF_BODY
+            else -> FULL_BODY
+        }
+    }
+}
+
 enum class DollDistributionMode {
     COLOR_AFFINITY,
     UNIFORM_RANDOM

@@ -1,178 +1,183 @@
 package com.cruise.assistant.domain
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DollManagerTest {
 
     @Test
-    fun compactCard_under44dp_returnsNullForBoth() {
-        val result = DollManager.selectDollsForCard(
-            eventId = 1001L,
-            cardColorArgb = 0xFF9C27B0.toInt(),
-            cardHeightDp = 40f,
-            blankHeightDp = 10f,
-            mode = DollDistributionMode.COLOR_AFFINITY
-        )
-        assertNull("Primary doll must be null for compact card (< 44dp)", result.first)
-        assertNull("Secondary doll must be null for compact card (< 44dp)", result.second)
+    fun dollTier_forCardHeight_thresholds() {
+        assertEquals(DollTier.HEAD, DollTier.forCardHeight(0f))
+        assertEquals(DollTier.HEAD, DollTier.forCardHeight(35f))
+        assertEquals(DollTier.HEAD, DollTier.forCardHeight(43.9f))
+        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(44f))
+        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(55f))
+        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(71.9f))
+        assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(72f))
+        assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(90f))
+        assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(150f))
     }
 
     @Test
-    fun normalCard_returnsPrimaryDollAndNullSecondary() {
-        val result = DollManager.selectDollsForCard(
-            eventId = 1002L,
-            cardColorArgb = 0xFF4CAF50.toInt(),
-            cardHeightDp = 70f,
-            blankHeightDp = 30f,
-            mode = DollDistributionMode.COLOR_AFFINITY
-        )
-        assertNotNull("Primary doll should be present for normal card", result.first)
-        assertTrue("Primary doll path should not be empty", result.first!!.isNotEmpty())
-        assertNull("Secondary doll should be null for normal card (< 90dp or blank < 50dp)", result.second)
+    fun all60AssetsRegistered_andProperlyTiered() {
+        val allRegistered = DollManager.getAllAssets()
+        assertEquals("Total registered doll assets must be exactly 60", 60, allRegistered.size)
+        assertEquals(60, allRegistered.distinct().size)
+
+        var headCount = 0
+        var halfBodyCount = 0
+        var fullBodyCount = 0
+
+        DuffyCharacter.entries.forEach { character ->
+            val heads = DollManager.getAssets(character, DollTier.HEAD)
+            val halfBodies = DollManager.getAssets(character, DollTier.HALF_BODY)
+            val fullBodies = DollManager.getAssets(character, DollTier.FULL_BODY)
+
+            headCount += heads.size
+            halfBodyCount += halfBodies.size
+            fullBodyCount += fullBodies.size
+
+            heads.forEach { path ->
+                assertTrue("Head path $path must contain /head/", path.contains("/head/"))
+                assertTrue("Head path $path must start with ${character.assetDir}", path.startsWith(character.assetDir))
+                assertEquals(character, DollManager.getCharacterForAsset(path))
+                assertEquals(DollTier.HEAD, DollManager.getTierForAsset(path))
+            }
+            halfBodies.forEach { path ->
+                assertTrue("HalfBody path $path must contain /half_body/", path.contains("/half_body/"))
+                assertTrue("HalfBody path $path must start with ${character.assetDir}", path.startsWith(character.assetDir))
+                assertEquals(character, DollManager.getCharacterForAsset(path))
+                assertEquals(DollTier.HALF_BODY, DollManager.getTierForAsset(path))
+            }
+            fullBodies.forEach { path ->
+                assertTrue("FullBody path $path must contain /full_body/", path.contains("/full_body/"))
+                assertTrue("FullBody path $path must start with ${character.assetDir}", path.startsWith(character.assetDir))
+                assertEquals(character, DollManager.getCharacterForAsset(path))
+                assertEquals(DollTier.FULL_BODY, DollManager.getTierForAsset(path))
+            }
+        }
+
+        assertEquals("Total head tier assets must be 10", 10, headCount)
+        assertEquals("Total half_body tier assets must be 7", 7, halfBodyCount)
+        assertEquals("Total full_body tier assets must be 43", 43, fullBodyCount)
     }
 
     @Test
-    fun largeCard_withEnoughBlankHeight_returnsBothPrimaryAndSecondaryDolls() {
-        val result = DollManager.selectDollsForCard(
-            eventId = 1003L,
-            cardColorArgb = 0xFFFFEB3B.toInt(),
-            cardHeightDp = 120f,
-            blankHeightDp = 70f,
-            mode = DollDistributionMode.COLOR_AFFINITY
-        )
-        val primary = result.first
-        val secondary = result.second
-
-        assertNotNull("Primary doll should be present for large card", primary)
-        assertNotNull("Secondary doll should be present for large card with >= 50dp blank height", secondary)
-        assertNotEquals("Primary and secondary dolls must not be the exact same asset", primary, secondary)
-
-        // Verify primary and secondary belong to different characters
-        val primaryChar = DollManager.getCharacterForAsset(primary!!)
-        val secondaryChar = DollManager.getCharacterForAsset(secondary!!)
-        assertNotNull(primaryChar)
-        assertNotNull(secondaryChar)
-        assertNotEquals("Primary and secondary dolls must belong to different characters", primaryChar, secondaryChar)
+    fun shortCard_under44dp_returnsHeadAsset() {
+        // Cards < 44dp get HEAD tier
+        for (eventId in 1L..100L) {
+            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 35f)
+            assertNotNull("Asset must not be null for event $eventId", asset)
+            val tier = DollManager.getTierForAsset(asset!!)
+            // Every character has at least 1 head asset, so it should always resolve to HEAD
+            assertEquals("Short card (35dp) should select HEAD tier for event $eventId", DollTier.HEAD, tier)
+        }
     }
 
     @Test
-    fun largeCard_withInsufficientBlankHeight_returnsOnlyPrimaryDoll() {
-        val result = DollManager.selectDollsForCard(
-            eventId = 1004L,
-            cardColorArgb = 0xFFFFEB3B.toInt(),
-            cardHeightDp = 120f,
-            blankHeightDp = 40f, // < 50dp
-            mode = DollDistributionMode.COLOR_AFFINITY
-        )
-        assertNotNull(result.first)
-        assertNull("Secondary doll must be null if blankHeightDp < 50dp", result.second)
+    fun mediumCard_44to72dp_returnsHalfBodyOrFallback() {
+        // Cards between 44dp and 72dp prefer HALF_BODY, fallback to HEAD then FULL_BODY
+        for (eventId in 1L..100L) {
+            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 55f)
+            assertNotNull("Asset must not be null for event $eventId", asset)
+            val char = DollManager.getCharacterForAsset(asset!!)
+            assertNotNull(char)
+            val tier = DollManager.getTierForAsset(asset)
+
+            val hasHalfBody = DollManager.getAssets(char!!, DollTier.HALF_BODY).isNotEmpty()
+            if (hasHalfBody) {
+                assertEquals("Character ${char.name} has half_body, so it must return HALF_BODY", DollTier.HALF_BODY, tier)
+            } else {
+                // Duffy, ShellieMay, StellaLou don't have half_body, fallback order is HEAD then FULL_BODY
+                val hasHead = DollManager.getAssets(char, DollTier.HEAD).isNotEmpty()
+                if (hasHead) {
+                    assertEquals("Character ${char.name} has no half_body, should fallback to HEAD", DollTier.HEAD, tier)
+                } else {
+                    assertEquals(DollTier.FULL_BODY, tier)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun largeCard_72dpAndAbove_returnsFullBodyAsset() {
+        // Cards >= 72dp get FULL_BODY tier
+        for (eventId in 1L..100L) {
+            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 90f)
+            assertNotNull("Asset must not be null for event $eventId", asset)
+            val tier = DollManager.getTierForAsset(asset!!)
+            // Every character has full_body assets, so it should always resolve to FULL_BODY
+            assertEquals("Large card (90dp) should select FULL_BODY tier for event $eventId", DollTier.FULL_BODY, tier)
+        }
     }
 
     @Test
     fun deterministicSelection_sameEventIdProducesIdenticalResult() {
-        val eventId = 8888L
-        val color = 0xFF00BCD4.toInt()
+        val eventId = 123456L
+        val first = DollManager.selectDollForCard(eventId, 60f)
+        val second = DollManager.selectDollForCard(eventId, 60f)
+        val third = DollManager.selectDollForCard(eventId, 60f)
 
-        val firstRun = DollManager.selectDollsForCard(eventId, color, 100f, 60f)
-        val secondRun = DollManager.selectDollsForCard(eventId, color, 100f, 60f)
-        val thirdRun = DollManager.selectDollsForCard(eventId, color, 100f, 60f)
-
-        assertEquals("First and second run must produce identical result", firstRun, secondRun)
-        assertEquals("First and third run must produce identical result", firstRun, thirdRun)
+        assertNotNull(first)
+        assertEquals("First and second run must produce identical result", first, second)
+        assertEquals("First and third run must produce identical result", first, third)
     }
 
     @Test
-    fun colorAffinity_increasesMatchingCharacterProbability() {
-        // Purple color (Hue ~ 270-290°): Preferred STELLALOU
-        val purpleArgb = 0xFF9C27B0.toInt() // Purple
-        val preferredChar = DuffyCharacter.STELLALOU
+    fun uniformDistribution_all7CharactersAppear() {
+        val characterCounts = mutableMapOf<DuffyCharacter, Int>()
+        val sampleSize = 700
 
-        var affinityMatches = 0
-        var uniformMatches = 0
-        val sampleSize = 2000
-
-        for (i in 0 until sampleSize) {
-            val eventId = i.toLong()
-
-            val affinityDoll = DollManager.selectDollsForCard(
-                eventId = eventId,
-                cardColorArgb = purpleArgb,
-                cardHeightDp = 70f,
-                blankHeightDp = 30f,
-                mode = DollDistributionMode.COLOR_AFFINITY
-            ).first!!
-
-            if (DollManager.getCharacterForAsset(affinityDoll) == preferredChar) {
-                affinityMatches++
-            }
-
-            val uniformDoll = DollManager.selectDollsForCard(
-                eventId = eventId,
-                cardColorArgb = purpleArgb,
-                cardHeightDp = 70f,
-                blankHeightDp = 30f,
-                mode = DollDistributionMode.UNIFORM_RANDOM
-            ).first!!
-
-            if (DollManager.getCharacterForAsset(uniformDoll) == preferredChar) {
-                uniformMatches++
-            }
+        for (i in 1..sampleSize) {
+            val asset = DollManager.selectDollForCard(eventId = i.toLong(), cardHeightDp = 80f)
+            assertNotNull(asset)
+            val char = DollManager.getCharacterForAsset(asset!!)
+            assertNotNull(char)
+            characterCounts[char!!] = characterCounts.getOrDefault(char, 0) + 1
         }
 
-        val affinityRatio = affinityMatches.toDouble() / sampleSize
-        val uniformRatio = uniformMatches.toDouble() / sampleSize
+        // Verify all 7 characters appear
+        assertEquals("All 7 characters must appear in random sampling", 7, characterCounts.keys.size)
 
-        // In Uniform mode, 1/7 ~= 14.3%
-        // In Affinity mode, weight is 5 / (5 + 6*1) = 5/11 ~= 45.45%
-        assertTrue("Affinity ratio ($affinityRatio) must be significantly higher than uniform ratio ($uniformRatio)",
-            affinityRatio > uniformRatio * 2.0)
-        assertTrue("Affinity ratio ($affinityRatio) should be around 45% (> 35%)", affinityRatio > 0.35)
-        assertTrue("Uniform ratio ($uniformRatio) should be around 14% (< 25%)", uniformRatio < 0.25)
+        // Each character should appear roughly sampleSize / 7 = 100 times (+/- variance)
+        characterCounts.forEach { (char, count) ->
+            assertTrue(
+                "Character ${char.name} count ($count) should be well distributed (between 50 and 150)",
+                count in 50..150
+            )
+        }
     }
 
     @Test
-    fun colorAffinity_colorRangeMappings() {
-        // Purple (Hue in 240°..300°) -> STELLALOU
-        val purple = DollManager.getPreferredCharacters(0xFF9C27B0.toInt())
-        assertEquals(listOf(DuffyCharacter.STELLALOU), purple)
+    fun characterSelection_matchesEventIdModulo() {
+        val characters = DuffyCharacter.entries
+        characters.forEachIndexed { index, expectedChar ->
+            val eventId = index.toLong()
+            val asset = DollManager.selectDollForCard(eventId, 60f)
+            assertNotNull(asset)
+            val actualChar = DollManager.getCharacterForAsset(asset!!)
+            assertEquals("EventId $eventId should map to character $expectedChar", expectedChar, actualChar)
+        }
 
-        // Yellow (Hue in 35°..65°) -> COOKIEANN
-        val yellow = DollManager.getPreferredCharacters(0xFFFFEB3B.toInt())
-        assertEquals(listOf(DuffyCharacter.COOKIEANN), yellow)
-
-        // Green (Hue in 80°..165°) -> OLUMEL
-        val green = DollManager.getPreferredCharacters(0xFF4CAF50.toInt())
-        assertEquals(listOf(DuffyCharacter.OLUMEL), green)
-
-        // Mint/Cyan (Hue in 165°..205°) -> GELATONI
-        val cyan = DollManager.getPreferredCharacters(0xFF00BCD4.toInt())
-        assertEquals(listOf(DuffyCharacter.GELATONI), cyan)
-
-        // Pink (Hue in 300°..360° or 0°..15° with saturation > 0.12f) -> LINABELL & SHELLIEMAY
-        val pink = DollManager.getPreferredCharacters(0xFFE91E63.toInt())
-        assertEquals(listOf(DuffyCharacter.LINABELL, DuffyCharacter.SHELLIEMAY), pink)
-
-        // Brown / Warm Earth (e.g. Hue in 15°..35°) -> DUFFY
-        val brown = DollManager.getPreferredCharacters(0xFF795548.toInt())
-        assertEquals(listOf(DuffyCharacter.DUFFY), brown)
+        // Verify with offset
+        characters.forEachIndexed { index, expectedChar ->
+            val eventId = (index + characters.size * 5).toLong()
+            val asset = DollManager.selectDollForCard(eventId, 60f)
+            assertNotNull(asset)
+            val actualChar = DollManager.getCharacterForAsset(asset!!)
+            assertEquals("EventId $eventId should map to character $expectedChar", expectedChar, actualChar)
+        }
     }
 
     @Test
-    fun all60AssetsRegistered_andNonEmpty() {
-        val totalAssets = DollManager.allDolls.values.sumOf { it.size }
-        assertEquals("Total registered doll assets must be exactly 60", 60, totalAssets)
-        assertEquals(7, DollManager.allDolls.keys.size)
-        DuffyCharacter.entries.forEach { character ->
-            val assets = DollManager.getAssetsForCharacter(character)
-            assertTrue("Character ${character.name} must have assets", assets.isNotEmpty())
-            assets.forEach { path ->
-                assertTrue("Asset path $path must start with ${character.assetDir}", path.startsWith(character.assetDir))
-            }
+    fun negativeEventId_handlesGracefully() {
+        for (eventId in -20L..-1L) {
+            val asset = DollManager.selectDollForCard(eventId, 60f)
+            assertNotNull("Asset must not be null for negative eventId $eventId", asset)
+            val char = DollManager.getCharacterForAsset(asset!!)
+            assertNotNull("Character must be resolved for negative eventId $eventId", char)
         }
     }
 }
