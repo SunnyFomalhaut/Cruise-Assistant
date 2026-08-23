@@ -23,6 +23,8 @@ public struct DeckMapView: View {
         }
         self.onBack = onBack
     }
+    @Environment(\.cruisePalette) private var palette
+
 
     public var body: some View {
         NavigationStack {
@@ -98,7 +100,7 @@ public struct DeckMapView: View {
                                 Image(systemName: "chevron.left")
                                 Text("返回")
                             }
-                            .foregroundColor(CruiseAzure)
+                            .foregroundColor(palette.primary)
                         }
                     }
                 }
@@ -109,7 +111,7 @@ public struct DeckMapView: View {
                     }) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(CruiseAzure)
+                            .foregroundColor(palette.primary)
                     }
                 }
             }
@@ -149,11 +151,11 @@ public struct DeckMapView: View {
                                     .foregroundColor(isSelected ? .white : Slate800)
                             }
                             .frame(width: 52, height: 44)
-                            .background(isSelected ? CruiseAzure : Slate100)
+                            .background(isSelected ? palette.primary : Slate100)
                             .cornerRadius(10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(isSelected ? CruiseAzure : Color.clear, lineWidth: 1)
+                                    .stroke(isSelected ? palette.primary : Color.clear, lineWidth: 1)
                             )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -245,9 +247,9 @@ public struct DeckMapView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(CruiseAzure)
+        .background(palette.primary)
         .cornerRadius(14)
-        .shadow(color: CruiseAzure.opacity(0.35), radius: 8, x: 0, y: 4)
+        .shadow(color: palette.primary.opacity(0.35), radius: 8, x: 0, y: 4)
     }
 
     // MARK: - Search Quick Bar
@@ -258,7 +260,7 @@ public struct DeckMapView: View {
         }) {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(CruiseMarine)
+                    .foregroundColor(palette.secondary)
                     .font(.system(size: 15))
 
                 Text("搜索地点、设施或客房...")

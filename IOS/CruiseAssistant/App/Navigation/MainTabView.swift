@@ -163,6 +163,7 @@ public struct MainTabView: View {
             .tag(AppTab.settings)
         }
         .tint(settingsStore.settings.colorTheme.primaryColor)
+        .cruiseTheme(settingsStore.settings.colorTheme)
         .sheet(item: $activeEventSheetParams) { params in
             let vm = EventSheetViewModel(
                 date: params.date,
@@ -183,6 +184,7 @@ public struct MainTabView: View {
                     wishlistViewModel.loadData()
                 }
             )
+            .cruiseTheme(settingsStore.settings.colorTheme)
         }
         .onChange(of: coordinator.targetDeck) { _, newDeck in
             if let deck = newDeck {

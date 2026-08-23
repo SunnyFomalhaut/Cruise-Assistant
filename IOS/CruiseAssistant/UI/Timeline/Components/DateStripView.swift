@@ -20,17 +20,20 @@ public struct DateStripView: View {
     public let dates: [SimpleDate]
     public let selectedDate: SimpleDate
     public let finalizedDates: Set<SimpleDate>
+    public let theme: AppColorTheme
     public let onSelect: (SimpleDate) -> Void
 
     public init(
         dates: [SimpleDate],
         selectedDate: SimpleDate,
         finalizedDates: Set<SimpleDate> = [],
+        theme: AppColorTheme = .judy_blue,
         onSelect: @escaping (SimpleDate) -> Void
     ) {
         self.dates = dates
         self.selectedDate = selectedDate
         self.finalizedDates = finalizedDates
+        self.theme = theme
         self.onSelect = onSelect
     }
 
@@ -39,17 +42,19 @@ public struct DateStripView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(Array(dates.enumerated()), id: \.element) { index, date in
-                        let isSelected = date == selectedDate
+                        let isSelected = (date == selectedDate)
                         let isFinalized = finalizedDates.contains(date)
                         let dayIndex = index + 1
+                        let dayNumber = date.day
                         let weekday = weekdayChinese(for: date)
 
                         DateChip(
                             dayIndex: dayIndex,
-                            dayNumber: date.day,
+                            dayNumber: dayNumber,
                             weekday: weekday,
                             isSelected: isSelected,
                             isFinalized: isFinalized,
+                            theme: theme,
                             onTap: {
                                 onSelect(date)
                             }
@@ -57,16 +62,21 @@ public struct DateStripView: View {
                         .id(date)
                     }
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+            .background(SurfaceCard)
+            .overlay(
+                Divider(),
+                alignment: .bottom
+            )
+            .onChange(of: selectedDate) { _, newDate in
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    proxy.scrollTo(newDate, anchor: .center)
+                }
             }
             .onAppear {
                 proxy.scrollTo(selectedDate, anchor: .center)
-            }
-            .onChange(of: selectedDate) { _, newDate in
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    proxy.scrollTo(newDate, anchor: .center)
-                }
             }
         }
     }
@@ -79,21 +89,26 @@ private struct DateChip: View {
     let weekday: String
     let isSelected: Bool
     let isFinalized: Bool
+    let theme: AppColorTheme
     let onTap: () -> Void
+
+    private var palette: CruiseColorPalette {
+        theme.palette
+    }
 
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
     }
 
     private var backgroundColor: Color {
-        isSelected ? CruiseAzureContainer : SurfaceCard
+        isSelected ? palette.primaryContainer : SurfaceCard
     }
 
     private var borderColor: Color {
         if isSelected {
-            return CruiseAzure
+            return palette.primary
         } else if isFinalized {
-            return CruiseMarine.opacity(0.4)
+            return palette.secondary.opacity(0.4)
         } else {
             return Slate200
         }
@@ -105,7 +120,7 @@ private struct DateChip: View {
                 // Day index (e.g. "D1")
                 Text("D\(dayIndex)")
                     .font(.system(size: 11, weight: isSelected ? .bold : .medium))
-                    .foregroundColor(isSelected ? CruiseMarine : Slate400)
+                    .foregroundColor(isSelected ? palette.secondary : Slate400)
                     .lineLimit(1)
 
                 Spacer(minLength: 1)
@@ -113,7 +128,7 @@ private struct DateChip: View {
                 // Day of month number
                 Text("\(dayNumber)")
                     .font(.system(size: 17, weight: isSelected ? .bold : .semibold))
-                    .foregroundColor(isSelected ? CruiseMarine : Slate900)
+                    .foregroundColor(isSelected ? palette.secondary : Slate900)
                     .lineLimit(1)
 
                 Spacer(minLength: 1)
@@ -121,7 +136,7 @@ private struct DateChip: View {
                 // Weekday label (e.g. "周四")
                 Text(weekday)
                     .font(.system(size: 10, weight: isSelected ? .bold : .regular))
-                    .foregroundColor(isSelected ? CruiseMarine : Slate700)
+                    .foregroundColor(isSelected ? palette.secondary : Slate700)
                     .lineLimit(1)
 
                 Spacer(minLength: 2)
@@ -129,7 +144,7 @@ private struct DateChip: View {
                 // Finalized dot indicator
                 if isFinalized {
                     Circle()
-                        .fill(isSelected ? CruiseMarine : CruiseAzure.opacity(0.7))
+                        .fill(isSelected ? palette.secondary : palette.primary.opacity(0.7))
                         .frame(width: 4, height: 4)
                 } else {
                     Spacer()
@@ -146,7 +161,7 @@ private struct DateChip: View {
                     .stroke(borderColor, lineWidth: isSelected ? 1.5 : 1.0)
             )
             .shadow(
-                color: isSelected ? CruiseAzure.opacity(0.25) : Color.clear,
+                color: isSelected ? palette.primary.opacity(0.25) : Color.clear,
                 radius: 3,
                 x: 0,
                 y: 1.5
@@ -156,4 +171,20 @@ private struct DateChip: View {
         .animation(.easeInOut(duration: 0.2), value: isSelected)
         .animation(.easeInOut(duration: 0.2), value: isFinalized)
     }
+}
+
+#Preview {
+    DateStripView(
+        dates: [
+            SimpleDate(year: 2026, month: 9, day: 3),
+            SimpleDate(year: 2026, month: 9, day: 4),
+            SimpleDate(year: 2026, month: 9, day: 5),
+            SimpleDate(year: 2026, month: 9, day: 6),
+            SimpleDate(year: 2026, month: 9, day: 7)
+        ],
+        selectedDate: SimpleDate(year: 2026, month: 9, day: 3),
+        finalizedDates: [SimpleDate(year: 2026, month: 9, day: 3)],
+        theme: .shelliemay_pink,
+        onSelect: { _ in }
+    )
 }

@@ -13,6 +13,10 @@ public struct SettingsView: View {
         self.viewModel = viewModel
     }
 
+    private var palette: CruiseColorPalette {
+        viewModel.settings.colorTheme.palette
+    }
+
     public var body: some View {
         Form {
             // Section 1: 航次与船期 (Voyage & Schedule)
@@ -115,7 +119,7 @@ public struct SettingsView: View {
                     Spacer()
                     Text(viewModel.settings.dinnerTime.description)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(CruiseAzure)
+                        .foregroundColor(palette.primary)
                 }
 
                 Button {
@@ -126,7 +130,7 @@ public struct SettingsView: View {
                         Text("修改船期与晚餐时间")
                     }
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(CruiseAzure)
+                    .foregroundColor(palette.primary)
                 }
             } else {
                 Text("暂无有效航次数据")
@@ -149,7 +153,7 @@ public struct SettingsView: View {
                     Spacer()
                     Text("\(Int(viewModel.settings.hourHeightPt)) pt")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(CruiseAzure)
+                        .foregroundColor(palette.primary)
                 }
 
                 HStack(spacing: 8) {
@@ -165,7 +169,7 @@ public struct SettingsView: View {
                         in: 60...180,
                         step: 5
                     )
-                    .tint(CruiseAzure)
+                    .tint(palette.primary)
 
                     Text("宽松 (180)")
                         .font(.system(size: 11))
@@ -219,7 +223,7 @@ public struct SettingsView: View {
                         .foregroundColor(Slate500)
                 }
             }
-            .tint(CruiseAzure)
+            .tint(palette.primary)
         }
     }
 
@@ -275,28 +279,28 @@ public struct SettingsView: View {
                 get: { viewModel.settings.notificationsEnabled },
                 set: { viewModel.setNotificationsEnabled($0) }
             ))
-            .tint(CruiseAzure)
+            .tint(palette.primary)
 
             if viewModel.settings.notificationsEnabled {
                 Toggle("提前 15 分钟提醒", isOn: Binding(
                     get: { viewModel.settings.remindBefore15 },
                     set: { viewModel.setRemindBefore15($0) }
                 ))
-                .tint(CruiseAzure)
+                .tint(palette.primary)
                 .padding(.leading, 12)
 
                 Toggle("提前 5 分钟提醒", isOn: Binding(
                     get: { viewModel.settings.remindBefore5 },
                     set: { viewModel.setRemindBefore5($0) }
                 ))
-                .tint(CruiseAzure)
+                .tint(palette.primary)
                 .padding(.leading, 12)
 
                 Toggle("活动开始时提醒", isOn: Binding(
                     get: { viewModel.settings.remindAtStart },
                     set: { viewModel.setRemindAtStart($0) }
                 ))
-                .tint(CruiseAzure)
+                .tint(palette.primary)
                 .padding(.leading, 12)
             }
         }
@@ -315,7 +319,7 @@ public struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(CruiseAzure)
+                        .foregroundColor(palette.primary)
                     Text("导出数据备份 (JSON)")
                         .foregroundColor(Slate900)
                     Spacer()

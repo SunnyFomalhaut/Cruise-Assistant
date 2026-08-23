@@ -23,6 +23,8 @@ public struct EventSheetView: View {
         self.onManageCategories = onManageCategories
     }
 
+    @Environment(\.cruisePalette) private var palette
+
     private let cardShape = RoundedRectangle(cornerRadius: 16, style: .continuous)
 
     public var body: some View {
@@ -95,7 +97,7 @@ public struct EventSheetView: View {
                         }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(CruiseAzure)
+                    .foregroundColor(palette.primary)
                     .disabled(viewModel.saving)
                 }
             }
@@ -119,7 +121,7 @@ public struct EventSheetView: View {
 
     private var categoryAndTitleCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            SectionHeader(title: "活动类别与名称", systemImage: "square.grid.2x2")
+            SectionHeader(title: "活动类别与名称", systemImage: "square.grid.2x2", palette: palette)
 
             CategorySelector(
                 categories: viewModel.categories,
@@ -186,7 +188,7 @@ public struct EventSheetView: View {
 
     private var mealPeriodCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "餐次类型", systemImage: "fork.knife")
+            SectionHeader(title: "餐次类型", systemImage: "fork.knife", palette: palette)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -194,16 +196,16 @@ public struct EventSheetView: View {
                     Button(action: { viewModel.onMealPeriodSelect(nil) }) {
                         Text("全部")
                             .font(.system(size: 14, weight: allSelected ? .bold : .medium))
-                            .foregroundColor(allSelected ? CruiseMarine : Slate700)
+                            .foregroundColor(allSelected ? palette.secondary : Slate700)
                             .lineLimit(1)
                             .fixedSize(horizontal: true, vertical: false)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background(allSelected ? CruiseAzureContainer : Slate100)
+                            .background(allSelected ? palette.primaryContainer : Slate100)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(allSelected ? CruiseAzure : Slate200, lineWidth: allSelected ? 1.5 : 1)
+                                    .stroke(allSelected ? palette.primary : Slate200, lineWidth: allSelected ? 1.5 : 1)
                             )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -213,16 +215,16 @@ public struct EventSheetView: View {
                         Button(action: { viewModel.onMealPeriodSelect(period) }) {
                             Text(period.label)
                                 .font(.system(size: 14, weight: isSelected ? .bold : .medium))
-                                .foregroundColor(isSelected ? CruiseMarine : Slate700)
+                                .foregroundColor(isSelected ? palette.secondary : Slate700)
                                 .lineLimit(1)
                                 .fixedSize(horizontal: true, vertical: false)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
-                                .background(isSelected ? CruiseAzureContainer : Slate100)
+                                .background(isSelected ? palette.primaryContainer : Slate100)
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .stroke(isSelected ? CruiseAzure : Slate200, lineWidth: isSelected ? 1.5 : 1)
+                                        .stroke(isSelected ? palette.primary : Slate200, lineWidth: isSelected ? 1.5 : 1)
                                 )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -241,7 +243,7 @@ public struct EventSheetView: View {
 
     private var locationCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "活动地点", systemImage: "mappin.and.ellipse")
+            SectionHeader(title: "活动地点", systemImage: "mappin.and.ellipse", palette: palette)
 
             let presetOptions = LocationCatalog.locationPresetOptions(
                 iconKey: viewModel.categoryIconKey ?? "",
@@ -277,7 +279,7 @@ public struct EventSheetView: View {
 
     private var waitMinutesCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "提前候场时间", systemImage: "clock.badge.checkmark")
+            SectionHeader(title: "提前候场时间", systemImage: "clock.badge.checkmark", palette: palette)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -289,16 +291,16 @@ public struct EventSheetView: View {
                         }) {
                             Text("\(mins)分钟")
                                 .font(.system(size: 14, weight: isSelected ? .bold : .medium))
-                                .foregroundColor(isSelected ? CruiseMarine : Slate700)
+                                .foregroundColor(isSelected ? palette.secondary : Slate700)
                                 .lineLimit(1)
                                 .fixedSize(horizontal: true, vertical: false)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
-                                .background(isSelected ? CruiseAzureContainer : Slate100)
+                                .background(isSelected ? palette.primaryContainer : Slate100)
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .stroke(isSelected ? CruiseAzure : Slate200, lineWidth: isSelected ? 1.5 : 1)
+                                        .stroke(isSelected ? palette.primary : Slate200, lineWidth: isSelected ? 1.5 : 1)
                                 )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -322,20 +324,20 @@ public struct EventSheetView: View {
     private var timeSelectionCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                SectionHeader(title: "起止时间", systemImage: "clock")
+                SectionHeader(title: "起止时间", systemImage: "clock", palette: palette)
 
                 Spacer()
 
                 HStack(spacing: 4) {
                     Text("\(viewModel.startTime.description)–\(viewModel.endTime.description)")
                     Text("(\(viewModel.durationMinutes)分钟)")
-                        .foregroundColor(CruiseMarine)
+                        .foregroundColor(palette.secondary)
                 }
                 .font(.system(size: 13, weight: .bold, design: .monospaced))
                 .foregroundColor(Slate700)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .background(CruiseAzureContainer)
+                .background(palette.primaryContainer)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
 
@@ -345,19 +347,19 @@ public struct EventSheetView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("开始时间")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(activeTimeTab == .start ? CruiseMarine : Slate500)
+                            .foregroundColor(activeTimeTab == .start ? palette.secondary : Slate500)
 
                         Text(viewModel.startTime.description)
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(activeTimeTab == .start ? CruiseMarine : Slate800)
+                            .foregroundColor(activeTimeTab == .start ? palette.secondary : Slate800)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
-                    .background(activeTimeTab == .start ? CruiseAzureContainer : Slate100)
+                    .background(activeTimeTab == .start ? palette.primaryContainer : Slate100)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(activeTimeTab == .start ? CruiseAzure : Slate200, lineWidth: activeTimeTab == .start ? 2 : 1)
+                            .stroke(activeTimeTab == .start ? palette.primary : Slate200, lineWidth: activeTimeTab == .start ? 2 : 1)
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -366,26 +368,26 @@ public struct EventSheetView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("结束时间")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(activeTimeTab == .end ? CruiseMarine : Slate500)
+                            .foregroundColor(activeTimeTab == .end ? palette.secondary : Slate500)
 
                         Text(viewModel.endTime.description)
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(activeTimeTab == .end ? CruiseMarine : Slate800)
+                            .foregroundColor(activeTimeTab == .end ? palette.secondary : Slate800)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
-                    .background(activeTimeTab == .end ? CruiseAzureContainer : Slate100)
+                    .background(activeTimeTab == .end ? palette.primaryContainer : Slate100)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(activeTimeTab == .end ? CruiseAzure : Slate200, lineWidth: activeTimeTab == .end ? 2 : 1)
+                            .stroke(activeTimeTab == .end ? palette.primary : Slate200, lineWidth: activeTimeTab == .end ? 2 : 1)
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
 
             // Full-Width Wheel Picker for the Active Time Tab
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 if activeTimeTab == .start {
                     TimeWheelPicker(
                         time: Binding(
@@ -404,26 +406,38 @@ public struct EventSheetView: View {
                     )
                 }
 
-                // Quick Duration Adjustment Chips
-                HStack(spacing: 8) {
-                    Text("快速设时长:")
-                        .font(.system(size: 12, weight: .medium))
+                // Quick Duration Adjustment Chips (Dedicated Row with Horizontal Scroll)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("快速设时长")
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(Slate500)
 
-                    ForEach([15, 30, 45, 60, 90], id: \.self) { duration in
-                        Button(action: {
-                            let endMin = min(1440, viewModel.startTime.totalMinutes + duration)
-                            viewModel.onEndTimeChange(SimpleTime(totalMinutes: endMin))
-                        }) {
-                            Text("+\(duration)分")
-                                .font(.system(size: 12, weight: viewModel.durationMinutes == duration ? .bold : .regular))
-                                .foregroundColor(viewModel.durationMinutes == duration ? CruiseMarine : Slate700)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(viewModel.durationMinutes == duration ? CruiseAzureContainer : Slate100)
-                                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach([15, 30, 45, 60, 90, 120], id: \.self) { duration in
+                                let isCurrentDuration = viewModel.durationMinutes == duration
+                                Button(action: {
+                                    let endMin = min(1440, viewModel.startTime.totalMinutes + duration)
+                                    viewModel.onEndTimeChange(SimpleTime(totalMinutes: endMin))
+                                }) {
+                                    Text("+\(duration)分钟")
+                                        .font(.system(size: 13, weight: isCurrentDuration ? .bold : .medium))
+                                        .foregroundColor(isCurrentDuration ? palette.secondary : Slate700)
+                                        .lineLimit(1)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 7)
+                                        .background(isCurrentDuration ? palette.primaryContainer : Slate100)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                                .stroke(isCurrentDuration ? palette.primary : Slate200, lineWidth: isCurrentDuration ? 1.5 : 1)
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .padding(.vertical, 2)
                     }
                 }
                 .padding(.top, 4)
@@ -446,7 +460,7 @@ public struct EventSheetView: View {
             )) {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundColor(CruiseAzure)
+                        .foregroundColor(palette.primary)
                         .font(.system(size: 16, weight: .medium))
 
                     Text("每日循环")
@@ -454,7 +468,7 @@ public struct EventSheetView: View {
                         .foregroundColor(Slate900)
                 }
             }
-            .tint(CruiseAzure)
+            .tint(palette.primary)
 
             if viewModel.recurring {
                 Text("将在航程中的每一天（除离船日外）自动添加此活动")
@@ -497,14 +511,15 @@ public struct EventSheetView: View {
 private struct SectionHeader: View {
     let title: String
     let systemImage: String
+    let palette: CruiseColorPalette
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(CruiseAzure)
+                .foregroundColor(palette.primary)
                 .frame(width: 28, height: 28)
-                .background(CruiseAzureContainer)
+                .background(palette.primaryContainer)
                 .clipShape(Circle())
 
             Text(title)

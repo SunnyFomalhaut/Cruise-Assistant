@@ -12,6 +12,8 @@ public struct PixieDustView: View {
         }
     }
 
+    @Environment(\.cruisePalette) private var palette
+
     public var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -140,12 +142,12 @@ public struct PixieDustView: View {
                     VStack(spacing: 6) {
                         Text(tabItem.rawValue)
                             .font(.system(size: 15, weight: viewModel.tab == tabItem ? .bold : .medium))
-                            .foregroundColor(viewModel.tab == tabItem ? CruiseMarine : Slate600)
+                            .foregroundColor(viewModel.tab == tabItem ? palette.secondary : Slate600)
                             .frame(maxWidth: .infinity)
                             .padding(.top, 10)
 
                         Rectangle()
-                            .fill(viewModel.tab == tabItem ? CruiseAzure : Color.clear)
+                            .fill(viewModel.tab == tabItem ? palette.primary : Color.clear)
                             .frame(height: 2.5)
                             .cornerRadius(1.5)
                     }
@@ -183,14 +185,14 @@ public struct PixieDustView: View {
                     HStack(spacing: 4) {
                         Text("D\(viewModel.deck)")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(CruiseMarine)
+                            .foregroundColor(palette.secondary)
                         Image(systemName: "chevron.down")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(CruiseMarine)
+                            .foregroundColor(palette.secondary)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
-                    .background(CruiseAzureContainer.opacity(0.6))
+                    .background(palette.primaryContainer.opacity(0.6))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
 
@@ -218,7 +220,7 @@ public struct PixieDustView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("上次: \(history.levelName)")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(CruiseMarine)
+                            .foregroundColor(palette.secondary)
                         Text("已送 \(history.count) 次")
                             .font(.system(size: 10))
                             .foregroundColor(Slate500)
@@ -255,7 +257,7 @@ public struct PixieDustView: View {
                                     .frame(width: 10, height: 10)
                                 Text(level.name)
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(viewModel.selectedLevelId == level.id ? CruiseMarine : Slate700)
+                                    .foregroundColor(viewModel.selectedLevelId == level.id ? palette.secondary : Slate700)
 
                                 StarRatingView(
                                     rating: level.rank,
@@ -268,11 +270,11 @@ public struct PixieDustView: View {
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
-                            .background(viewModel.selectedLevelId == level.id ? CruiseAzureContainer.opacity(0.6) : Color.white)
+                            .background(viewModel.selectedLevelId == level.id ? palette.primaryContainer.opacity(0.6) : Color.white)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(viewModel.selectedLevelId == level.id ? CruiseAzure : Slate200, lineWidth: 1.2)
+                                    .stroke(viewModel.selectedLevelId == level.id ? palette.primary : Slate200, lineWidth: 1.2)
                             )
                         }
                         .buttonStyle(.plain)
@@ -295,7 +297,7 @@ public struct PixieDustView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 42)
-                .background(canSubmit ? CruiseAzure : Slate300)
+                .background(canSubmit ? palette.primary : Slate300)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .animation(.easeInOut(duration: 0.15), value: canSubmit)
             }

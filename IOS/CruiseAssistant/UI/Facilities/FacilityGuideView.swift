@@ -30,6 +30,8 @@ public struct FacilityGuideView: View {
         self.categoryRepository = categoryRepository
     }
 
+    @Environment(\.cruisePalette) private var palette
+
     public var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -185,12 +187,12 @@ public struct FacilityGuideView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .foregroundColor(isSelected ? CruiseMarine : Slate700)
-                            .background(isSelected ? CruiseAzureContainer : Slate100)
+                            .foregroundColor(isSelected ? palette.secondary : Slate700)
+                            .background(isSelected ? palette.primaryContainer : Slate100)
                             .cornerRadius(16)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(isSelected ? CruiseAzure : Color.clear, lineWidth: 1)
+                                    .stroke(isSelected ? palette.primary : Color.clear, lineWidth: 1)
                             )
                         }
                         .buttonStyle(PlainButtonStyle())

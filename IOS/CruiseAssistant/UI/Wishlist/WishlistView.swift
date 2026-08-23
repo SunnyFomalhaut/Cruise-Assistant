@@ -5,6 +5,8 @@ public struct WishlistView: View {
     @ObservedObject public var viewModel: WishlistViewModel
     public var onNavigateToDeckMap: ((Int, String) -> Void)?
 
+    @Environment(\.cruisePalette) private var envPalette
+
     // Local sheet states for Add/Edit and Convert
     @State private var showingEditSheet: Bool = false
     @State private var showingConvertSheet: Bool = false
@@ -66,13 +68,13 @@ public struct WishlistView: View {
 
     @ViewBuilder
     private func itemRow(for item: WishlistItem) -> some View {
+        let category = viewModel.categories.first { $0.id == item.categoryId }
+
         WishlistCardView(
             item: item,
-            category: viewModel.categoriesById[item.categoryId],
+            category: category,
             onToggleCompleted: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    _ = viewModel.toggleCompleted(item)
-                }
+                viewModel.toggleCompleted(item)
             },
             onConvertToSchedule: {
                 viewModel.convertingItem = item
@@ -85,13 +87,11 @@ public struct WishlistView: View {
             onNavigateToDeckMap: onNavigateToDeckMap
         )
         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-        .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
-                withAnimation {
-                    viewModel.deleteItem(item)
-                }
+                viewModel.deleteItem(item)
             } label: {
                 Label("删除", systemImage: "trash")
             }
@@ -108,9 +108,9 @@ public struct WishlistView: View {
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.white)
                 .frame(width: 56, height: 56)
-                .background(CruiseAzure)
+                .background(envPalette.primary)
                 .clipShape(Circle())
-                .shadow(color: CruiseAzure.opacity(0.4), radius: 8, x: 0, y: 4)
+                .shadow(color: envPalette.primary.opacity(0.4), radius: 8, x: 0, y: 4)
         }
         .padding(.trailing, 20)
         .padding(.bottom, 20)
@@ -132,16 +132,9 @@ public struct WishlistView: View {
     private var convertSheetContent: some View {
         if let item = viewModel.convertingItem {
             WishlistConvertModalSheet(
+                viewModel: viewModel,
                 item: item,
-                category: viewModel.categoriesById[item.categoryId],
-                activeVoyage: viewModel.activeVoyage,
-                onConfirm: { date, startMinute, durationMinutes in
-                    viewModel.convertToEvent(
-                        item: item,
-                        date: date,
-                        startMinute: startMinute,
-                        durationMinutes: durationMinutes
-                    )
+                onConverted: {
                     showingConvertSheet = false
                     viewModel.convertingItem = nil
                 },
@@ -176,12 +169,12 @@ public struct WishlistView: View {
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(viewModel.selectedCategoryId == nil ? CruiseAzure : Color.white)
+                            .fill(viewModel.selectedCategoryId == nil ? envPalette.primary : Color.white)
                     )
                     .foregroundColor(viewModel.selectedCategoryId == nil ? .white : Slate700)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(viewModel.selectedCategoryId == nil ? CruiseAzure : Slate200, lineWidth: 1)
+                            .stroke(viewModel.selectedCategoryId == nil ? envPalette.primary : Slate200, lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -230,7 +223,7 @@ public struct WishlistView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "checklist")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(CruiseAzure)
+                        .foregroundColor(envPalette.primary)
                     Text("心愿打卡进度")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(Slate800)
@@ -257,13 +250,12 @@ public struct WishlistView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(
                             LinearGradient(
-                                colors: [CruiseAzure, CruiseMarine],
+                                colors: [envPalette.primary, envPalette.secondary],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
-                        .frame(width: geometry.size.width * progress, height: 6)
-                        .animation(.easeInOut(duration: 0.3), value: progress)
+                        .frame(width: max(0, min(geometry.size.width, geometry.size.width * progress)), height: 6)
                 }
             }
             .frame(height: 6)
@@ -288,14 +280,14 @@ public struct WishlistView: View {
 
             Image(systemName: "sparkles.rectangle.stack")
                 .font(.system(size: 48))
-                .foregroundColor(CruiseAzure.opacity(0.6))
+                .foregroundColor(envPalette.primary.opacity(0.6))
 
             Text(viewModel.selectedCategoryId == nil ? "暂无心愿项目" : "该分类下暂无心愿")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(Slate800)
 
             Text("点击右下方 “+” 按钮，添加您想在邮轮上体验的演出、活动、美食或打卡点。")
-                .font(.system(size: 14))
+                .font(.system(size: 13))
                 .foregroundColor(Slate500)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -312,6 +304,8 @@ private struct WishlistEditModalSheet: View {
     @ObservedObject var viewModel: WishlistViewModel
     let editingItem: WishlistItem?
     let onDismiss: () -> Void
+
+    @Environment(\.cruisePalette) private var envPalette
 
     @State private var title: String = ""
     @State private var selectedCategoryId: Int64 = 1
@@ -337,221 +331,193 @@ private struct WishlistEditModalSheet: View {
             _placeName = State(initialValue: item.placeName ?? "")
             _note = State(initialValue: item.note ?? "")
         } else {
-            let initialCat = viewModel.selectedCategoryId ?? viewModel.categories.first?.id ?? 1
-            _selectedCategoryId = State(initialValue: initialCat)
+            let firstCatId = viewModel.categories.first?.id ?? 1
+            _title = State(initialValue: "")
+            _selectedCategoryId = State(initialValue: firstCatId)
+            _selectedDeck = State(initialValue: nil)
+            _selectedZone = State(initialValue: nil)
+            _placeName = State(initialValue: "")
+            _note = State(initialValue: "")
         }
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
-                // Section: Basic Info
-                Section(header: Text("项目信息")) {
-                    TextField("心愿名称（如：狮子王演出、旋转滑梯）", text: $title)
+                Section("项目信息") {
+                    TextField("项目名称 (如: 去剧院看狮子王)", text: $title)
 
-                    // Category Picker
                     Picker("所属类别", selection: $selectedCategoryId) {
                         ForEach(viewModel.categories) { cat in
-                            HStack {
-                                Circle()
-                                    .fill(Color(argb: cat.colorArgb))
-                                    .frame(width: 8, height: 8)
-                                Text(cat.name)
-                            }
-                            .tag(cat.id)
+                            Text(cat.name).tag(cat.id)
                         }
                     }
                 }
 
-                // Section: Location Info
-                Section(header: Text("位置信息（可选）")) {
-                    // Deck Picker
+                Section("位置信息 (选填)") {
                     Picker("甲板楼层", selection: $selectedDeck) {
-                        Text("未指定甲板").tag(Optional<Int>.none)
-                        ForEach(1...20, id: \.self) { (deck: Int) in
-                            Text("Deck \(deck)").tag(Optional<Int>.some(deck))
+                        Text("未选择").tag(nil as Int?)
+                        ForEach(5...19, id: \.self) { deck in
+                            Text("Deck \(deck)").tag(deck as Int?)
                         }
                     }
 
-                    // Zone Picker
-                    Picker("船体方位", selection: $selectedZone) {
-                        Text("未指定方位").tag(Optional<ShipZone>.none)
-                        ForEach(ShipZone.allCases, id: \.self) { (zone: ShipZone) in
-                            Text(zone.displayName).tag(Optional<ShipZone>.some(zone))
+                    Picker("船体区域", selection: $selectedZone) {
+                        Text("未选择").tag(nil as ShipZone?)
+                        ForEach(ShipZone.allCases, id: \.self) { zone in
+                            Text(zone.label).tag(zone as ShipZone?)
                         }
                     }
 
-                    TextField("场所/餐厅名称（如：沃尔特剧院）", text: $placeName)
+                    TextField("地点详情 (如: 华特迪士尼剧院)", text: $placeName)
                 }
 
-                // Section: Notes
-                Section(header: Text("备注信息（可选）")) {
-                    TextField("记录注意事项、着装要求或预约提示", text: $note, axis: .vertical)
+                Section("备注 (选填)") {
+                    TextField("备注说明...", text: $note, axis: .vertical)
                         .lineLimit(3...6)
-                }
-
-                // Section: Delete (if editing)
-                if let item = editingItem {
-                    Section {
-                        Button(role: .destructive) {
-                            viewModel.deleteItem(item)
-                            onDismiss()
-                        } label: {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "trash")
-                                Text("删除此心愿")
-                                Spacer()
-                            }
-                        }
-                    }
                 }
             }
             .navigationTitle(editingItem == nil ? "添加心愿" : "编辑心愿")
             .inlineNavigationBarTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        onDismiss()
-                    }
+                    Button("取消", action: onDismiss)
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        saveAction()
+                        if editingItem == nil {
+                            viewModel.addItem(
+                                title: title,
+                                categoryId: selectedCategoryId,
+                                deck: selectedDeck,
+                                zone: selectedZone,
+                                placeName: placeName.isEmpty ? nil : placeName,
+                                note: note.isEmpty ? nil : note
+                            )
+                        } else if let item = editingItem {
+                            let updated = WishlistItem(
+                                id: item.id,
+                                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                                categoryId: selectedCategoryId,
+                                deck: selectedDeck,
+                                zone: selectedZone,
+                                placeName: placeName.isEmpty ? nil : placeName,
+                                note: note.isEmpty ? nil : note,
+                                isCompleted: item.isCompleted,
+                                createdAt: item.createdAt
+                            )
+                            viewModel.updateItem(updated)
+                        }
+                        onDismiss()
                     }
+                    .fontWeight(.semibold)
+                    .foregroundColor(envPalette.primary)
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }
-    }
-
-    private func saveAction() {
-        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else { return }
-
-        let trimmedPlace = placeName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        viewModel.saveItem(
-            id: editingItem?.id ?? 0,
-            title: trimmedTitle,
-            categoryId: selectedCategoryId,
-            deck: selectedDeck,
-            zone: selectedZone,
-            placeName: trimmedPlace.isEmpty ? nil : trimmedPlace,
-            note: trimmedNote.isEmpty ? nil : trimmedNote
-        )
-        onDismiss()
     }
 }
 
 // MARK: - Wishlist Convert Modal Sheet
 
 private struct WishlistConvertModalSheet: View {
+    @ObservedObject var viewModel: WishlistViewModel
     let item: WishlistItem
-    let category: Category?
-    let activeVoyage: Voyage?
-    let onConfirm: (SimpleDate, Int, Int) -> Void
+    let onConverted: () -> Void
     let onDismiss: () -> Void
 
+    @Environment(\.cruisePalette) private var envPalette
+
     @State private var selectedDate: SimpleDate
-    @State private var startHour: Int = 10
-    @State private var startMinute: Int = 0
-    @State private var durationMinutes: Int = 30
+    @State private var startMinute: Int = 10 * 60 // 10:00
+    @State private var durationMinutes: Int = 45
 
     init(
+        viewModel: WishlistViewModel,
         item: WishlistItem,
-        category: Category?,
-        activeVoyage: Voyage?,
-        onConfirm: @escaping (SimpleDate, Int, Int) -> Void,
+        onConverted: @escaping () -> Void,
         onDismiss: @escaping () -> Void
     ) {
+        self.viewModel = viewModel
         self.item = item
-        self.category = category
-        self.activeVoyage = activeVoyage
-        self.onConfirm = onConfirm
+        self.onConverted = onConverted
         self.onDismiss = onDismiss
 
-        let initialDate = activeVoyage?.boardDate ?? SimpleDate.today()
+        let initialDate = viewModel.activeVoyage?.datesInVoyage().first ?? SimpleDate(year: 2026, month: 9, day: 3)
         _selectedDate = State(initialValue: initialDate)
     }
 
-    private var availableDates: [SimpleDate] {
-        if let voyage = activeVoyage {
-            return voyage.datesInVoyage()
-        }
-        return [selectedDate]
-    }
-
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
-                Section(header: Text("待转入行程项目")) {
-                    HStack(spacing: 8) {
-                        CategoryChip(
-                            name: category?.name ?? "项目",
-                            colorArgb: category?.colorArgb ?? 0xFF0284C7,
-                            showDot: true
-                        )
+                Section("心愿详情") {
+                    HStack {
+                        Text("项目")
+                        Spacer()
                         Text(item.title)
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.headline)
                             .foregroundColor(Slate900)
                     }
-                }
 
-                Section(header: Text("选择安排日期")) {
-                    Picker("日期", selection: $selectedDate) {
-                        ForEach(availableDates, id: \.self) { date in
-                            Text("\(date.description) (\(date.dayOfWeekShort))")
-                                .tag(date)
+                    if let loc = formatLocation(deck: item.deck, zone: item.zone, placeName: item.placeName) {
+                        HStack {
+                            Text("地点")
+                            Spacer()
+                            Text(loc)
+                                .foregroundColor(Slate600)
                         }
                     }
                 }
 
-                Section(header: Text("安排时间")) {
+                Section("计划排入日程") {
+                    let dates = viewModel.activeVoyage?.datesInVoyage() ?? [SimpleDate(year: 2026, month: 9, day: 3)]
+                    Picker("安排日期", selection: $selectedDate) {
+                        ForEach(dates, id: \.self) { date in
+                            Text(date.description).tag(date)
+                        }
+                    }
+
                     HStack {
                         Text("开始时间")
                         Spacer()
-                        Picker("时", selection: $startHour) {
-                            ForEach(6...23, id: \.self) { h in
-                                Text(String(format: "%02d:00", h)).tag(h)
-                            }
-                        }
-                        .labelsHidden()
-
-                        Picker("分", selection: $startMinute) {
-                            ForEach([0, 15, 30, 45], id: \.self) { m in
-                                Text(String(format: ":%02d", m)).tag(m)
-                            }
-                        }
-                        .labelsHidden()
+                        Text(SimpleTime(totalMinutes: startMinute).description)
+                            .fontWeight(.bold)
+                            .foregroundColor(envPalette.primary)
                     }
 
-                    Picker("预计时长", selection: $durationMinutes) {
-                        Text("15 分钟").tag(15)
-                        Text("30 分钟").tag(30)
-                        Text("45 分钟").tag(45)
-                        Text("60 分钟 (1小时)").tag(60)
-                        Text("90 分钟 (1.5小时)").tag(90)
-                        Text("120 分钟 (2小时)").tag(120)
+                    HStack {
+                        Text("活动时长")
+                        Spacer()
+                        Text("\(durationMinutes) 分钟")
+                            .fontWeight(.semibold)
+                    }
+
+                    Stepper(value: $durationMinutes, in: 15...180, step: 15) {
+                        Text("调整时长: \(durationMinutes) 分钟")
                     }
                 }
             }
-            .navigationTitle("转为日程事件")
+            .navigationTitle("转为日程活动")
             .inlineNavigationBarTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        onDismiss()
-                    }
+                    Button("取消", action: onDismiss)
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("确认转入") {
-                        let totalStartMinutes = startHour * 60 + startMinute
-                        onConfirm(selectedDate, totalStartMinutes, durationMinutes)
+                    Button("确认加入") {
+                        viewModel.convertToEvent(
+                            item: item,
+                            date: selectedDate,
+                            startMinute: startMinute,
+                            durationMinutes: durationMinutes
+                        )
+                        onConverted()
                     }
+                    .fontWeight(.semibold)
+                    .foregroundColor(envPalette.primary)
                 }
             }
         }

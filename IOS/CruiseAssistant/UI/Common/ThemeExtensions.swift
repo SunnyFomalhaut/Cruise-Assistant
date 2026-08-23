@@ -131,6 +131,7 @@ extension AppColorTheme {
         Color(argb: containerArgb)
     }
 
+
     public var palette: CruiseColorPalette {
         switch self {
         case .judy_blue:
@@ -214,6 +215,29 @@ extension AppColorTheme {
                 surfaceContainer: Color(argb: 0xFFFDFDF9)
             )
         }
+    }
+}
+
+// MARK: - SwiftUI Theme Environment
+
+private struct CruiseThemeKey: EnvironmentKey {
+    static let defaultValue: AppColorTheme = .judy_blue
+}
+
+extension EnvironmentValues {
+    public var cruiseTheme: AppColorTheme {
+        get { self[CruiseThemeKey.self] }
+        set { self[CruiseThemeKey.self] = newValue }
+    }
+
+    public var cruisePalette: CruiseColorPalette {
+        self.cruiseTheme.palette
+    }
+}
+
+extension View {
+    public func cruiseTheme(_ theme: AppColorTheme) -> some View {
+        self.environment(\.cruiseTheme, theme)
     }
 }
 

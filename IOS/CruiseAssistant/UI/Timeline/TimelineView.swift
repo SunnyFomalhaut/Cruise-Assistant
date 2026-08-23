@@ -32,6 +32,10 @@ public struct TimelineView: View {
         self.onOpenDeckMap = onOpenDeckMap
     }
 
+    private var palette: CruiseColorPalette {
+        viewModel.settings.colorTheme.palette
+    }
+
     private var dayIndexText: String {
         guard let voyage = viewModel.voyage,
               let index = voyage.dayIndexOf(date: viewModel.selectedDate) else {
@@ -51,6 +55,7 @@ public struct TimelineView: View {
                     dates: viewModel.datesInVoyage,
                     selectedDate: viewModel.selectedDate,
                     finalizedDates: viewModel.finalizedDates,
+                    theme: viewModel.settings.colorTheme,
                     onSelect: { date in
                         viewModel.selectDate(date)
                     }
@@ -62,6 +67,7 @@ public struct TimelineView: View {
                         ongoing: viewModel.ongoing,
                         next: viewModel.next,
                         categories: viewModel.categories,
+                        theme: viewModel.settings.colorTheme,
                         onSelectEvent: { event in
                             onEditEvent?(event)
                         }
@@ -109,11 +115,11 @@ public struct TimelineView: View {
 
                     if !dayIndexText.isEmpty {
                         Text(dayIndexText)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(CruiseMarine)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(CruiseAzureContainer)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(palette.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(palette.primaryContainer)
                             .clipShape(Capsule())
                     }
                 }
@@ -131,10 +137,10 @@ public struct TimelineView: View {
             }) {
                 Text(viewModel.fullDayOverride ? "收起" : "全天")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(viewModel.fullDayOverride ? .white : CruiseMarine)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(viewModel.fullDayOverride ? CruiseAzure : CruiseAzureContainer)
+                    .foregroundColor(viewModel.fullDayOverride ? .white : palette.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(viewModel.fullDayOverride ? palette.primary : palette.primaryContainer)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
 
@@ -153,9 +159,9 @@ public struct TimelineView: View {
                         .font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundColor(viewModel.isFinalized ? Slate700 : .white)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 5)
-                .background(viewModel.isFinalized ? Slate200 : CruiseAzure)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(viewModel.isFinalized ? Slate200 : palette.primary)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
 
@@ -188,10 +194,10 @@ public struct TimelineView: View {
                                 Text("顶部有 \(viewModel.layout.hiddenBefore) 个活动被隐藏")
                             }
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(CruiseMarine)
+                            .foregroundColor(palette.secondary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(CruiseAzureContainer)
+                            .background(palette.primaryContainer)
                             .clipShape(Capsule())
                             .padding(.top, 6)
                         }
@@ -261,10 +267,10 @@ public struct TimelineView: View {
                                 Text("底部有 \(viewModel.layout.hiddenAfter) 个活动被隐藏")
                             }
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(CruiseMarine)
+                            .foregroundColor(palette.secondary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(CruiseAzureContainer)
+                            .background(palette.primaryContainer)
                             .clipShape(Capsule())
                             .padding(.bottom, 6)
                         }
@@ -280,7 +286,7 @@ public struct TimelineView: View {
     private var wallpaperLayer: some View {
         let preset = WallpaperPreset.fromKey(viewModel.settings.wallpaperKey)
         if preset != .none, let imageName = preset.imageResourceName {
-            Image(imageName)
+            Image(imageName, bundle: CruiseAssistant.bundle)
                 .resizable()
                 .scaledToFill()
                 .opacity(viewModel.settings.wallpaperAlpha)
@@ -303,7 +309,7 @@ public struct TimelineView: View {
                         Text("今天")
                             .font(.system(size: 12, weight: .bold))
                     }
-                    .foregroundColor(CruiseMarine)
+                    .foregroundColor(palette.secondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 7)
                     .background(SurfaceCard)
@@ -317,7 +323,7 @@ public struct TimelineView: View {
                 Button(action: onOpenWishlist) {
                     Image(systemName: "star.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(CruiseMarine)
+                        .foregroundColor(palette.primary)
                         .frame(width: 44, height: 44)
                         .background(SurfaceCard)
                         .clipShape(Circle())
@@ -334,9 +340,9 @@ public struct TimelineView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 52, height: 52)
-                    .background(CruiseAzure)
+                    .background(palette.primary)
                     .clipShape(Circle())
-                    .shadow(color: CruiseAzure.opacity(0.4), radius: 6, x: 0, y: 3)
+                    .shadow(color: palette.primary.opacity(0.4), radius: 6, x: 0, y: 3)
             }
         }
     }
