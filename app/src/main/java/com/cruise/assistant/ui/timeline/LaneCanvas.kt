@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
+import com.cruise.assistant.domain.DollDistributionMode
 import com.cruise.assistant.domain.LANE_COUNT
 import com.cruise.assistant.domain.TimelineLayout
 import com.cruise.assistant.domain.effectiveWaitMinutes
@@ -57,6 +58,8 @@ fun LaneCanvas(
     menuFor: CruiseEvent? = null,
     /** 菜单内容槽：渲染在被按卡片上的 DropdownMenu */
     menuContent: @Composable (CruiseEvent) -> Unit = {},
+    dollsEnabled: Boolean = true,
+    dollDistributionMode: DollDistributionMode = DollDistributionMode.COLOR_AFFINITY,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier.fillMaxWidth().height(layout.totalHeightDp.dp)) {
@@ -109,6 +112,8 @@ fun LaneCanvas(
                     hasConflict = event.id in conflictIds,
                     onClick = { onEventClick(event) },
                     onLongClick = { onEventLongClick(event) },
+                    dollsEnabled = dollsEnabled,
+                    dollDistributionMode = dollDistributionMode,
                     modifier = Modifier.fillMaxSize(),
                     narrow = narrow,
                 )
