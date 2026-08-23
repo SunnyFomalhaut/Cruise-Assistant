@@ -15,3 +15,5 @@ keystore.properties
 Thumbs.db
 *.pyc
 __pycache__/
+.build/
+.swiftpm/
