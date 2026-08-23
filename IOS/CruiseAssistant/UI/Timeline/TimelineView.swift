@@ -12,6 +12,8 @@ public struct TimelineView: View {
     public let onOpenFacilities: (() -> Void)?
     public let onOpenDeckMap: (() -> Void)?
 
+    @State private var selectedDetailEvent: CruiseEvent? = nil
+
     public init(
         viewModel: TimelineViewModel,
         onAddEvent: ((Int) -> Void)? = nil,
@@ -69,7 +71,11 @@ public struct TimelineView: View {
                         categories: viewModel.categories,
                         theme: viewModel.settings.colorTheme,
                         onSelectEvent: { event in
-                            onEditEvent?(event)
+                            if viewModel.isFinalized {
+                                selectedDetailEvent = event
+                            } else {
+                                onEditEvent?(event)
+                            }
                         }
                     )
                 }
@@ -82,6 +88,25 @@ public struct TimelineView: View {
             floatingActionButtons
                 .padding(.trailing, 16)
                 .padding(.bottom, 20)
+
+            // Finalized Read-Only Event Detail Dialog
+            if let detailEvent = selectedDetailEvent {
+                EventDetailDialogView(
+                    event: detailEvent,
+                    category: viewModel.categories[detailEvent.categoryId],
+                    onNavigateToMap: { deck, placeName in
+                        selectedDetailEvent = nil
+                        onOpenDeckMap?()
+                    },
+                    onDismiss: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedDetailEvent = nil
+                        }
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .zIndex(100)
+            }
         }
         .background(Slate50.ignoresSafeArea())
         .sheet(isPresented: $viewModel.showConflictDialog) {
@@ -226,7 +251,13 @@ public struct TimelineView: View {
                                 conflictIds: viewModel.conflictIds,
                                 singleLane: viewModel.isFinalized,
                                 onEventClick: { event in
-                                    onEditEvent?(event)
+                                    if viewModel.isFinalized {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            selectedDetailEvent = event
+                                        }
+                                    } else {
+                                        onEditEvent?(event)
+                                    }
                                 },
                                 onEventLongClick: { _ in },
                                 onMoveToLane: { event, laneIndex in
@@ -239,7 +270,13 @@ public struct TimelineView: View {
                                     viewModel.keepOnlyThisShow(event)
                                 },
                                 onEditEvent: { event in
-                                    onEditEvent?(event)
+                                    if viewModel.isFinalized {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            selectedDetailEvent = event
+                                        }
+                                    } else {
+                                        onEditEvent?(event)
+                                    }
                                 },
                                 onDeleteEvent: { event in
                                     viewModel.deleteEvent(id: event.id)
@@ -257,6 +294,7 @@ public struct TimelineView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: CGFloat(viewModel.layout.totalHeightPt))
+                        .clipped()
                     }
 
                     // Hidden After Indicator
@@ -285,12 +323,26 @@ public struct TimelineView: View {
     @ViewBuilder
     private var wallpaperLayer: some View {
         let preset = WallpaperPreset.fromKey(viewModel.settings.wallpaperKey)
-        if preset != .none, let imageName = preset.imageResourceName {
-            Image(imageName, bundle: CruiseAssistant.bundle)
+        if preset != .none, let img = loadWallpaperImage(for: preset) {
+            #if canImport(UIKit)
+            Image(uiImage: img)
                 .resizable()
                 .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: CGFloat(viewModel.layout.totalHeightPt))
+                .clipped()
                 .opacity(viewModel.settings.wallpaperAlpha)
                 .allowsHitTesting(false)
+            #elseif canImport(AppKit)
+            Image(nsImage: img)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: CGFloat(viewModel.layout.totalHeightPt))
+                .clipped()
+                .opacity(viewModel.settings.wallpaperAlpha)
+                .allowsHitTesting(false)
+            #endif
         }
     }
 

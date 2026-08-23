@@ -1,4 +1,11 @@
 import Foundation
+#if canImport(UIKit)
+import UIKit
+public typealias PlatformWallpaperImage = UIImage
+#elseif canImport(AppKit)
+import AppKit
+public typealias PlatformWallpaperImage = NSImage
+#endif
 
 /// Timeline semi-transparent background wallpaper presets.
 public enum WallpaperPreset: String, CaseIterable, Identifiable, Codable, Sendable {
@@ -68,4 +75,55 @@ public enum WallpaperPreset: String, CaseIterable, Identifiable, Codable, Sendab
         guard let key = key else { return .none }
         return WallpaperPreset(rawValue: key) ?? .none
     }
+}
+
+/// Universal wallpaper image resolver searching all bundle locations and directories.
+public func loadWallpaperImage(for preset: WallpaperPreset, bundle: Bundle? = nil) -> PlatformWallpaperImage? {
+    guard let filename = preset.assetFilename else { return nil }
+    let clean = (filename as NSString).lastPathComponent
+    let name = (clean as NSString).deletingPathExtension
+    let ext = (clean as NSString).pathExtension
+
+    let bundlesToTry: [Bundle] = [
+        bundle,
+        CruiseAssistant.bundle,
+        Bundle.main,
+        Bundle(for: CruiseAssistantBundleMarker.self)
+    ].compactMap { $0 }
+
+    let subdirs: [String?] = [
+        "Wallpapers",
+        "wallpapers",
+        "Resources/Wallpapers",
+        "Resources/wallpapers",
+        nil
+    ]
+
+    for b in bundlesToTry {
+        for sub in subdirs {
+            if let url = b.url(forResource: name, withExtension: ext, subdirectory: sub) {
+                #if canImport(UIKit)
+                if let img = UIImage(contentsOfFile: url.path) {
+                    return img
+                }
+                #elseif canImport(AppKit)
+                if let img = NSImage(contentsOf: url) {
+                    return img
+                }
+                #endif
+            }
+        }
+        if let url = b.url(forResource: name, withExtension: ext) {
+            #if canImport(UIKit)
+            if let img = UIImage(contentsOfFile: url.path) {
+                return img
+            }
+            #elseif canImport(AppKit)
+            if let img = NSImage(contentsOf: url) {
+                return img
+            }
+            #endif
+        }
+    }
+    return nil
 }
