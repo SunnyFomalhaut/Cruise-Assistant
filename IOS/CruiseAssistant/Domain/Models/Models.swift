@@ -579,3 +579,22 @@ public func lastLevelForRoom(records: [PixieDustRecord], deck: Int, room: String
         .filter { $0.direction == .given && $0.deck == deck && $0.room == room }
         .max(by: { $0.timestamp < $1.timestamp })
 }
+
+/// Formats a cruise location (e.g. "Deck 7 船中 花园"). When `compact` is true, uses "D7" prefix.
+public func formatLocation(
+    deck: Int?,
+    zone: ShipZone?,
+    placeName: String?,
+    compact: Bool = false
+) -> String? {
+    guard let deck = deck else { return nil }
+    var parts: [String] = []
+    parts.append(compact ? "D\(deck)" : "Deck \(deck)")
+    if let zone = zone {
+        parts.append(zone.label)
+    }
+    if let placeName = placeName?.trimmingCharacters(in: .whitespacesAndNewlines), !placeName.isEmpty {
+        parts.append(placeName)
+    }
+    return parts.joined(separator: " ")
+}
