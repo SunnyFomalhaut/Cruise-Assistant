@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
-import com.cruise.assistant.domain.DollDistributionMode
 import com.cruise.assistant.domain.DollManager
 import com.cruise.assistant.domain.endMinute
 import com.cruise.assistant.domain.formatLocation
@@ -78,7 +77,6 @@ fun EventCard(
     /** 卡片所在栏是否是最窄的那栏（栏2），影响 compact 分支的排版取舍 */
     narrow: Boolean = false,
     dollsEnabled: Boolean = true,
-    dollDistributionMode: DollDistributionMode = DollDistributionMode.COLOR_AFFINITY,
 ) {
     val colorArgb = category?.colorArgb ?: 0xFF9E9E9E.toInt()
     val active = event.isActive
@@ -109,21 +107,10 @@ fun EventCard(
         else -> 1
     }
 
-    val textHeightDp = if (hasWaitSegment) {
-        waitSegmentHeightDp + (bodyLines * 18).dp + 4.dp
+    val dollAsset = if (dollsEnabled && active) {
+        remember(event.id, heightDp) { DollManager.selectDollForCard(event.id, heightDp.value) }
     } else {
-        if (compact) 20.dp else (if (location != null) 54.dp else 38.dp)
-    }
-    val blankHeightDp = (heightDp - textHeightDp).coerceAtLeast(0.dp)
-
-    val (primaryAsset, secondaryAsset) = remember(event.id, colorArgb, heightDp, dollDistributionMode) {
-        DollManager.selectDollsForCard(
-            eventId = event.id,
-            cardColorArgb = colorArgb,
-            cardHeightDp = heightDp.value,
-            blankHeightDp = blankHeightDp.value,
-            mode = dollDistributionMode,
-        )
+        null
     }
 
     Box(
@@ -139,42 +126,25 @@ fun EventCard(
             )
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
-        if (dollsEnabled && active) {
-            val context = LocalContext.current
-            if (primaryAsset != null) {
-                val primaryBitmap = remember(primaryAsset) {
-                    DollManager.loadDollBitmap(context, primaryAsset, 160)
-                }
-                if (primaryBitmap != null) {
-                    Image(
-                        bitmap = primaryBitmap.asImageBitmap(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = 4.dp, bottom = 2.dp)
-                            .size((heightDp * 0.70f).coerceIn(36.dp, 84.dp))
-                            .alpha(0.24f),
-                    )
-                }
-            }
-            if (secondaryAsset != null) {
-                val secondaryBitmap = remember(secondaryAsset) {
-                    DollManager.loadDollBitmap(context, secondaryAsset, 140)
-                }
-                if (secondaryBitmap != null) {
-                    Image(
-                        bitmap = secondaryBitmap.asImageBitmap(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(start = 10.dp, bottom = 2.dp)
-                            .size((blankHeightDp * 0.85f).coerceIn(32.dp, 72.dp))
-                            .alpha(0.20f),
-                    )
-                }
-            }
+        val context = LocalContext.current
+        val dollBitmap = if (dollAsset != null) {
+            remember(dollAsset) { DollManager.loadDollBitmap(context, dollAsset, 240) }
+        } else {
+            null
+        }
+
+        if (dollBitmap != null) {
+            val dollHeight = (heightDp - 4.dp).coerceIn(24.dp, 120.dp)
+            Image(
+                bitmap = dollBitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                alpha = 0.24f,
+                modifier = Modifier
+                    .align(if (compact) Alignment.CenterEnd else Alignment.BottomEnd)
+                    .padding(end = 4.dp, bottom = 2.dp)
+                    .height(dollHeight),
+            )
         }
 
         Row(
