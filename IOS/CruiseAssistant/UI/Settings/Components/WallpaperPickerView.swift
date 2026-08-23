@@ -118,7 +118,7 @@ public struct WallpaperPickerView: View {
                             .font(.system(size: 20))
                             .foregroundColor(CruiseAzure)
                     } else if let resourceName = preset.imageResourceName {
-                        Image(resourceName, bundle: .module)
+                        Image(resourceName, bundle: CruiseAssistant.bundle)
                             .resizable()
                             .scaledToFill()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)

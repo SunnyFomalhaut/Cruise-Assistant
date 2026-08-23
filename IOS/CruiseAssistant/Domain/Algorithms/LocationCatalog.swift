@@ -399,7 +399,7 @@ public final class LocationCatalog: @unchecked Sendable {
     /// 从 Bundle 加载默认地点数据
     @discardableResult
     public func loadDefault(bundle: Bundle? = nil) -> Bool {
-        let targetBundle = bundle ?? .module
+        let targetBundle = bundle ?? CruiseAssistant.bundle
         let url = targetBundle.url(forResource: "locations", withExtension: "json")
             ?? targetBundle.url(forResource: "locations", withExtension: "json", subdirectory: "Raw")
         guard let url = url, let data = try? Data(contentsOf: url) else {

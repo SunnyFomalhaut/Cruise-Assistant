@@ -449,7 +449,7 @@ public final class PosterManager: @unchecked Sendable {
 
     /// 解析 Bundle 中的海报 URL
     public func urlForPoster(path: String, bundle: Bundle? = nil) -> URL? {
-        let targetBundle = bundle ?? .module
+        let targetBundle = bundle ?? CruiseAssistant.bundle
         let clean = (path as NSString).lastPathComponent
         let name = (clean as NSString).deletingPathExtension
         let ext = (clean as NSString).pathExtension.isEmpty ? "jpg" : (clean as NSString).pathExtension
