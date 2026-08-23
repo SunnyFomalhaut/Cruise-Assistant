@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.cruise.assistant.domain.AppColorTheme
+import com.cruise.assistant.domain.DollDistributionMode
 import com.cruise.assistant.domain.WallpaperPreset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -35,6 +36,8 @@ data class AppSettings(
     val wallpaperEnabled: Boolean = false,
     val wallpaperKey: String = WallpaperPreset.NONE.key,
     val wallpaperAlpha: Float = 0.10f,
+    val cardDollsEnabled: Boolean = true,
+    val cardDollDistribution: DollDistributionMode = DollDistributionMode.COLOR_AFFINITY,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("cruise_settings")
@@ -59,6 +62,8 @@ class SettingsStore(private val context: Context) {
         val wallpaperEnabled = booleanPreferencesKey("wallpaper_enabled")
         val wallpaperKey = stringPreferencesKey("wallpaper_key")
         val wallpaperAlpha = floatPreferencesKey("wallpaper_alpha")
+        val cardDollsEnabled = booleanPreferencesKey("card_dolls_enabled")
+        val cardDollDistribution = stringPreferencesKey("card_doll_distribution")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -85,6 +90,10 @@ class SettingsStore(private val context: Context) {
             wallpaperEnabled = prefs[Keys.wallpaperEnabled] ?: defaults.wallpaperEnabled,
             wallpaperKey = prefs[Keys.wallpaperKey] ?: defaults.wallpaperKey,
             wallpaperAlpha = prefs[Keys.wallpaperAlpha]?.coerceIn(0.05f, 0.40f) ?: defaults.wallpaperAlpha,
+            cardDollsEnabled = prefs[Keys.cardDollsEnabled] ?: defaults.cardDollsEnabled,
+            cardDollDistribution = prefs[Keys.cardDollDistribution]
+                ?.let { runCatching { DollDistributionMode.valueOf(it) }.getOrNull() }
+                ?: defaults.cardDollDistribution,
         )
     }
 
@@ -132,6 +141,12 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setWallpaperAlpha(alpha: Float) =
         edit { it[Keys.wallpaperAlpha] = alpha.coerceIn(0.05f, 0.40f) }
+
+    suspend fun setCardDollsEnabled(enabled: Boolean) =
+        edit { it[Keys.cardDollsEnabled] = enabled }
+
+    suspend fun setCardDollDistribution(mode: DollDistributionMode) =
+        edit { it[Keys.cardDollDistribution] = mode.name }
 
     /**
      * 上一次 rescheduleAll() 实际排上闹钟的事件 id 集合，用于下次重排时精确取消——

@@ -561,6 +561,8 @@ fun CruiseNavHost(container: AppContainer) {
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
+                    onCardDollsToggle = vm::setCardDollsEnabled,
+                    onCardDollDistributionChange = vm::setCardDollDistribution,
                 )
             }
 

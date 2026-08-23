@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 
 import android.content.Context
 import android.net.Uri
+import com.cruise.assistant.domain.DollDistributionMode
 import com.cruise.assistant.domain.WallpaperManager
 import com.cruise.assistant.domain.WallpaperPreset
 
@@ -70,6 +71,14 @@ class SettingsViewModel(
 
     fun setWallpaperAlpha(alpha: Float) {
         viewModelScope.launch { settingsStore.setWallpaperAlpha(alpha) }
+    }
+
+    fun setCardDollsEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsStore.setCardDollsEnabled(enabled) }
+    }
+
+    fun setCardDollDistribution(mode: DollDistributionMode) {
+        viewModelScope.launch { settingsStore.setCardDollDistribution(mode) }
     }
 
     fun saveCustomWallpaper(context: Context, uri: Uri) {

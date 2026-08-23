@@ -240,4 +240,14 @@
     <string name="lead_time_label">提前候场时间</string>
     <string name="lead_time_format">%d 分钟</string>
     <string name="lead_time_hint">建议提前候场以获取较好座位</string>
+
+    <!-- 卡片萌趣装饰 -->
+    <string name="card_dolls_section_title">卡片萌趣装饰</string>
+    <string name="card_dolls_enabled">卡片人偶立绘点缀</string>
+    <string name="card_dolls_desc">在日程卡片空白处半透明点缀达菲家族七位宝宝</string>
+    <string name="card_dolls_mode_title">分配模式</string>
+    <string name="card_dolls_mode_affinity">色彩亲和推荐</string>
+    <string name="card_dolls_mode_affinity_desc">根据卡片背景颜色提升对应角色的出场概率，兼具全员偶现</string>
+    <string name="card_dolls_mode_random">全员完全随机</string>
+    <string name="card_dolls_mode_random_desc">七位宝宝全部 60 张素材均等概率随机轮播</string>
 </resources>
