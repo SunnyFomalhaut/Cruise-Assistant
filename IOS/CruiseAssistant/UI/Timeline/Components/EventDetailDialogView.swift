@@ -34,14 +34,38 @@ public struct EventDetailDialogView: View {
         }
     }
 
+    private var isShowEvent: Bool {
+        category?.iconKey == "show" || category?.name == "演出" || (event.presetKey != nil && DISNEY_ADVENTURE_SHOWS.contains { $0.key == event.presetKey })
+    }
+
     private var posterUrl: URL? {
-        let isShow = category?.iconKey == "show" || event.presetKey != nil
-        if isShow {
+        if isShowEvent {
             return PosterManager.shared.posterUrl(forEventTitle: event.title, presetKey: event.presetKey)
         } else if let place = event.placeName, !place.isEmpty {
             return PosterManager.shared.posterUrl(for: place)
         }
         return nil
+    }
+
+    private var resolvedDeck: Int? {
+        if let d = event.deck {
+            return d
+        }
+        if let place = event.placeName, !place.isEmpty {
+            let entry = LocationCatalog.getAllEntries().first {
+                $0.placeName == place || $0.placeName.contains(place) || place.contains($0.placeName)
+            }
+            return entry?.deck
+        }
+        return nil
+    }
+
+    private var mapHighlightTarget: String {
+        let place = event.placeName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !place.isEmpty {
+            return place
+        }
+        return event.title.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var locationFormatted: String? {
@@ -111,8 +135,8 @@ public struct EventDetailDialogView: View {
                         }
                     }
 
-                    // Show Wait Time Notice (if show with wait minutes)
-                    if event.effectiveWaitMinutes > 0 && (category?.iconKey == "show" || event.presetKey != nil) {
+                    // Show Wait Time Notice (only for shows with wait minutes)
+                    if isShowEvent && event.effectiveWaitMinutes > 0 {
                         HStack(spacing: 10) {
                             Image(systemName: "bell.badge.fill")
                                 .font(.system(size: 15))
@@ -148,10 +172,10 @@ public struct EventDetailDialogView: View {
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(Slate800)
 
-                                if let deck = event.deck, let onNavigateToMap = onNavigateToMap {
+                                if let deck = resolvedDeck, let onNavigateToMap = onNavigateToMap {
                                     Button(action: {
                                         onDismiss()
-                                        onNavigateToMap(deck, event.placeName ?? "")
+                                        onNavigateToMap(deck, mapHighlightTarget)
                                     }) {
                                         HStack(spacing: 4) {
                                             Image(systemName: "map.fill")
@@ -181,10 +205,10 @@ public struct EventDetailDialogView: View {
                         }
                         .buttonStyle(.plain)
 
-                        if let deck = event.deck, let onNavigateToMap = onNavigateToMap {
+                        if let deck = resolvedDeck, let onNavigateToMap = onNavigateToMap {
                             Button(action: {
                                 onDismiss()
-                                onNavigateToMap(deck, event.placeName ?? "")
+                                onNavigateToMap(deck, mapHighlightTarget)
                             }) {
                                 HStack(spacing: 4) {
                                     Image(systemName: "map.fill")

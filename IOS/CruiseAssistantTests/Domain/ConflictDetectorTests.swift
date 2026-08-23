@@ -112,4 +112,68 @@ final class ConflictDetectorTests: XCTestCase {
         let conflicts = findConflicts(events: events)
         XCTAssertEqual(1, conflicts.count)
     }
+
+    func testShowWaitTimeExpansionConflicts_WhenOneSiblingShowDeactivated() {
+        let showCatId: Int64 = 2
+        let rangeOf = showRangeOf([showCatId])
+
+        // 达菲与友谊之船 09:45-10:15 (wait 45m -> 09:00-10:15)
+        var duffy = CruiseEvent(
+            id: 32,
+            date: SimpleDate(year: 2026, month: 9, day: 4),
+            startTime: SimpleTime(hour: 9, minute: 45),
+            durationMinutes: 30,
+            categoryId: showCatId,
+            title: "达菲与友谊之船",
+            waitMinutes: 45
+        )
+        duffy.isActive = true
+
+        // 海洋奇缘 09:30-09:45 (wait 30m -> 09:00-09:45)
+        var moana1 = CruiseEvent(
+            id: 14,
+            date: SimpleDate(year: 2026, month: 9, day: 4),
+            startTime: SimpleTime(hour: 9, minute: 30),
+            durationMinutes: 15,
+            categoryId: showCatId,
+            title: "海洋奇缘",
+            waitMinutes: 30
+        )
+        moana1.isActive = true
+
+        // 海洋奇缘 10:00-10:15 (deactivated)
+        var moana2 = CruiseEvent(
+            id: 15,
+            date: SimpleDate(year: 2026, month: 9, day: 4),
+            startTime: SimpleTime(hour: 10, minute: 0),
+            durationMinutes: 15,
+            categoryId: showCatId,
+            title: "海洋奇缘",
+            waitMinutes: 30
+        )
+        moana2.isActive = false
+
+        // 大白超级健身 08:45-09:15 (wait 15m -> 08:30-09:15)
+        var baymax = CruiseEvent(
+            id: 29,
+            date: SimpleDate(year: 2026, month: 9, day: 4),
+            startTime: SimpleTime(hour: 8, minute: 45),
+            durationMinutes: 30,
+            categoryId: showCatId,
+            title: "大白超级健身",
+            waitMinutes: 15
+        )
+        baymax.isActive = true
+
+        let events = [baymax, moana1, duffy, moana2]
+        let conflicts = findConflicts(events, rangeOf: rangeOf)
+
+        // baymax (08:30-09:15) overlaps with moana1 (09:00-09:45) and duffy (09:00-10:15)
+        // moana1 (09:00-09:45) overlaps with duffy (09:00-10:15)
+        // Total active conflict pairs = 3
+        XCTAssertEqual(3, conflicts.count)
+        XCTAssertTrue(conflicts.contains { $0.first.id == 29 && $0.second.id == 14 })
+        XCTAssertTrue(conflicts.contains { $0.first.id == 29 && $0.second.id == 32 })
+        XCTAssertTrue(conflicts.contains { $0.first.id == 14 && $0.second.id == 32 })
+    }
 }

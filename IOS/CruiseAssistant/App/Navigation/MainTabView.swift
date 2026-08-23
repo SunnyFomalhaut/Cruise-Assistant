@@ -97,7 +97,10 @@ public struct MainTabView: View {
                 onOpenWishlist: { coordinator.navigateToWishlist() },
                 onOpenPixieDust: { coordinator.navigateToPixieDust() },
                 onOpenFacilities: { coordinator.navigateToFacilities() },
-                onOpenDeckMap: { coordinator.navigateToDeckMap() }
+                onOpenDeckMap: { coordinator.navigateToDeckMap() },
+                onNavigateToDeckMap: { deck, placeName in
+                    coordinator.navigateToDeckMap(deck: deck, highlight: placeName)
+                }
             )
             .tabItem {
                 Label(AppTab.timeline.title, systemImage: AppTab.timeline.iconName)
@@ -186,18 +189,30 @@ public struct MainTabView: View {
             )
             .cruiseTheme(settingsStore.settings.colorTheme)
         }
-        .onChange(of: coordinator.targetDeck) { _, newDeck in
-            if let deck = newDeck {
-                deckMapViewModel.selectDeck(deck)
-                if let highlight = coordinator.targetHighlight {
-                    deckMapViewModel.highlightTarget = highlight
-                    deckMapViewModel.search(query: highlight)
-                }
+        .onChange(of: coordinator.targetDeck) { _, _ in
+            handleDeckMapNavigation()
+        }
+        .onChange(of: coordinator.targetHighlight) { _, _ in
+            handleDeckMapNavigation()
+        }
+        .onChange(of: coordinator.activeTab) { _, newTab in
+            if newTab == .deckMap {
+                handleDeckMapNavigation()
             }
         }
         .onChange(of: coordinator.targetDate) { _, newDate in
             if let date = newDate {
                 timelineViewModel.selectDate(date)
+            }
+        }
+    }
+
+    private func handleDeckMapNavigation() {
+        if let deck = coordinator.targetDeck {
+            deckMapViewModel.selectDeck(deck)
+            if let highlight = coordinator.targetHighlight, !highlight.isEmpty {
+                deckMapViewModel.highlightTarget = highlight
+                deckMapViewModel.search(query: highlight)
             }
         }
     }

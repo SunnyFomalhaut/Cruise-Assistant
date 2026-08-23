@@ -270,17 +270,9 @@ public final class EventRepository: EventRepositoryProtocol, @unchecked Sendable
 
     public func conflictsOn(date: SimpleDate) -> [(CruiseEvent, CruiseEvent)] {
         let activeEvents = database.getEvents(for: date).filter(\.isActive)
-        var conflicts: [(CruiseEvent, CruiseEvent)] = []
-
-        for i in 0..<activeEvents.count {
-            for j in (i + 1)..<activeEvents.count {
-                let e1 = activeEvents[i]
-                let e2 = activeEvents[j]
-                if max(e1.startMinute, e2.startMinute) < min(e1.endMinute, e2.endMinute) {
-                    conflicts.append((e1, e2))
-                }
-            }
-        }
-        return conflicts
+        let showCatIds = Set(database.getCategories().filter { $0.iconKey == "show" }.map(\.id))
+        let rangeOf = showRangeOf(showCatIds)
+        let pairs = findConflicts(activeEvents, rangeOf: rangeOf)
+        return pairs.map { ($0.first, $0.second) }
     }
 }

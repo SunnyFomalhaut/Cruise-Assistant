@@ -17,3 +17,6 @@ Thumbs.db
 __pycache__/
 .build/
 .swiftpm/
+build_derived/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/

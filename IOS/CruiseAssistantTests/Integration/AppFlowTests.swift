@@ -323,4 +323,200 @@ final class AppFlowTests: XCTestCase {
         XCTAssertNil(coordinator.targetDate)
         XCTAssertNil(coordinator.targetEventId)
     }
+
+    func testEventDetailDialog_ShowVersusNonShowWaitTimes() {
+        let showCategory = Category(id: 2, name: "演出", colorArgb: 0xFFF5B301, iconKey: "show")
+        let importantCategory = Category(id: 3, name: "重要事项", colorArgb: 0xFFEA4335, iconKey: "important")
+        let mealCategory = Category(id: 1, name: "餐食", colorArgb: 0xFF34A853, iconKey: "meal")
+        let showEvent = CruiseEvent(
+            id: 12,
+            date: SimpleDate(year: 2026, month: 9, day: 3),
+            startTime: SimpleTime(hour: 20, minute: 30),
+            durationMinutes: 60,
+            categoryId: 2,
+            title: "海洋奇遇 Disney Seas The Adventure",
+            deck: 6,
+            zone: .bow,
+            placeName: "华特迪士尼剧院 Walt Disney Theatre",
+            presetKey: "show_seas_adventure"
+        )
+
+        let drillEvent = CruiseEvent(
+            id: 3,
+            date: SimpleDate(year: 2026, month: 9, day: 3),
+            startTime: SimpleTime(hour: 15, minute: 45),
+            durationMinutes: 35,
+            categoryId: 3,
+            title: "安全演习",
+            deck: 6,
+            zone: .mid,
+            placeName: nil,
+            presetKey: "safety_drill"
+        )
+
+        let dinnerEvent = CruiseEvent(
+            id: 4,
+            date: SimpleDate(year: 2026, month: 9, day: 3),
+            startTime: SimpleTime(hour: 17, minute: 45),
+            durationMinutes: 75,
+            categoryId: 1,
+            title: "晚餐",
+            presetKey: "dinner"
+        )
+
+        // 1. Verify show event has wait minutes formatted
+        XCTAssertEqual(showEvent.effectiveWaitMinutes, 45)
+        XCTAssertEqual(formatWaitStart(showEvent), "19:45")
+
+        // 2. Verify dialog callbacks for navigation
+        var navigatedDeck: Int?
+        var navigatedTarget: String?
+
+        let showDialog = EventDetailDialogView(
+            event: showEvent,
+            category: showCategory,
+            onNavigateToMap: { deck, target in
+                navigatedDeck = deck
+                navigatedTarget = target
+            },
+            onDismiss: {}
+        )
+        showDialog.onNavigateToMap?(6, "华特迪士尼剧院 Walt Disney Theatre")
+        XCTAssertEqual(navigatedDeck, 6)
+        XCTAssertEqual(navigatedTarget, "华特迪士尼剧院 Walt Disney Theatre")
+
+        let drillDialog = EventDetailDialogView(
+            event: drillEvent,
+            category: importantCategory,
+            onNavigateToMap: { deck, target in
+                navigatedDeck = deck
+                navigatedTarget = target
+            },
+            onDismiss: {}
+        )
+        drillDialog.onNavigateToMap?(6, "安全演习")
+        XCTAssertEqual(navigatedDeck, 6)
+        XCTAssertEqual(navigatedTarget, "安全演习")
+
+        let dinnerDialog = EventDetailDialogView(
+            event: dinnerEvent,
+            category: mealCategory,
+            onNavigateToMap: { deck, target in
+                navigatedDeck = deck
+                navigatedTarget = target
+            },
+            onDismiss: {}
+        )
+        XCTAssertNotNil(dinnerDialog)
+    }
+
+    func testEventDetailDialog_MapDeepLinkAndHighlight() {
+        let coordinator = NavigationCoordinator()
+        let deckMapVM = DeckMapViewModel(initialDeck: 10)
+
+        // Simulate event detail dialog clicking "去地图" -> Deck 6, "华特迪士尼剧院"
+        coordinator.navigateToDeckMap(deck: 6, highlight: "华特迪士尼剧院 Walt Disney Theatre")
+        XCTAssertEqual(coordinator.activeTab, .deckMap)
+        XCTAssertEqual(coordinator.targetDeck, 6)
+        XCTAssertEqual(coordinator.targetHighlight, "华特迪士尼剧院 Walt Disney Theatre")
+
+        deckMapVM.navigateToFacility(deck: 6, highlight: "华特迪士尼剧院 Walt Disney Theatre")
+        XCTAssertEqual(deckMapVM.selectedDeck, 6)
+        XCTAssertEqual(deckMapVM.highlightTarget, "华特迪士尼剧院 Walt Disney Theatre")
+
+        // Verify SVG HTML generation includes highlight pin badge and pulse box
+        if let svgContent = DeckMapRepository.loadDeckSvgContent(deckNumber: 6) {
+            let html = DeckMapRepository.inlineHtmlWrapperFor(
+                svgContent: svgContent,
+                highlightTarget: "华特迪士尼剧院 Walt Disney Theatre"
+            )
+            XCTAssertTrue(html.contains("facility-highlight-box"), "HTML should inject facility-highlight-box CSS")
+            XCTAssertTrue(html.contains("facility-pin-badge"), "HTML should inject facility-pin-badge CSS")
+            XCTAssertTrue(html.contains("centerFacilityTarget"), "HTML should inject centerFacilityTarget script")
+            XCTAssertTrue(html.contains("📍"), "HTML should include pin icon in pin-badge")
+        }
+    }
+
+    func testTimelineFinalizedState_ToggleAndFABVisibility() {
+        let container = AppContainer.inMemory()
+        let boardDate = SimpleDate(year: 2026, month: 9, day: 3)
+        let disembarkDate = SimpleDate(year: 2026, month: 9, day: 7)
+
+        _ = container.voyageRepository.createVoyage(
+            shipName: "Disney Adventure",
+            boardDate: boardDate,
+            boardTime: SimpleTime(hour: 12, minute: 0),
+            disembarkDate: disembarkDate,
+            disembarkTime: SimpleTime(hour: 7, minute: 0),
+            maxDeck: 20,
+            minDeck: 1,
+            dinnerTime: SimpleTime(hour: 17, minute: 45),
+            shipPresetName: "Disney Adventure"
+        )
+
+        let timelineVM = TimelineViewModel(
+            voyageRepository: container.voyageRepository,
+            eventRepository: container.eventRepository,
+            categoryRepository: container.categoryRepository,
+            settingsStore: container.settingsStore,
+            notificationService: container.notificationService,
+            todayProvider: { boardDate }
+        )
+
+        timelineVM.selectDate(boardDate)
+        XCTAssertFalse(timelineVM.isFinalized, "Day should be unfinalized initially")
+
+        // Request finalize
+        timelineVM.finalizeDay(boardDate)
+        XCTAssertTrue(timelineVM.isFinalized, "Day should be finalized after finalizeDay")
+
+        // Unlock day
+        timelineVM.unlockDay(boardDate)
+        XCTAssertFalse(timelineVM.isFinalized, "Day should be unfinalized after unlockDay")
+    }
+
+    func testSeedSimulatorData() {
+        let containerPath = "/Users/u219999/Library/Developer/CoreSimulator/Devices/0185FF65-EB49-4425-8703-0ADAEF6D749B/data/Containers/Data/Application/F5CEA785-4A5F-4CF0-91BD-833E92AD082F"
+        let appSupport = URL(fileURLWithPath: containerPath).appendingPathComponent("Library/Application Support/CruiseAssistant", isDirectory: true)
+        try? FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
+        let dbURL = appSupport.appendingPathComponent("cruise_database.json")
+
+        let database = CruiseDatabase(fileURL: dbURL)
+        let categoryRepo = CategoryRepository(database: database)
+        let voyageRepo = VoyageRepository(database: database, categoryRepository: categoryRepo)
+        let notificationService = NotificationService()
+
+        let defaults = UserDefaults(suiteName: "simulator_seed") ?? .standard
+        let settingsStore = SettingsStore(userDefaults: defaults)
+
+        let boardDate = SimpleDate(year: 2026, month: 9, day: 3)
+        let disembarkDate = SimpleDate(year: 2026, month: 9, day: 7)
+        let dinnerTime = SimpleTime(hour: 17, minute: 45)
+
+        let onboardingVM = OnboardingViewModel(
+            voyageRepository: voyageRepo,
+            settingsStore: settingsStore,
+            notificationService: notificationService,
+            today: boardDate
+        )
+
+        onboardingVM.selectedShipIndex = 0
+        onboardingVM.shipName = "Disney Adventure"
+        onboardingVM.onBoardDateChange(boardDate)
+        onboardingVM.onDisembarkDateChange(disembarkDate)
+        onboardingVM.dinnerTime = dinnerTime
+        onboardingVM.submit()
+
+        let prefsURL = URL(fileURLWithPath: containerPath).appendingPathComponent("Library/Preferences", isDirectory: true)
+        try? FileManager.default.createDirectory(at: prefsURL, withIntermediateDirectories: true)
+        let plistURL = prefsURL.appendingPathComponent("com.cruise.assistant.ios.plist")
+        var settings = settingsStore.settings
+        settings.onboardingCompleted = true
+        settings.lastViewedDate = boardDate
+        let encoder = PropertyListEncoder()
+        if let data = try? encoder.encode(["cruise_settings": try? JSONEncoder().encode(settings)]) {
+            try? data.write(to: plistURL)
+        }
+        print("Clean seeded database at \(dbURL.path)")
+    }
 }

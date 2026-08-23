@@ -73,4 +73,70 @@ final class CommonComponentTests: XCTestCase {
         XCTAssertEqual(picker2.minute, 45)
         XCTAssertEqual(picker2.minuteStep, 5)
     }
+
+    func testEventDetailDialogViewInitializationAndCallbacks() {
+        let showCategory = Category(id: 1, name: "演出", colorArgb: 0xFFF5B301, iconKey: "show")
+        let importantCategory = Category(id: 2, name: "重要事项", colorArgb: 0xFFEA4335, iconKey: "important")
+
+        let showEvent = CruiseEvent(
+            id: 101,
+            date: SimpleDate(year: 2026, month: 9, day: 3),
+            startTime: SimpleTime(hour: 18, minute: 0),
+            durationMinutes: 60,
+            categoryId: 1,
+            title: "海洋奇遇 Disney Seas The Adventure",
+            deck: 6,
+            zone: .bow,
+            placeName: "华特迪士尼剧院 Walt Disney Theatre",
+            presetKey: "show_seas_adventure"
+        )
+
+        let drillEvent = CruiseEvent(
+            id: 102,
+            date: SimpleDate(year: 2026, month: 9, day: 3),
+            startTime: SimpleTime(hour: 15, minute: 45),
+            durationMinutes: 35,
+            categoryId: 2,
+            title: "安全演习",
+            deck: 6,
+            zone: .mid,
+            placeName: nil,
+            presetKey: "safety_drill"
+        )
+
+        var navigatedDeck: Int?
+        var navigatedTarget: String?
+        var dismissed = false
+
+        let dialog1 = EventDetailDialogView(
+            event: showEvent,
+            category: showCategory,
+            onNavigateToMap: { deck, target in
+                navigatedDeck = deck
+                navigatedTarget = target
+            },
+            onDismiss: {
+                dismissed = true
+            }
+        )
+        XCTAssertEqual(dialog1.event.id, 101)
+        dialog1.onNavigateToMap?(6, "华特迪士尼剧院 Walt Disney Theatre")
+        XCTAssertEqual(navigatedDeck, 6)
+        XCTAssertEqual(navigatedTarget, "华特迪士尼剧院 Walt Disney Theatre")
+
+        let dialog2 = EventDetailDialogView(
+            event: drillEvent,
+            category: importantCategory,
+            onNavigateToMap: { deck, target in
+                navigatedDeck = deck
+                navigatedTarget = target
+            },
+            onDismiss: {
+                dismissed = true
+            }
+        )
+        XCTAssertEqual(dialog2.event.id, 102)
+        dialog2.onDismiss()
+        XCTAssertTrue(dismissed)
+    }
 }

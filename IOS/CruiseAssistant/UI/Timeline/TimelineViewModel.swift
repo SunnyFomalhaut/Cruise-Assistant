@@ -275,8 +275,9 @@ public final class TimelineViewModel: ObservableObject, @unchecked Sendable {
             showCategoryIds: showCatIds
         )
 
-        // Conflict IDs on visible active events
-        let conflictPairs = findConflicts(visibleEvents)
+        // Conflict IDs on visible active events with show wait time expansion
+        let rangeOf = showRangeOf(showCatIds)
+        let conflictPairs = findConflicts(visibleEvents, rangeOf: rangeOf)
         self.conflictIds = Set(conflictPairs.flatMap { [$0.first.id, $0.second.id] })
     }
 

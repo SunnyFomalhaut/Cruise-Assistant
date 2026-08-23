@@ -69,8 +69,9 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
             maxDeck: maxDeck,
             minDeck: minDeck
         )
+        database.clearEvents()
+        database.clearDayPlans()
         database.saveVoyage(voyage)
-
         // 1. Create DayPlan for each day
         let validDates = voyage.datesInVoyage()
         for date in validDates {

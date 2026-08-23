@@ -11,6 +11,7 @@ public struct TimelineView: View {
     public let onOpenPixieDust: (() -> Void)?
     public let onOpenFacilities: (() -> Void)?
     public let onOpenDeckMap: (() -> Void)?
+    public let onNavigateToDeckMap: ((Int, String) -> Void)?
 
     @State private var selectedDetailEvent: CruiseEvent? = nil
 
@@ -22,7 +23,8 @@ public struct TimelineView: View {
         onOpenWishlist: (() -> Void)? = nil,
         onOpenPixieDust: (() -> Void)? = nil,
         onOpenFacilities: (() -> Void)? = nil,
-        onOpenDeckMap: (() -> Void)? = nil
+        onOpenDeckMap: (() -> Void)? = nil,
+        onNavigateToDeckMap: ((Int, String) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.onAddEvent = onAddEvent
@@ -32,6 +34,7 @@ public struct TimelineView: View {
         self.onOpenPixieDust = onOpenPixieDust
         self.onOpenFacilities = onOpenFacilities
         self.onOpenDeckMap = onOpenDeckMap
+        self.onNavigateToDeckMap = onNavigateToDeckMap
     }
 
     private var palette: CruiseColorPalette {
@@ -101,7 +104,11 @@ public struct TimelineView: View {
                     category: viewModel.categories[detailEvent.categoryId],
                     onNavigateToMap: { deck, placeName in
                         selectedDetailEvent = nil
-                        onOpenDeckMap?()
+                        if let onNavigateToDeckMap = onNavigateToDeckMap {
+                            onNavigateToDeckMap(deck, placeName)
+                        } else {
+                            onOpenDeckMap?()
+                        }
                     },
                     onDismiss: {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -136,19 +143,21 @@ public struct TimelineView: View {
     // MARK: - Top Header Bar
 
     private var topHeaderBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(viewModel.voyage?.shipName ?? "邮轮小助手")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(Slate900)
-
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                     if !dayIndexText.isEmpty {
                         Text(dayIndexText)
                             .font(.system(size: 11, weight: .bold))
                             .foregroundColor(palette.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
+                            .lineLimit(1)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2.5)
                             .background(palette.primaryContainer)
                             .clipShape(Capsule())
                     }
@@ -157,24 +166,12 @@ public struct TimelineView: View {
                 Text(viewModel.selectedDate.chineseFormatted)
                     .font(.system(size: 12))
                     .foregroundColor(Slate500)
+                    .lineLimit(1)
             }
 
-            Spacer()
+            Spacer(minLength: 4)
 
-            // Full Day Toggle
-            Button(action: {
-                viewModel.toggleFullDay()
-            }) {
-                Text(viewModel.fullDayOverride ? "收起" : "全天")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(viewModel.fullDayOverride ? .white : palette.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(viewModel.fullDayOverride ? palette.primary : palette.primaryContainer)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            }
-
-            // Finalize / Unlock Button
+            // Generate Schedule / Unlock Button (Prominent single-line styling)
             Button(action: {
                 if viewModel.isFinalized {
                     viewModel.unlockDay(viewModel.selectedDate)
@@ -183,16 +180,36 @@ public struct TimelineView: View {
                 }
             }) {
                 HStack(spacing: 4) {
-                    Image(systemName: viewModel.isFinalized ? "lock.fill" : "lock.open")
-                        .font(.system(size: 11))
-                    Text(viewModel.isFinalized ? "修改" : "定稿")
-                        .font(.system(size: 12, weight: .semibold))
+                    Image(systemName: viewModel.isFinalized ? "lock.fill" : "sparkles")
+                        .font(.system(size: viewModel.isFinalized ? 11 : 12, weight: .bold))
+                    Text(viewModel.isFinalized ? "修改" : "生成计划表")
+                        .font(.system(size: 12.5, weight: .bold))
+                        .lineLimit(1)
                 }
+                .fixedSize(horizontal: true, vertical: false)
                 .foregroundColor(viewModel.isFinalized ? Slate700 : .white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(viewModel.isFinalized ? Slate200 : palette.primary)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .padding(.horizontal, viewModel.isFinalized ? 11 : 13)
+                .padding(.vertical, 7)
+                .background(
+                    Group {
+                        if viewModel.isFinalized {
+                            Slate200
+                        } else {
+                            LinearGradient(
+                                colors: [palette.primary, palette.primary.opacity(0.88)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        }
+                    }
+)
+                .clipShape(Capsule())
+                .shadow(
+                    color: viewModel.isFinalized ? Color.clear : palette.primary.opacity(0.35),
+                    radius: 4,
+                    x: 0,
+                    y: 2
+                )
             }
 
             // Settings Shortcut
@@ -372,31 +389,34 @@ public struct TimelineView: View {
                 }
             }
 
-            // Wishlist Quick Access
+            // Wishlist Quick Access (Matching 52x52 size)
             if let onOpenWishlist = onOpenWishlist {
                 Button(action: onOpenWishlist) {
                     Image(systemName: "star.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(palette.primary)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 52, height: 52)
                         .background(SurfaceCard)
                         .clipShape(Circle())
                         .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
                 }
             }
 
-            // Add Event Primary FAB
-            Button(action: {
-                let defaultStart = viewModel.nowMinute
-                onAddEvent?(defaultStart)
-            }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 52, height: 52)
-                    .background(palette.primary)
-                    .clipShape(Circle())
-                    .shadow(color: palette.primary.opacity(0.4), radius: 6, x: 0, y: 3)
+            // Add Event Primary FAB (Hidden when finalized)
+            if !viewModel.isFinalized {
+                Button(action: {
+                    let defaultStart = viewModel.nowMinute
+                    onAddEvent?(defaultStart)
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 52, height: 52)
+                        .background(palette.primary)
+                        .clipShape(Circle())
+                        .shadow(color: palette.primary.opacity(0.4), radius: 6, x: 0, y: 3)
+                }
+                .transition(.scale.combined(with: .opacity))
             }
         }
     }

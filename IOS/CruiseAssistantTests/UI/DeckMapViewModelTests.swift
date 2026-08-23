@@ -165,4 +165,13 @@ final class DeckMapViewModelTests: XCTestCase {
         vm.closeSearch()
         XCTAssertFalse(vm.isSearchSheetPresented)
     }
+
+    func testAllAvailableDeckMapsLoadSvgContent() {
+        let passengerDecks = [5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19]
+        for deck in passengerDecks {
+            let svg = DeckMapRepository.loadDeckSvgContent(deckNumber: deck)
+            XCTAssertNotNil(svg, "Deck \(deck) SVG should load successfully")
+            XCTAssertFalse(svg?.isEmpty ?? true, "Deck \(deck) SVG content should not be empty")
+        }
+    }
 }
