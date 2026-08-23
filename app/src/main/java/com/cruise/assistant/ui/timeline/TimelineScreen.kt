@@ -555,7 +555,6 @@ fun TimelineScreen(
                                         }
                                     },
                                     dollsEnabled = state.settings.cardDollsEnabled,
-                                    dollDistributionMode = state.settings.cardDollDistribution,
                                     modifier = Modifier.fillMaxSize(),
                                 )
                                 if (state.isToday) {

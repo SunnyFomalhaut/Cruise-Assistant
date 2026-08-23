@@ -66,7 +66,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.AppColorTheme
-import com.cruise.assistant.domain.DollDistributionMode
 import com.cruise.assistant.domain.WallpaperManager
 import com.cruise.assistant.domain.WallpaperPreset
 import com.cruise.assistant.ui.common.TimeWheel
@@ -107,7 +106,6 @@ fun SettingsScreen(
     onWallpaperAlphaChange: (Float) -> Unit = {},
     onPickCustomWallpaper: () -> Unit = {},
     onCardDollsToggle: (Boolean) -> Unit = {},
-    onCardDollDistributionChange: (DollDistributionMode) -> Unit = {},
 ) {
     var confirmReset by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(16.dp)
@@ -458,57 +456,6 @@ fun SettingsScreen(
                     checked = state.settings.cardDollsEnabled,
                     onCheckedChange = onCardDollsToggle,
                     colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = CruiseAzure),
-                )
-            }
-
-            if (state.settings.cardDollsEnabled) {
-                Spacer(Modifier.height(12.dp))
-                HorizontalDivider(color = Slate200)
-                Spacer(Modifier.height(12.dp))
-
-                Text(
-                    text = stringResource(R.string.card_dolls_mode_title),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Slate700,
-                )
-                Spacer(Modifier.height(8.dp))
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilterChip(
-                        selected = state.settings.cardDollDistribution == DollDistributionMode.COLOR_AFFINITY,
-                        onClick = { onCardDollDistributionChange(DollDistributionMode.COLOR_AFFINITY) },
-                        label = { Text(stringResource(R.string.card_dolls_mode_affinity)) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = CruiseAzureContainer,
-                            selectedLabelColor = CruiseMarine,
-                        ),
-                    )
-                    FilterChip(
-                        selected = state.settings.cardDollDistribution == DollDistributionMode.UNIFORM_RANDOM,
-                        onClick = { onCardDollDistributionChange(DollDistributionMode.UNIFORM_RANDOM) },
-                        label = { Text(stringResource(R.string.card_dolls_mode_random)) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = CruiseAzureContainer,
-                            selectedLabelColor = CruiseMarine,
-                        ),
-                    )
-                }
-
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = stringResource(
-                        if (state.settings.cardDollDistribution == DollDistributionMode.COLOR_AFFINITY) {
-                            R.string.card_dolls_mode_affinity_desc
-                        } else {
-                            R.string.card_dolls_mode_random_desc
-                        }
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Slate500,
                 )
             }
         }

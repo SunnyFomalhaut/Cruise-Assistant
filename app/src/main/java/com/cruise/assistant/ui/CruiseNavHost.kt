@@ -562,7 +562,6 @@ fun CruiseNavHost(container: AppContainer) {
                         )
                     },
                     onCardDollsToggle = vm::setCardDollsEnabled,
-                    onCardDollDistributionChange = vm::setCardDollDistribution,
                 )
             }
 
