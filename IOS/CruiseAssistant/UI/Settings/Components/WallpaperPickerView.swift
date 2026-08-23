@@ -12,9 +12,9 @@ public struct WallpaperPickerView: View {
     @Environment(\.cruisePalette) private var palette
 
     private let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8)
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
     ]
 
     public init(
@@ -52,7 +52,7 @@ public struct WallpaperPickerView: View {
             .tint(palette.primary)
 
             // Wallpaper Presets Grid
-            LazyVGrid(columns: columns, spacing: 8) {
+            LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(WallpaperPreset.allCases) { preset in
                     wallpaperCard(preset: preset)
                 }
@@ -106,39 +106,37 @@ public struct WallpaperPickerView: View {
             onSelectWallpaper(preset.rawValue)
         } label: {
             VStack(spacing: 6) {
-                // Thumbnail Preview
+                // Thumbnail Preview Container with Strict Bounded Clipping
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Slate100)
-
                     if preset == .none {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Slate100)
                         Image(systemName: "slash.circle")
-                            .font(.system(size: 20))
+                            .font(.system(size: 22))
                             .foregroundColor(Slate400)
                     } else if preset == .custom {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Slate100)
                         Image(systemName: "photo.badge.plus")
-                            .font(.system(size: 20))
+                            .font(.system(size: 22))
                             .foregroundColor(palette.primary)
                     } else if let img = loadWallpaperImage(for: preset) {
                         #if canImport(UIKit)
                         Image(uiImage: img)
                             .resizable()
                             .scaledToFill()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .clipped()
-                            .cornerRadius(8)
                         #elseif canImport(AppKit)
                         Image(nsImage: img)
                             .resizable()
                             .scaledToFill()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .clipped()
-                            .cornerRadius(8)
                         #endif
+                    } else {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Slate100)
                     }
 
                     if isSelected {
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .stroke(palette.primary, lineWidth: 2.5)
 
                         VStack {
@@ -154,9 +152,10 @@ public struct WallpaperPickerView: View {
                         .padding(4)
                     }
                 }
-                .frame(height: 60)
+                .frame(height: 72)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(isSelected ? palette.primary : Slate200, lineWidth: isSelected ? 2 : 1)
                 )
 
@@ -165,7 +164,7 @@ public struct WallpaperPickerView: View {
                     .foregroundColor(isSelected ? palette.primary : Slate700)
                     .lineLimit(1)
             }
-            .padding(4)
+            .padding(2)
         }
         .buttonStyle(.plain)
     }

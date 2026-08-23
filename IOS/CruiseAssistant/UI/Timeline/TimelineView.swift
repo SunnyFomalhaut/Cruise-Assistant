@@ -48,6 +48,11 @@ public struct TimelineView: View {
 
     public var body: some View {
         ZStack(alignment: .bottomTrailing) {
+            // Background Wallpaper Watermark (Viewport Fixed)
+            if viewModel.settings.wallpaperEnabled {
+                wallpaperBackgroundLayer
+            }
+
             VStack(spacing: 0) {
                 // Top Header Bar
                 topHeaderBar
@@ -108,7 +113,7 @@ public struct TimelineView: View {
                 .zIndex(100)
             }
         }
-        .background(Slate50.ignoresSafeArea())
+        .background((viewModel.settings.wallpaperEnabled ? Color.clear : Slate50).ignoresSafeArea())
         .sheet(isPresented: $viewModel.showConflictDialog) {
             ConflictDialogView(
                 conflicts: viewModel.conflicts,
@@ -202,7 +207,7 @@ public struct TimelineView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(SurfaceCard)
+        .background(SurfaceCard.opacity(viewModel.settings.wallpaperEnabled ? 0.94 : 1.0))
     }
 
     // MARK: - Main Timeline Canvas
@@ -235,11 +240,6 @@ public struct TimelineView: View {
 
                         // Right Canvas Area
                         ZStack(alignment: .topLeading) {
-                            // Wallpaper Background Layer
-                            if viewModel.settings.wallpaperEnabled {
-                                wallpaperLayer
-                            }
-
                             // Grid Lines
                             TimelineGridView(layout: viewModel.layout)
 
@@ -318,31 +318,33 @@ public struct TimelineView: View {
         }
     }
 
-    // MARK: - Wallpaper Layer
+    // MARK: - Viewport-Fixed Wallpaper Layer
 
     @ViewBuilder
-    private var wallpaperLayer: some View {
+    private var wallpaperBackgroundLayer: some View {
         let preset = WallpaperPreset.fromKey(viewModel.settings.wallpaperKey)
         if preset != .none, let img = loadWallpaperImage(for: preset) {
-            #if canImport(UIKit)
-            Image(uiImage: img)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity)
-                .frame(height: CGFloat(viewModel.layout.totalHeightPt))
-                .clipped()
-                .opacity(viewModel.settings.wallpaperAlpha)
-                .allowsHitTesting(false)
-            #elseif canImport(AppKit)
-            Image(nsImage: img)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity)
-                .frame(height: CGFloat(viewModel.layout.totalHeightPt))
-                .clipped()
-                .opacity(viewModel.settings.wallpaperAlpha)
-                .allowsHitTesting(false)
-            #endif
+            GeometryReader { geo in
+                #if canImport(UIKit)
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+                    .opacity(viewModel.settings.wallpaperAlpha)
+                    .allowsHitTesting(false)
+                #elseif canImport(AppKit)
+                Image(nsImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+                    .opacity(viewModel.settings.wallpaperAlpha)
+                    .allowsHitTesting(false)
+                #endif
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
         }
     }
 
