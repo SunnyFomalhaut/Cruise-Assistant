@@ -76,6 +76,9 @@ public final class FacilityGuideViewModel: ObservableObject {
         currentTime: SimpleTime = .now(),
         facilities: [FacilityItemUiModel]? = nil
     ) {
+        if facilities == nil && LocationCatalog.getAllEntries().isEmpty {
+            LocationCatalog.loadDefault()
+        }
         self.allFacilities = facilities ?? getAllFacilityItems(currentTime: currentTime)
     }
 
