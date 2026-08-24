@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Map
@@ -46,10 +47,12 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.cruise.assistant.R
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.PosterManager
@@ -63,7 +66,9 @@ import com.cruise.assistant.ui.theme.CruiseMarine
 import com.cruise.assistant.ui.theme.Slate100
 import com.cruise.assistant.ui.theme.Slate200
 import com.cruise.assistant.ui.theme.Slate500
+import com.cruise.assistant.ui.theme.Slate600
 import com.cruise.assistant.ui.theme.Slate700
+import com.cruise.assistant.ui.theme.Slate800
 import com.cruise.assistant.ui.theme.Slate900
 
 @Composable
@@ -295,6 +300,48 @@ fun EventDetailDialog(
                                             fontWeight = FontWeight.Bold,
                                         )
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    // Notes Section
+                    if (!event.note.isNullOrBlank()) {
+                        Spacer(Modifier.height(10.dp))
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Slate100,
+                            border = BorderStroke(1.dp, Slate200),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.Top,
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Outlined.Notes,
+                                    contentDescription = null,
+                                    tint = Slate500,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .padding(top = 2.dp),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.note_label),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Slate600,
+                                    )
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        text = event.note,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Slate800,
+                                    )
                                 }
                             }
                         }
