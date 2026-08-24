@@ -31,6 +31,18 @@ class EventSheetStateTest {
     }
 
     @Test
+    fun `test EventSheetState lane default is zero and copy updates correctly`() {
+        val state = EventSheetState(
+            date = LocalDate.of(2026, 8, 24),
+            startTime = LocalTime.of(10, 0),
+            endTime = LocalTime.of(11, 0),
+        )
+        assertEquals(0, state.lane)
+        val updated = state.copy(lane = 2)
+        assertEquals(2, updated.lane)
+    }
+
+    @Test
     fun `test note trimming and null conversion for CruiseEvent`() {
         val blankNote = "   "
         val trimmedBlank = blankNote.trim().takeIf { it.isNotEmpty() }

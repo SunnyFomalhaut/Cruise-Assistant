@@ -83,7 +83,8 @@ class EventRepository(
             eventDao.getByGroup(groupId).map { it.toDomain() }
                 .filter { it.id == event.id || it.date !in finalizedDates }
         } else {
-            listOf(event)
+            val existing = eventDao.getById(event.id)?.toDomain()
+            listOf(existing ?: event)
         }
         targets.forEach { target ->
             val merged = event.copy(

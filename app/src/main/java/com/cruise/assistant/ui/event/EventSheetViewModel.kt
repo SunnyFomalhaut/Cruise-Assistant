@@ -77,6 +77,7 @@ data class EventSheetState(
     /** 提前候场时间（分钟），默认 30，演出类别时可选 10~120m */
     val waitMinutes: Int = 30,
     val note: String = "",
+    val lane: Int = 0,
 ) {
     val isEditing: Boolean get() = editingId != 0L
 
@@ -212,6 +213,7 @@ class EventSheetViewModel(
                             recurrenceGroupId = event.recurrenceGroupId,
                             waitMinutes = event.waitMinutes ?: event.effectiveWaitMinutes,
                             note = event.note.orEmpty(),
+                            lane = event.lane,
                         )
                     }
                     _state.update { current ->
@@ -468,6 +470,7 @@ class EventSheetViewModel(
             recurrenceGroupId = s.recurrenceGroupId,
             waitMinutes = if (s.categoryIconKey == "show") s.waitMinutes else null,
             note = s.note.trim().takeIf { it.isNotEmpty() },
+            lane = s.lane,
         )
 
         _state.update { it.copy(saving = true) }
