@@ -91,18 +91,18 @@ class LocationCatalogLoaderTest {
         val venues = parseLocationsJson(json)
         val mainVenues = venues.filter { it.diningGroup == DiningGroup.MAIN }
 
-        val seating1745 = listOf(
+        val seating2200 = listOf(
             "动画师餐厅 Animator's Table Restaurant",
             "魔法盛夏餐厅 Enchanted Summer Restaurant",
             "动画师味觉餐厅 Animator's Palate",
             "好莱坞聚光灯俱乐部 Hollywood Spotlight Club",
         )
-        val seating1800 = listOf(
+        val seating2215 = listOf(
             "皮克斯市场餐厅 Pixar Market Restaurant",
             "航海家俱乐部 Navigator's Club Restaurant",
         )
 
-        for (name in seating1745) {
+        for (name in seating2200) {
             val v = mainVenues.firstOrNull { it.placeName == name }
             org.junit.Assert.assertNotNull("Venue $name should exist", v)
             val dinnerSlots = v!!.hours!!.slots.filter { it.meal == MealPeriod.DINNER }
@@ -111,12 +111,12 @@ class LocationCatalogLoaderTest {
             assertEquals(LocalTime.of(22, 0), dinnerSlots[0].end)
         }
 
-        for (name in seating1800) {
+        for (name in seating2215) {
             val v = mainVenues.firstOrNull { it.placeName == name }
             org.junit.Assert.assertNotNull("Venue $name should exist", v)
             val dinnerSlots = v!!.hours!!.slots.filter { it.meal == MealPeriod.DINNER }
             assertEquals("Venue $name should have exactly 1 dinner slot", 1, dinnerSlots.size)
-            assertEquals(LocalTime.of(18, 0), dinnerSlots[0].start)
+            assertEquals(LocalTime.of(17, 45), dinnerSlots[0].start)
             assertEquals(LocalTime.of(22, 15), dinnerSlots[0].end)
         }
     }

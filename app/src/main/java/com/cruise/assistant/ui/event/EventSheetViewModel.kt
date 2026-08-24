@@ -271,13 +271,13 @@ class EventSheetViewModel(
             .firstOrNull { e -> e.deck == it.deck && e.zone == it.zone && e.placeName == it.placeName }
             ?.isOpenFor(period) != false
         // 餐次联动起止时间：优先从保留地点在该餐次的营业时段取开始时间（如动画师早餐
-        // 08:30），否则用规范默认值（早餐 08:00、午餐 12:00、晚餐 18:00、夜宵 22:00，
+        // 08:30），否则用规范默认值（早餐 08:00、午餐 12:00、晚餐 17:45、夜宵 22:00，
         // 各 30 分钟）——避免自动时间落在营业时段外（如帕洛午餐 12:00 在外）触发自家校验。
         // 全部/零食/酒水不调整时间。
         val defaultStart = when (period) {
             MealPeriod.BREAKFAST -> LocalTime.of(8, 0)
             MealPeriod.LUNCH -> LocalTime.of(12, 0)
-            MealPeriod.DINNER -> LocalTime.of(18, 0)
+            MealPeriod.DINNER -> LocalTime.of(17, 45)
             MealPeriod.LATE_NIGHT -> LocalTime.of(22, 0)
             else -> null
         }
