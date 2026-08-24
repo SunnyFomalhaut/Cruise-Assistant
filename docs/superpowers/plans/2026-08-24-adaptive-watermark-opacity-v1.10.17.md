@@ -25,14 +25,14 @@
 - Consumes: `isFinalized: Boolean`
 - Produces: `dollAlpha = if (isFinalized) 0.38f else 0.16f` passed to `Image(..., alpha = dollAlpha)`
 
-- [ ] **Step 1: Update `EventCard.kt`**
+- [x] **Step 1: Update `EventCard.kt`**
 Compute `val dollAlpha = if (isFinalized) 0.38f else 0.16f` and pass to `Image(..., alpha = dollAlpha)`.
 
-- [ ] **Step 2: Verify compilation and tests**
+- [x] **Step 2: Verify compilation and tests**
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/ui/timeline/EventCard.kt
@@ -47,16 +47,16 @@ git commit -m "style(ui): apply adaptive watermark opacity (0.38f finalized, 0.1
 - Modify: `app/build.gradle.kts`
 - Modify/Create: `人偶效果截图对比/`
 
-- [ ] **Step 1: Bump version in `app/build.gradle.kts`**
+- [x] **Step 1: Bump version in `app/build.gradle.kts`**
 Set `versionCode = 43`, `versionName = "1.10.17"`.
 
-- [ ] **Step 2: Build and install APK**
+- [x] **Step 2: Build and install APK**
 Run `assembleDebug` and install to running emulator.
 
-- [ ] **Step 3: Capture screenshots**
+- [x] **Step 3: Capture screenshots**
 Capture finalized 1-lane view and draft 3-lane view to verify readability.
 
-- [ ] **Step 4: Commit version bump and screenshots**
+- [x] **Step 4: Commit version bump and screenshots**
 
 ```bash
 git add app/build.gradle.kts 人偶效果截图对比/
