@@ -30,20 +30,20 @@
 - Consumes: Room `@Database`, `@Entity`
 - Produces: `CruiseEvent.note`, `EventEntity.note`, Room DB v8 migration
 
-- [ ] **Step 1: Update `Models.kt` and `EventEntity.kt`**
+- [x] **Step 1: Update `Models.kt` and `EventEntity.kt`**
 Add `val note: String? = null` to `CruiseEvent` and `EventEntity`.
 
-- [ ] **Step 2: Update `Mappers.kt`**
+- [x] **Step 2: Update `Mappers.kt`**
 Add `note = note` to `EventEntity.toDomain()` and `CruiseEvent.toEntity()`.
 
-- [ ] **Step 3: Update `CruiseDatabase.kt`**
+- [x] **Step 3: Update `CruiseDatabase.kt`**
 Bump `version = 8` and add `AutoMigration(from = 7, to = 8)`.
 
-- [ ] **Step 4: Run compilation and tests**
+- [x] **Step 4: Run compilation and tests**
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/domain/Models.kt app/src/main/java/com/cruise/assistant/data/db/entity/EventEntity.kt app/src/main/java/com/cruise/assistant/data/db/Mappers.kt app/src/main/java/com/cruise/assistant/data/db/CruiseDatabase.kt app/schemas/
@@ -65,24 +65,24 @@ git commit -m "feat(db): add note column to event table and bump database to ver
 - Consumes: `EventSheetState.note`, `onNoteChange: (String) -> Unit`
 - Produces: UI card for entering and editing notes in EventSheet
 
-- [ ] **Step 1: Add string resources**
+- [x] **Step 1: Add string resources**
 Add `note_label` ("备注") and `note_hint` ("添加备注信息（选填）") to `strings.xml` and `values-zh-rCN/strings.xml`.
 
-- [ ] **Step 2: Update `EventSheetViewModel.kt`**
+- [x] **Step 2: Update `EventSheetViewModel.kt`**
 - Add `val note: String = ""` to `EventSheetState`.
 - Update `openForCreate`: `note = ""`.
 - Update `openForEdit(event)`: `note = event.note.orEmpty()`.
 - Add `fun onNoteChange(value: String) = _state.update { it.copy(note = value) }`.
 - In `save(...)`: pass `note = s.note.trim().takeIf { it.isNotEmpty() }` to `CruiseEvent(...)`.
 
-- [ ] **Step 3: Update `EventSheet.kt`**
+- [x] **Step 3: Update `EventSheet.kt`**
 Add `onNoteChange: (String) -> Unit` parameter and render Notes Card below location/wait segment.
 
-- [ ] **Step 4: Run unit tests**
+- [x] **Step 4: Run unit tests**
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
 
 ```bash
 git add app/src/main/res/values/strings.xml app/src/main/res/values-zh-rCN/strings.xml app/src/main/java/com/cruise/assistant/ui/event/EventSheetViewModel.kt app/src/main/java/com/cruise/assistant/ui/event/EventSheet.kt
@@ -100,7 +100,7 @@ git commit -m "feat(ui): add note input section to EventSheet"
 - Consumes: `event.note: String?`
 - Produces: Clean notes card rendered directly below the location card
 
-- [ ] **Step 1: Update `EventDetailDialog.kt`**
+- [x] **Step 1: Update `EventDetailDialog.kt`**
 Below Location Section:
 ```kotlin
 if (!event.note.isNullOrBlank()) {
@@ -143,11 +143,11 @@ if (!event.note.isNullOrBlank()) {
 }
 ```
 
-- [ ] **Step 2: Run unit tests and verify compile**
+- [x] **Step 2: Run unit tests and verify compile**
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/ui/timeline/EventDetailDialog.kt
@@ -162,17 +162,17 @@ git commit -m "feat(ui): display note card in EventDetailDialog below location c
 - Modify: `app/build.gradle.kts`
 - Modify/Create: `人偶效果截图对比/`
 
-- [ ] **Step 1: Bump version in `app/build.gradle.kts`**
+- [x] **Step 1: Bump version in `app/build.gradle.kts`**
 Set `versionCode = 45`, `versionName = "1.10.19"`.
 
-- [ ] **Step 2: Build and install APK**
+- [x] **Step 2: Build and install APK**
 Run `assembleDebug` and install to running emulator.
 
-- [ ] **Step 3: Test on emulator and capture verification screenshot**
+- [x] **Step 3: Test on emulator and capture verification screenshot**
 - Open EventDetailDialog for an event with note to verify presentation.
 - Capture screenshot and save to `人偶效果截图对比/05_事件详情备注展示.png`.
 
-- [ ] **Step 4: Commit version bump and screenshots**
+- [x] **Step 4: Commit version bump and screenshots**
 
 ```bash
 git add app/build.gradle.kts 人偶效果截图对比/
