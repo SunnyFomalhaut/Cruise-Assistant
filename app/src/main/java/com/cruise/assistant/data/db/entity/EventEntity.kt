@@ -28,4 +28,5 @@ data class EventEntity(
     val isActive: Boolean = true,
     val presetKey: String? = null,
     val waitMinutes: Int? = null,
+    val note: String? = null,
 )

@@ -42,6 +42,7 @@ fun EventEntity.toDomain() = CruiseEvent(
     placeName = placeName, lane = lane, recurrenceGroupId = recurrenceGroupId,
     reminderMinutesBefore = reminderMinutesBefore, isSystemGenerated = isSystemGenerated,
     isActive = isActive, presetKey = presetKey, waitMinutes = waitMinutes,
+    note = note,
 )
 
 fun CruiseEvent.toEntity() = EventEntity(
@@ -50,6 +51,7 @@ fun CruiseEvent.toEntity() = EventEntity(
     placeName = placeName, lane = lane, recurrenceGroupId = recurrenceGroupId,
     reminderMinutesBefore = reminderMinutesBefore, isSystemGenerated = isSystemGenerated,
     isActive = isActive, presetKey = presetKey, waitMinutes = waitMinutes,
+    note = note,
 )
 
 fun DayPlanEntity.toDomain() = DayPlan(date, finalized, finalizedAt)
