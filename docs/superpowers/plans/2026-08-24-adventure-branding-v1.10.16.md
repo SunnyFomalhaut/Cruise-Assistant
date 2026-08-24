@@ -28,23 +28,23 @@
 - Consumes: JSON venue slots, `MealPeriod.DINNER`
 - Produces: 17:45 start time for dinner slots across all dining venues, eliminating false out-of-hours validation.
 
-- [ ] **Step 1: Update `locations.json`**
+- [x] **Step 1: Update `locations.json`**
 Change dinner slots starting at `18:00` to `17:45` for:
 - 航海家俱乐部 Navigator's Club Restaurant
 - 皮克斯市场餐厅 Pixar Market Restaurant
 - 怪兽亚洲风味 Mike & Sulley's Flavors of Asia
 - 帕洛意大利餐厅 Palo Trattoria (first slot: 17:45 - 20:00)
 
-- [ ] **Step 2: Update `EventSheetViewModel.kt`**
+- [x] **Step 2: Update `EventSheetViewModel.kt`**
 Update line 280: `MealPeriod.DINNER -> LocalTime.of(17, 45)`.
 
-- [ ] **Step 3: Update and run tests in `LocationCatalogTest.kt`**
+- [x] **Step 3: Update and run tests in `LocationCatalogTest.kt`**
 Verify that tests pass with updated dinner slot start times.
 
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
 
 ```bash
 git add app/src/main/assets/locations.json app/src/main/java/com/cruise/assistant/ui/event/EventSheetViewModel.kt app/src/test/java/com/cruise/assistant/domain/LocationCatalogTest.kt
@@ -62,10 +62,10 @@ git commit -m "fix(venues): change dinner opening hours to 17:45 and update defa
 **Interfaces:**
 - Produces: High-quality adaptive vector icon representing Disney Adventure ship colors and Mickey funnels.
 
-- [ ] **Step 1: Update `ic_launcher_background.xml`**
+- [x] **Step 1: Update `ic_launcher_background.xml`**
 Set deep marine gradient (`#0B192C` -> `#1E3E62`) with subtle decorative wave accents.
 
-- [ ] **Step 2: Update `ic_launcher_foreground.xml`**
+- [x] **Step 2: Update `ic_launcher_foreground.xml`**
 Implement accurate Disney Adventure cruise vector:
 - Twin iconic Disney red funnels (`#E51821`) with black top caps.
 - Crisp white Mickey head silhouette (1 center circle + 2 ear circles in `#FFFFFF`) on the front funnel.
@@ -74,10 +74,10 @@ Implement accurate Disney Adventure cruise vector:
 - Dark navy/black hull (`#141923`) with gold waterline stripe (`#FFC72C`) and red keel line (`#E51821`).
 - Dynamic turquoise ocean wave splashes (`#00B4D8`, `#90E0EF`).
 
-- [ ] **Step 3: Verify vector drawable XML syntax and rendering**
+- [x] **Step 3: Verify vector drawable XML syntax and rendering**
 Compile debug sources to ensure no XML parse errors.
 
-- [ ] **Step 4: Commit icon assets**
+- [x] **Step 4: Commit icon assets**
 
 ```bash
 git add app/src/main/res/drawable/ic_launcher_foreground.xml app/src/main/res/drawable/ic_launcher_background.xml
@@ -95,12 +95,12 @@ git commit -m "style(branding): redesign launcher icon with Disney Adventure red
 **Interfaces:**
 - Produces: App name updated to "探险号助手".
 
-- [ ] **Step 1: Update `strings.xml` and `values-zh-rCN/strings.xml`**
+- [x] **Step 1: Update `strings.xml` and `values-zh-rCN/strings.xml`**
 Set `<string name="app_name">探险号助手</string>`.
 
-- [ ] **Step 2: Verify strings and compilation**
+- [x] **Step 2: Verify strings and compilation**
 
-- [ ] **Step 3: Commit string changes**
+- [x] **Step 3: Commit string changes**
 
 ```bash
 git add app/src/main/res/values/strings.xml app/src/main/res/values-zh-rCN/strings.xml
@@ -115,17 +115,17 @@ git commit -m "chore(branding): rename app Chinese name to 探险号助手"
 - Modify: `app/build.gradle.kts`
 - Modify/Create: `人偶效果截图对比/`
 
-- [ ] **Step 1: Bump version in `app/build.gradle.kts`**
+- [x] **Step 1: Bump version in `app/build.gradle.kts`**
 Set `versionCode = 42`, `versionName = "1.10.16"`.
 
-- [ ] **Step 2: Run all unit tests and build APK**
+- [x] **Step 2: Run all unit tests and build APK**
 Run `testDebugUnitTest` and `assembleDebug`.
 
-- [ ] **Step 3: Install on emulator and capture verification screenshots**
+- [x] **Step 3: Install on emulator and capture verification screenshots**
 - Capture timeline / event sheet with 17:45 dinner venue (verify no outside operating hours warning).
 - Capture Android launcher showing the new Disney Adventure icon and "探险号助手" label.
 
-- [ ] **Step 4: Commit version bump and screenshots**
+- [x] **Step 4: Commit version bump and screenshots**
 
 ```bash
 git add app/build.gradle.kts 人偶效果截图对比/
