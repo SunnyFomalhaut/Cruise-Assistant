@@ -13,7 +13,7 @@ def create_xcodeproj():
     source_files = []
     ca_dir = os.path.join(ios_dir, "CruiseAssistant")
     for root, dirs, files in os.walk(ca_dir):
-        if "Resources" in root:
+        if "Resources" in root or "Assets.xcassets" in root:
             continue
         for f in files:
             if f.endswith(".swift"):
@@ -45,12 +45,11 @@ def create_xcodeproj():
         f_uuid = generate_uuid()
         b_uuid = generate_uuid()
         file_refs[sf] = (f_uuid, b_uuid)
-    resource_folders = ["Resources/Raw", "Resources/Posters", "Resources/Wallpapers"]
+    resource_folders = ["Resources/Raw", "Resources/Posters", "Resources/Wallpapers", "Assets.xcassets"]
     for rf in resource_folders:
         f_uuid = generate_uuid()
         b_uuid = generate_uuid()
         file_refs[rf] = (f_uuid, b_uuid)
-        
     pbxproj = []
     pbxproj.append("// !$*UTF8*$!")
     pbxproj.append("{")
@@ -72,10 +71,10 @@ def create_xcodeproj():
     for sf, (f_uuid, b_uuid) in file_refs.items():
         if sf.endswith(".swift"):
             pbxproj.append(f"\t\t{f_uuid} /* {os.path.basename(sf)} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = \"{sf}\"; sourceTree = \"<group>\"; }};")
+        elif sf.endswith(".xcassets"):
+            pbxproj.append(f"\t\t{f_uuid} /* {os.path.basename(sf)} */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = \"{sf}\"; sourceTree = \"<group>\"; }};")
         else:
             pbxproj.append(f"\t\t{f_uuid} /* {os.path.basename(sf)} */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"{sf}\"; sourceTree = \"<group>\"; }};")
-    pbxproj.append("/* End PBXFileReference section */")
-    
     # PBXFrameworksBuildPhase
     pbxproj.append("/* Begin PBXFrameworksBuildPhase section */")
     pbxproj.append(f"\t\t{frameworks_phase_uuid} /* Frameworks */ = {{")

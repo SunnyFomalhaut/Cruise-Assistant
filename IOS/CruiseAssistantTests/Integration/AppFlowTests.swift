@@ -476,7 +476,7 @@ final class AppFlowTests: XCTestCase {
     }
 
     func testSeedSimulatorData() {
-        let containerPath = "/Users/u219999/Library/Developer/CoreSimulator/Devices/0185FF65-EB49-4425-8703-0ADAEF6D749B/data/Containers/Data/Application/F5CEA785-4A5F-4CF0-91BD-833E92AD082F"
+        let containerPath = "/Users/u219999/Library/Developer/CoreSimulator/Devices/0185FF65-EB49-4425-8703-0ADAEF6D749B/data/Containers/Data/Application/72EBF653-7BA5-42E8-9A32-640A78026420"
         let appSupport = URL(fileURLWithPath: containerPath).appendingPathComponent("Library/Application Support/CruiseAssistant", isDirectory: true)
         try? FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
         let dbURL = appSupport.appendingPathComponent("cruise_database.json")

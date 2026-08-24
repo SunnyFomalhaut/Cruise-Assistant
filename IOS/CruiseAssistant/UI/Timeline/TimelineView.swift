@@ -255,63 +255,75 @@ public struct TimelineView: View {
                         // Left Time Ruler
                         TimeRulerView(layout: viewModel.layout)
 
-                        // Right Canvas Area
-                        ZStack(alignment: .topLeading) {
-                            // Grid Lines
-                            TimelineGridView(layout: viewModel.layout)
+                        // Right Canvas Area (Horizontal scroll for 3-lane planning mode)
+                        GeometryReader { geo in
+                            let viewportWidth = geo.size.width
+                            let canvasWidth = viewModel.isFinalized ? viewportWidth : (viewportWidth * 1.2)
 
-                            // Event Cards Canvas
-                            LaneCanvasView(
-                                layout: viewModel.layout,
-                                events: viewModel.visibleEvents,
-                                categories: viewModel.categories,
-                                conflictIds: viewModel.conflictIds,
-                                singleLane: viewModel.isFinalized,
-                                onEventClick: { event in
-                                    if viewModel.isFinalized {
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            selectedDetailEvent = event
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                ZStack(alignment: .topLeading) {
+                                    // Grid Lines
+                                    TimelineGridView(
+                                        layout: viewModel.layout,
+                                        laneBoundaries: viewModel.isFinalized ? [] : laneBoundaryFractions()
+                                    )
+
+                                    // Event Cards Canvas
+                                    LaneCanvasView(
+                                        layout: viewModel.layout,
+                                        events: viewModel.visibleEvents,
+                                        categories: viewModel.categories,
+                                        conflictIds: viewModel.conflictIds,
+                                        singleLane: viewModel.isFinalized,
+                                        onEventClick: { event in
+                                            if viewModel.isFinalized {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    selectedDetailEvent = event
+                                                }
+                                            } else {
+                                                onEditEvent?(event)
+                                            }
+                                        },
+                                        onEventLongClick: { _ in },
+                                        onMoveToLane: { event, laneIndex in
+                                            viewModel.moveToLane(eventId: event.id, lane: laneIndex)
+                                        },
+                                        onToggleActive: { event in
+                                            viewModel.toggleActive(eventId: event.id)
+                                        },
+                                        onKeepOnlyThisShow: { event in
+                                            viewModel.keepOnlyThisShow(event)
+                                        },
+                                        onEditEvent: { event in
+                                            if viewModel.isFinalized {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    selectedDetailEvent = event
+                                                }
+                                            } else {
+                                                onEditEvent?(event)
+                                            }
+                                        },
+                                        onDeleteEvent: { event in
+                                            viewModel.deleteEvent(id: event.id)
                                         }
-                                    } else {
-                                        onEditEvent?(event)
+                                    )
+
+                                    // Now Indicator Line
+                                    if viewModel.isToday {
+                                        NowIndicatorView(
+                                            layout: viewModel.layout,
+                                            nowMinute: viewModel.nowMinute
+                                        )
+                                        .id("nowIndicator")
                                     }
-                                },
-                                onEventLongClick: { _ in },
-                                onMoveToLane: { event, laneIndex in
-                                    viewModel.moveToLane(eventId: event.id, lane: laneIndex)
-                                },
-                                onToggleActive: { event in
-                                    viewModel.toggleActive(eventId: event.id)
-                                },
-                                onKeepOnlyThisShow: { event in
-                                    viewModel.keepOnlyThisShow(event)
-                                },
-                                onEditEvent: { event in
-                                    if viewModel.isFinalized {
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            selectedDetailEvent = event
-                                        }
-                                    } else {
-                                        onEditEvent?(event)
-                                    }
-                                },
-                                onDeleteEvent: { event in
-                                    viewModel.deleteEvent(id: event.id)
                                 }
-                            )
-
-                            // Now Indicator Line
-                            if viewModel.isToday {
-                                NowIndicatorView(
-                                    layout: viewModel.layout,
-                                    nowMinute: viewModel.nowMinute
-                                )
-                                .id("nowIndicator")
+                                .frame(width: canvasWidth, height: CGFloat(viewModel.layout.totalHeightPt), alignment: .topLeading)
                             }
+                            .frame(width: viewportWidth, height: CGFloat(viewModel.layout.totalHeightPt), alignment: .topLeading)
+                            .clipped()
+                            .disabled(viewModel.isFinalized)
                         }
-                        .frame(maxWidth: .infinity)
                         .frame(height: CGFloat(viewModel.layout.totalHeightPt))
-                        .clipped()
                     }
 
                     // Hidden After Indicator
