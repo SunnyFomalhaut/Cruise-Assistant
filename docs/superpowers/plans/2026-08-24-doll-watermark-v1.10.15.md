@@ -154,7 +154,7 @@ git commit -m "feat(domain): register duo doll assets and add 5-condition trigge
 - Consumes: `DollManager` selection functions
 - Produces: 100% passing tests for thresholds, duo triggers, fallbacks, and asset path validity.
 
-- [ ] **Step 1: Write failing/updated unit tests**
+- [x] **Step 1: Write failing/updated unit tests**
 Add test cases for:
 1. All asset paths in `DollManager` end with `.webp` and are non-empty.
 2. Finalized + 75min + clean card triggers `DUO` asset.
@@ -164,12 +164,12 @@ Add test cases for:
 6. 30min card triggers `HEAD` single doll.
 7. 45min card triggers `HALF_BODY` single doll.
 
-- [ ] **Step 2: Run unit tests**
+- [x] **Step 2: Run unit tests**
 
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: All tests PASS.
 
-- [ ] **Step 3: Commit unit tests**
+- [x] **Step 3: Commit unit tests**
 
 ```bash
 git add app/src/test/java/com/cruise/assistant/domain/DollManagerTest.kt
@@ -188,16 +188,16 @@ git commit -m "test: add comprehensive unit tests for duo trigger, fallback, and
 - Consumes: `isFinalized: Boolean` from `LaneCanvas` (`singleLane`)
 - Produces: Cleanly inset doll watermarks (`padding(end = 16.dp, bottom = 4.dp)`), accurate dual/single doll selection.
 
-- [ ] **Step 1: Update `EventCard.kt` parameter and selection logic**
+- [x] **Step 1: Update `EventCard.kt` parameter and selection logic**
 Add `isFinalized: Boolean = false` parameter to `EventCard`.
 Compute `isComplex = (hasWaitSegment || (category?.iconKey == "show") || hasConflict)`.
 Call `DollManager.selectDollForCard(event.id, heightDp.value, event.durationMinutes, isFinalized, isComplex)`.
 Set `Image` padding to `padding(end = 16.dp, bottom = 4.dp)`.
 
-- [ ] **Step 2: Update `LaneCanvas.kt`**
+- [x] **Step 2: Update `LaneCanvas.kt`**
 Pass `isFinalized = singleLane` to `EventCard`.
 
-- [ ] **Step 3: Commit UI changes**
+- [x] **Step 3: Commit UI changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/ui/timeline/EventCard.kt app/src/main/java/com/cruise/assistant/ui/timeline/LaneCanvas.kt

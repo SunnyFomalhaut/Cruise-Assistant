@@ -111,6 +111,7 @@ fun LaneCanvas(
                     onClick = { onEventClick(event) },
                     onLongClick = { onEventLongClick(event) },
                     dollsEnabled = dollsEnabled,
+                    isFinalized = singleLane,
                     modifier = Modifier.fillMaxSize(),
                     narrow = narrow,
                 )

@@ -77,6 +77,7 @@ fun EventCard(
     /** 卡片所在栏是否是最窄的那栏（栏2），影响 compact 分支的排版取舍 */
     narrow: Boolean = false,
     dollsEnabled: Boolean = true,
+    isFinalized: Boolean = false,
 ) {
     val colorArgb = category?.colorArgb ?: 0xFF9E9E9E.toInt()
     val active = event.isActive
@@ -107,8 +108,17 @@ fun EventCard(
         else -> 1
     }
 
+    val isComplex = hasWaitSegment || (category?.iconKey == "show") || hasConflict
     val dollAsset = if (dollsEnabled && active) {
-        remember(event.id, heightDp) { DollManager.selectDollForCard(event.id, heightDp.value) }
+        remember(event.id, heightDp, isFinalized, isComplex) {
+            DollManager.selectDollForCard(
+                eventId = event.id,
+                cardHeightDp = heightDp.value,
+                durationMinutes = event.durationMinutes,
+                isFinalized = isFinalized,
+                isComplex = isComplex,
+            )
+        }
     } else {
         null
     }
@@ -142,7 +152,7 @@ fun EventCard(
                 alpha = 0.24f,
                 modifier = Modifier
                     .align(if (compact) Alignment.CenterEnd else Alignment.BottomEnd)
-                    .padding(end = 4.dp, bottom = 2.dp)
+                    .padding(end = 16.dp, bottom = if (compact) 0.dp else 4.dp)
                     .height(dollHeight),
             )
         }
