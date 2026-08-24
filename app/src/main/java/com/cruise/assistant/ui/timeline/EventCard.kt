@@ -143,18 +143,27 @@ fun EventCard(
             null
         }
 
-        if (dollBitmap != null) {
+        if (dollBitmap != null && dollAsset != null) {
+            val isDuo = dollAsset.startsWith("dolls/duo/")
             val dollHeight = (heightDp - 4.dp).coerceIn(24.dp, 120.dp)
-            Image(
-                bitmap = dollBitmap.asImageBitmap(),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                alpha = 0.24f,
+            val containerWidth = if (isDuo) 140.dp else if (isFinalized) 96.dp else 80.dp
+            val endPadding = if (isFinalized) 16.dp else 8.dp
+            Box(
                 modifier = Modifier
                     .align(if (compact) Alignment.CenterEnd else Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = if (compact) 0.dp else 4.dp)
+                    .padding(end = endPadding, bottom = if (compact) 0.dp else 4.dp)
+                    .width(containerWidth)
                     .height(dollHeight),
-            )
+                contentAlignment = if (compact) Alignment.Center else Alignment.BottomCenter,
+            ) {
+                Image(
+                    bitmap = dollBitmap.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    alpha = 0.38f,
+                    modifier = Modifier.fillMaxHeight(),
+                )
+            }
         }
 
         Row(
