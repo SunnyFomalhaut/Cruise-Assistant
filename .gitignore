@@ -1,5 +1,7 @@
 *.iml
 .gradle/
+.gradle_user_home/
+.gradle_custom/
 local.properties
 .idea/
 build/
