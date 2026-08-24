@@ -148,6 +148,7 @@ fun EventCard(
             val dollHeight = (heightDp - 4.dp).coerceIn(24.dp, 120.dp)
             val containerWidth = if (isDuo) 140.dp else if (isFinalized) 96.dp else 80.dp
             val endPadding = if (isFinalized) 16.dp else 8.dp
+            val dollAlpha = if (isFinalized) 0.38f else 0.16f
             Box(
                 modifier = Modifier
                     .align(if (compact) Alignment.CenterEnd else Alignment.BottomEnd)
@@ -160,7 +161,7 @@ fun EventCard(
                     bitmap = dollBitmap.asImageBitmap(),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
-                    alpha = 0.38f,
+                    alpha = dollAlpha,
                     modifier = Modifier.fillMaxHeight(),
                 )
             }
