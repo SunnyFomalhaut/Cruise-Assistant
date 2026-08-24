@@ -19,8 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Schedule
@@ -307,42 +307,49 @@ fun EventDetailDialog(
 
                     // Notes Section
                     if (!event.note.isNullOrBlank()) {
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(12.dp))
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Slate100,
-                            border = BorderStroke(1.dp, Slate200),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color(0xFFF8FAFC),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.Top,
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
                             ) {
-                                Icon(
-                                    Icons.AutoMirrored.Outlined.Notes,
-                                    contentDescription = null,
-                                    tint = Slate500,
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .padding(top = 2.dp),
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFEDE9FE)),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.EditNote,
+                                            contentDescription = null,
+                                            tint = Color(0xFF7C3AED),
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                    }
+                                    Spacer(Modifier.width(8.dp))
                                     Text(
                                         text = stringResource(R.string.note_label),
-                                        style = MaterialTheme.typography.labelSmall,
+                                        style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = Slate600,
-                                    )
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(
-                                        text = event.note,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Slate800,
+                                        color = Color(0xFF6D28D9),
                                     )
                                 }
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    text = event.note,
+                                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                                    color = Color(0xFF1E293B),
+                                )
                             }
                         }
                     }
