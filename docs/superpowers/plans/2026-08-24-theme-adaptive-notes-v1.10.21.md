@@ -25,7 +25,7 @@
 - Consumes: `CruiseAzureContainer`, `CruiseAzure`, `CruiseMarine`
 - Produces: Theme-adaptive Note card in EventDetailDialog and focused border in EventSheet
 
-- [ ] **Step 1: Update `EventDetailDialog.kt`**
+- [x] **Step 1: Update `EventDetailDialog.kt`**
 ```kotlin
                     if (!event.note.isNullOrBlank()) {
                         Spacer(Modifier.height(12.dp))
@@ -76,14 +76,14 @@
                     }
 ```
 
-- [ ] **Step 2: Update `EventSheet.kt` note textfield focused color**
+- [x] **Step 2: Update `EventSheet.kt` note textfield focused color**
 Add `colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = CruiseAzure)`.
 
-- [ ] **Step 3: Run unit tests**
+- [x] **Step 3: Run unit tests**
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/ui/timeline/EventDetailDialog.kt app/src/main/java/com/cruise/assistant/ui/event/EventSheet.kt
@@ -98,17 +98,17 @@ git commit -m "style(ui): adapt note card styling to 8 global color themes"
 - Modify: `app/build.gradle.kts`
 - Modify/Create: `人偶效果截图对比/`
 
-- [ ] **Step 1: Bump version in `app/build.gradle.kts`**
+- [x] **Step 1: Bump version in `app/build.gradle.kts`**
 Set `versionCode = 47`, `versionName = "1.10.21"`.
 
-- [ ] **Step 2: Build and install APK**
+- [x] **Step 2: Build and install APK**
 Run `assembleDebug` and install to running emulator.
 
-- [ ] **Step 3: Test on emulator across themes and capture screenshot**
+- [x] **Step 3: Test on emulator across themes and capture screenshot**
 - Open EventDetailDialog under current theme (e.g. Olu Green), verify the Note card badge/label matches the green theme seamlessly.
 - Save screenshot to `人偶效果截图对比/05_事件详情备注展示.png`.
 
-- [ ] **Step 4: Commit version bump and screenshots**
+- [x] **Step 4: Commit version bump and screenshots**
 
 ```bash
 git add app/build.gradle.kts 人偶效果截图对比/
