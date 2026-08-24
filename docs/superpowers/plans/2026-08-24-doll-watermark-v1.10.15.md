@@ -27,7 +27,7 @@
 - Consumes: Raw PNGs in `人偶素材/` (83 single-character images across 7 characters + 8 dual-character images)
 - Produces: 91 optimized WebP images in `app/src/main/assets/dolls/{duffy,shelliemay,stellalou,linabell,gelatoni,cookieann,olumel,duo}/`
 
-- [ ] **Step 1: Write asset optimization script**
+- [x] **Step 1: Write asset optimization script**
 
 ```python
 # scripts/optimize_doll_assets.py
@@ -97,17 +97,17 @@ if __name__ == "__main__":
     process_all()
 ```
 
-- [ ] **Step 2: Run optimization script**
+- [x] **Step 2: Run optimization script**
 
 Run: `python scripts/optimize_doll_assets.py`
 Expected: Processed 91 images, total size <= 2.5 MB.
 
-- [ ] **Step 3: Verify output integrity**
+- [x] **Step 3: Verify output integrity**
 
 Run: `python -c "import os; print(len([os.path.join(r, f) for r, _, fs in os.walk('app/src/main/assets/dolls') for f in fs if f.endswith('.webp')]))"`
 Expected: 91
 
-- [ ] **Step 4: Commit assets and script**
+- [x] **Step 4: Commit assets and script**
 
 ```bash
 git add scripts/optimize_doll_assets.py app/src/main/assets/dolls/
