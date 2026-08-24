@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.CruiseEvent
@@ -92,13 +93,17 @@ fun EventCard(
     // 贪心分级：本体剩余高度决定信息分配（tier 0 = 无候场段，走原有逻辑）
     val bodyHeightDp = heightDp - waitSegmentHeightDp - 2.dp
     val labelSmall = MaterialTheme.typography.labelSmall
-    val labelLineHeight = labelSmall.lineHeight.takeIf { it != TextUnit.Unspecified }
-        ?: (labelSmall.fontSize * 1.25f)
-    val waitTwoLineMinDp = with(LocalDensity.current) {
-        (labelLineHeight * 2).toDp() + 4.dp
+    val labelLineHeightSp = if (labelSmall.lineHeight.isSpecified) {
+        labelSmall.lineHeight.value
+    } else {
+        labelSmall.fontSize.value * 1.25f
     }
-    val waitThreeLineMinDp = with(LocalDensity.current) {
-        (labelLineHeight * 3).toDp() + 6.dp
+    val density = LocalDensity.current
+    val waitTwoLineMinDp = with(density) {
+        (labelLineHeightSp * 2).sp.toDp() + 4.dp
+    }
+    val waitThreeLineMinDp = with(density) {
+        (labelLineHeightSp * 3).sp.toDp() + 6.dp
     }
     val waitLines = when {
         waitSegmentHeightDp >= waitThreeLineMinDp -> 3
@@ -551,11 +556,11 @@ private fun ConflictBadge() {
 }
 
 @Composable
-private fun NoteIndicator(colorArgb: Int, modifier: Modifier = Modifier) {
+private fun NoteIndicator(colorArgb: Int) {
     Surface(
         shape = RoundedCornerShape(4.dp),
         color = Color(colorArgb).copy(alpha = 0.18f),
-        modifier = modifier.padding(start = 3.dp),
+        modifier = Modifier.padding(start = 3.dp),
     ) {
         Box(
             modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
