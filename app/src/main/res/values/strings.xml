@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">邮轮助手</string>
+    <string name="app_name">探险号助手</string>
 
     <!-- 引导页 -->
     <string name="onboarding_title">添加航次</string>

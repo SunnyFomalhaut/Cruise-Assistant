@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">探险号助手</string>
+
     <!-- 卡片萌趣装饰 -->
     <string name="card_dolls_section_title">卡片萌趣装饰</string>
     <string name="card_dolls_enabled">卡片人偶立绘点缀</string>
