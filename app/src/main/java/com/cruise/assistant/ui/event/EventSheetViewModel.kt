@@ -76,6 +76,7 @@ data class EventSheetState(
     val hoursCheckOverride: Boolean = false,
     /** 提前候场时间（分钟），默认 30，演出类别时可选 10~120m */
     val waitMinutes: Int = 30,
+    val note: String = "",
 ) {
     val isEditing: Boolean get() = editingId != 0L
 
@@ -210,6 +211,7 @@ class EventSheetViewModel(
                             isRecurrenceMember = event.recurrenceGroupId != null,
                             recurrenceGroupId = event.recurrenceGroupId,
                             waitMinutes = event.waitMinutes ?: event.effectiveWaitMinutes,
+                            note = event.note.orEmpty(),
                         )
                     }
                     _state.update { current ->
@@ -301,6 +303,7 @@ class EventSheetViewModel(
         )
     }
     fun onTitleChange(value: String) = _state.update { it.copy(title = value, errorResId = null) }
+    fun onNoteChange(value: String) = _state.update { it.copy(note = value) }
     fun onDeckChange(value: Int) = _state.update { it.copy(deck = value, noLocation = false) }
     fun onZoneChange(value: ShipZone) = _state.update { it.copy(zone = value, noLocation = false) }
     fun onPlaceNameChange(value: String) = _state.update {
@@ -464,6 +467,7 @@ class EventSheetViewModel(
             // （而不是数据库里 target 行的字段）判断 WHOLE_GROUP 是否要 fan out 到整组。
             recurrenceGroupId = s.recurrenceGroupId,
             waitMinutes = if (s.categoryIconKey == "show") s.waitMinutes else null,
+            note = s.note.trim().takeIf { it.isNotEmpty() },
         )
 
         _state.update { it.copy(saving = true) }

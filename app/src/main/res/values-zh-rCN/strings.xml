@@ -2,6 +2,10 @@
 <resources>
     <string name="app_name">探险号助手</string>
 
+    <!-- 事件弹窗 -->
+    <string name="note_label">备注</string>
+    <string name="note_hint">添加备注信息（选填）</string>
+
     <!-- 卡片萌趣装饰 -->
     <string name="card_dolls_section_title">卡片萌趣装饰</string>
     <string name="card_dolls_enabled">卡片人偶立绘点缀</string>

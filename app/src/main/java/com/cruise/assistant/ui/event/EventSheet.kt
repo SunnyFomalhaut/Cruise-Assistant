@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Restaurant
@@ -107,6 +108,7 @@ fun EventSheet(
     onCustomShowSelected: () -> Unit = {},
     onMealPeriodSelect: (MealPeriod?) -> Unit,
     onWaitMinutesChange: (Int) -> Unit = {},
+    onNoteChange: (String) -> Unit = {},
     onStartChange: (LocalTime) -> Unit,
     onEndChange: (LocalTime) -> Unit,
     onRecurringToggle: (Boolean) -> Unit,
@@ -485,6 +487,34 @@ fun EventSheet(
                             stringResource(R.string.lead_time_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = Slate500,
+                        )
+                    }
+                }
+            }
+
+            // ---- 卡片：备注（非系统事件显示）----
+            if (!state.isSystemEvent) {
+                Spacer(Modifier.height(12.dp))
+                Surface(
+                    shape = cardShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        SectionHeader(
+                            title = stringResource(R.string.note_label),
+                            icon = Icons.Outlined.EditNote,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        OutlinedTextField(
+                            value = state.note,
+                            onValueChange = onNoteChange,
+                            placeholder = { Text(stringResource(R.string.note_hint)) },
+                            minLines = 2,
+                            maxLines = 4,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
