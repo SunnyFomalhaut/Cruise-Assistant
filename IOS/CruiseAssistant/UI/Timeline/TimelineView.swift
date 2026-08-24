@@ -260,9 +260,8 @@ public struct TimelineView: View {
                             let viewportWidth = geo.size.width
                             let canvasWidth = viewModel.isFinalized ? viewportWidth : (viewportWidth * 1.2)
 
-                            ScrollView(.horizontal, showsIndicators: false) {
+                            ScrollView(viewModel.isFinalized ? [] : .horizontal, showsIndicators: false) {
                                 ZStack(alignment: .topLeading) {
-                                    // Grid Lines
                                     TimelineGridView(
                                         layout: viewModel.layout,
                                         laneBoundaries: viewModel.isFinalized ? [] : laneBoundaryFractions()
@@ -321,7 +320,6 @@ public struct TimelineView: View {
                             }
                             .frame(width: viewportWidth, height: CGFloat(viewModel.layout.totalHeightPt), alignment: .topLeading)
                             .clipped()
-                            .disabled(viewModel.isFinalized)
                         }
                         .frame(height: CGFloat(viewModel.layout.totalHeightPt))
                     }

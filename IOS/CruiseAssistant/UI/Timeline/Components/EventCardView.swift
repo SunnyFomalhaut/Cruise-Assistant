@@ -230,17 +230,13 @@ public struct EventCardView: View {
         .padding(.horizontal, 4)
         .padding(.vertical, isExtremelyCompact ? 0 : 2)
         .background(
-            LinearGradient(
-                colors: [
-                    Color(argb: colorArgb).opacity(0.24),
-                    Color(argb: colorArgb).opacity(0.12),
-                    Color(argb: colorArgb).opacity(0.24)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(colorArgb == 0xFFF5B301 ? Color(hex: "#FEF3C7") : Color(argb: colorArgb).opacity(0.16))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .stroke(colorArgb == 0xFFF5B301 ? Color(hex: "#FDE68A") : Color(argb: colorArgb).opacity(0.28), lineWidth: 1)
+        )
     }
 
     // MARK: - Wait Adaptive Body View
