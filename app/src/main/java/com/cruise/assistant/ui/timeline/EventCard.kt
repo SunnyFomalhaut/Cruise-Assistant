@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -301,6 +304,9 @@ fun EventCard(
                         ) {
                             category?.let {
                                 CategoryChip(it.name, colorArgb)
+                                if (!event.note.isNullOrBlank()) {
+                                    NoteIndicator(colorArgb)
+                                }
                                 Spacer(Modifier.width(4.dp))
                             }
                             Text(
@@ -365,6 +371,9 @@ fun EventCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         category?.let {
                             CategoryChip(it.name, colorArgb)
+                            if (!event.note.isNullOrBlank()) {
+                                NoteIndicator(colorArgb)
+                            }
                             Spacer(Modifier.width(4.dp))
                         }
                         Text(
@@ -405,6 +414,9 @@ fun EventCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             category?.let {
                                 CategoryChip(it.name, colorArgb)
+                                if (!event.note.isNullOrBlank()) {
+                                    NoteIndicator(colorArgb)
+                                }
                                 Spacer(Modifier.width(4.dp))
                             }
                             Text(
@@ -444,6 +456,9 @@ fun EventCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             category?.let {
                                 CategoryChip(it.name, colorArgb)
+                                if (!event.note.isNullOrBlank()) {
+                                    NoteIndicator(colorArgb)
+                                }
                                 Spacer(Modifier.width(4.dp))
                             }
                             Text(
@@ -474,6 +489,9 @@ fun EventCard(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 category?.let {
                                     CategoryChip(it.name, colorArgb)
+                                    if (!event.note.isNullOrBlank()) {
+                                        NoteIndicator(colorArgb)
+                                    }
                                     Spacer(Modifier.width(4.dp))
                                 }
                                 Text(
@@ -527,6 +545,27 @@ private fun ConflictBadge() {
                 fontSize = 9.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NoteIndicator(colorArgb: Int, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = Color(colorArgb).copy(alpha = 0.18f),
+        modifier = modifier.padding(start = 3.dp),
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Outlined.EditNote,
+                contentDescription = "有备注",
+                tint = Color(colorArgb),
+                modifier = Modifier.size(12.dp),
             )
         }
     }
