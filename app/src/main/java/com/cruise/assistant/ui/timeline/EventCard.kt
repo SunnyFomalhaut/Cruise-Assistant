@@ -294,27 +294,70 @@ fun EventCard(
             }
             if (!hasWaitSegment) {
                 if (compact) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = event.title,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = textColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (hasConflict) {
-                            ConflictBadge()
-                        }
-                        if (!narrow) {
+                    if (isFinalized) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            category?.let {
+                                CategoryChip(it.name, colorArgb)
+                                Spacer(Modifier.width(4.dp))
+                            }
                             Text(
-                                text = formatStart(event),
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                color = textColor.copy(alpha = 0.8f),
+                                text = event.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor,
                                 maxLines = 1,
-                                modifier = Modifier.padding(start = 2.dp),
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false),
                             )
+                            if (!location.isNullOrBlank()) {
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = location,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    color = textColor.copy(alpha = 0.85f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                            }
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = formatTimeRange(event),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                color = textColor.copy(alpha = 0.75f),
+                                maxLines = 1,
+                            )
+                            if (hasConflict) {
+                                Spacer(Modifier.width(2.dp))
+                                ConflictBadge()
+                            }
+                        }
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = event.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (hasConflict) {
+                                ConflictBadge()
+                            }
+                            if (!narrow) {
+                                Text(
+                                    text = formatStart(event),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    color = textColor.copy(alpha = 0.8f),
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(start = 2.dp),
+                                )
+                            }
                         }
                     }
                 } else {
