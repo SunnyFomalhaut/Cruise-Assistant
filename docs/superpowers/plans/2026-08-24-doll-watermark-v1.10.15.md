@@ -212,18 +212,18 @@ git commit -m "feat(ui): pass finalization state to EventCard and adjust right-i
 - Modify: `app/build.gradle.kts`
 - Modify/Create: `人偶效果截图对比/`
 
-- [ ] **Step 1: Bump version in `app/build.gradle.kts`**
+- [x] **Step 1: Bump version in `app/build.gradle.kts`**
 Set `versionCode = 41`, `versionName = "1.10.15"`.
 
-- [ ] **Step 2: Run build and verify APK size reduction**
+- [x] **Step 2: Run build and verify APK size reduction**
 Run assembleDebug, check size of output APK in `app/build/outputs/apk/debug/`.
 Verify APK size is <= 20 MB (down from 71 MB).
 
-- [ ] **Step 3: Install APK on Android Emulator and capture screenshots**
+- [x] **Step 3: Install APK on Android Emulator and capture screenshots**
 Capture finalized mode screenshot showing duo art on dinner and single dolls on other cards.
 Capture draft mode screenshot showing fallback to single dolls.
 
-- [ ] **Step 4: Commit build and screenshots**
+- [x] **Step 4: Commit build and screenshots**
 
 ```bash
 git add app/build.gradle.kts 人偶效果截图对比/
