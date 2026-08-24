@@ -310,8 +310,8 @@ fun EventDetailDialog(
                         Spacer(Modifier.height(12.dp))
                         Surface(
                             shape = RoundedCornerShape(14.dp),
-                            color = Color(0xFFF8FAFC),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            color = Slate100,
+                            border = BorderStroke(1.dp, Slate200),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(
@@ -326,13 +326,13 @@ fun EventDetailDialog(
                                         modifier = Modifier
                                             .size(24.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFFEDE9FE)),
+                                            .background(CruiseAzureContainer),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
                                             Icons.Outlined.EditNote,
                                             contentDescription = null,
-                                            tint = Color(0xFF7C3AED),
+                                            tint = CruiseAzure,
                                             modifier = Modifier.size(16.dp),
                                         )
                                     }
@@ -341,14 +341,14 @@ fun EventDetailDialog(
                                         text = stringResource(R.string.note_label),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF6D28D9),
+                                        color = CruiseMarine,
                                     )
                                 }
                                 Spacer(Modifier.height(8.dp))
                                 Text(
                                     text = event.note,
                                     style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
-                                    color = Color(0xFF1E293B),
+                                    color = Slate800,
                                 )
                             }
                         }

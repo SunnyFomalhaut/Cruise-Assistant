@@ -50,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -514,6 +515,10 @@ fun EventSheet(
                             minLines = 2,
                             maxLines = 4,
                             shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = CruiseAzure,
+                                focusedLabelColor = CruiseAzure,
+                            ),
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
