@@ -243,20 +243,20 @@ extension View {
 
 // MARK: - Card & Category Color Blending Helpers
 
-/// Card background color: 8% category color blended over white.
+/// Card background color: 14% category color blended over white for vibrant, solid card appearance.
 public func cardBackgroundFor(colorArgb: Int64) -> Color {
     let r = Double((colorArgb >> 16) & 0xFF) / 255.0
     let g = Double((colorArgb >> 8) & 0xFF) / 255.0
     let b = Double(colorArgb & 0xFF) / 255.0
-    // Lerp with White (1.0, 1.0, 1.0) with fraction 0.08
-    let fraction = 0.08
+    // Lerp with White (1.0, 1.0, 1.0) with fraction 0.14
+    let fraction = 0.14
     let finalR = 1.0 + (r - 1.0) * fraction
     let finalG = 1.0 + (g - 1.0) * fraction
     let finalB = 1.0 + (b - 1.0) * fraction
     return Color(.sRGB, red: finalR, green: finalG, blue: finalB, opacity: 1.0)
 }
 
-/// Card text color: category color blended 45% towards Slate900 (0x0F, 0x17, 0x2A).
+/// Card text color: category color blended 75% towards Slate900 (0x0F, 0x17, 0x2A) for crisp readability.
 public func cardTextColorFor(colorArgb: Int64) -> Color {
     let r = Double((colorArgb >> 16) & 0xFF) / 255.0
     let g = Double((colorArgb >> 8) & 0xFF) / 255.0
@@ -266,13 +266,12 @@ public func cardTextColorFor(colorArgb: Int64) -> Color {
     let targetG = Double(0x17) / 255.0
     let targetB = Double(0x2A) / 255.0
 
-    let fraction = 0.45
+    let fraction = 0.75
     let finalR = r + (targetR - r) * fraction
     let finalG = g + (targetG - g) * fraction
     let finalB = b + (targetB - b) * fraction
     return Color(.sRGB, red: finalR, green: finalG, blue: finalB, opacity: 1.0)
 }
-
 // MARK: - SimpleDate SwiftUI Date Conversions
 
 extension SimpleDate {

@@ -59,8 +59,8 @@ public struct CategoryChip: View {
             }
 
             Text(name)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(isSelected ? .white : cardTextColorFor(colorArgb: colorArgb))
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(isSelected ? .white : (colorArgb == 0xFFF5B301 ? Color(hex: "#92400E") : cardTextColorFor(colorArgb: colorArgb)))
                 .lineLimit(1)
         }
         .padding(.horizontal, 6)
@@ -71,9 +71,8 @@ public struct CategoryChip: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(isSelected ? Color(argb: colorArgb) : Color.clear, lineWidth: 1)
+                .stroke(isSelected ? Color(argb: colorArgb) : Color(argb: colorArgb).opacity(0.32), lineWidth: 1)
         )
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
     }
 }
 

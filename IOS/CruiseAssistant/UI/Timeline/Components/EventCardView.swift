@@ -153,10 +153,11 @@ public struct EventCardView: View {
             .overlay(
                 cardShape
                     .stroke(
-                        Color(argb: colorArgb).opacity(active ? 0.28 : 0.15),
+                        Color(argb: colorArgb).opacity(active ? 0.38 : 0.2),
                         lineWidth: 1
                     )
             )
+            .shadow(color: Color.black.opacity(active ? 0.04 : 0.0), radius: 2, x: 0, y: 1)
             .opacity(active ? 1.0 : 0.45)
         }
         .buttonStyle(PlainButtonStyle())
@@ -213,14 +214,14 @@ public struct EventCardView: View {
             Text(waitText)
                 .font(.system(size: isExtremelyCompact ? 9.5 : 11, weight: .bold))
                 .italic()
-                .foregroundColor(textColor.opacity(0.9))
+                .foregroundColor(active ? (colorArgb == 0xFFF5B301 ? Color(hex: "#92400E") : textColor) : Slate500)
                 .lineLimit(1)
 
             if waitSegmentHeightPt >= 36, let loc = locationText {
                 Text(loc)
                     .font(.system(size: 10))
                     .italic()
-                    .foregroundColor(textColor.opacity(0.75))
+                    .foregroundColor(active ? Slate700 : Slate500)
                     .lineLimit(1)
             }
         }
@@ -231,9 +232,9 @@ public struct EventCardView: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color(argb: colorArgb).opacity(0.18),
-                    Color(argb: colorArgb).opacity(0.08),
-                    Color(argb: colorArgb).opacity(0.18)
+                    Color(argb: colorArgb).opacity(0.24),
+                    Color(argb: colorArgb).opacity(0.12),
+                    Color(argb: colorArgb).opacity(0.24)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -256,7 +257,7 @@ public struct EventCardView: View {
                 }
                 Text(event.title)
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(textColor)
+                    .foregroundColor(active ? Slate900 : Slate500)
                     .lineLimit(1)
 
                 if hasConflict {
@@ -268,7 +269,7 @@ public struct EventCardView: View {
             if bodyLines == 3, let loc = locationText {
                 Text(loc)
                     .font(.system(size: 10))
-                    .foregroundColor(textColor.opacity(0.85))
+                    .foregroundColor(active ? Slate700 : Slate500)
                     .lineLimit(1)
             }
 
@@ -276,7 +277,7 @@ public struct EventCardView: View {
             if bodyLines >= 2 {
                 Text(formatTimeRange(event: event))
                     .font(.system(size: 10))
-                    .foregroundColor(textColor.opacity(0.75))
+                    .foregroundColor(active ? Slate600 : Slate500)
                     .lineLimit(1)
             }
         }
@@ -288,7 +289,7 @@ public struct EventCardView: View {
         HStack(spacing: 2) {
             Text(event.title)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(textColor)
+                .foregroundColor(active ? Slate900 : Slate500)
                 .lineLimit(1)
 
             if hasConflict {
@@ -299,7 +300,7 @@ public struct EventCardView: View {
                 Spacer(minLength: 2)
                 Text(formatStart(event: event))
                     .font(.system(size: 10))
-                    .foregroundColor(textColor.opacity(0.8))
+                    .foregroundColor(active ? Slate600 : Slate500)
                     .lineLimit(1)
             }
         }
@@ -316,7 +317,7 @@ public struct EventCardView: View {
                 }
                 Text(event.title)
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(textColor)
+                    .foregroundColor(active ? Slate900 : Slate500)
                     .lineLimit(1)
 
                 if hasConflict {
@@ -328,14 +329,14 @@ public struct EventCardView: View {
             if let loc = locationText {
                 Text(loc)
                     .font(.system(size: 10))
-                    .foregroundColor(textColor.opacity(0.85))
+                    .foregroundColor(active ? Slate700 : Slate500)
                     .lineLimit(1)
             }
 
             // Line 3: Time Range
             Text(formatTimeRange(event: event))
                 .font(.system(size: 10))
-                .foregroundColor(textColor.opacity(0.75))
+                .foregroundColor(active ? Slate600 : Slate500)
                 .lineLimit(1)
         }
     }
