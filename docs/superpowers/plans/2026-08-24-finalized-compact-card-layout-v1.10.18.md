@@ -26,7 +26,7 @@
 - Consumes: `isFinalized: Boolean`, `category: Category?`, `event: CruiseEvent`, `location: String?`
 - Produces: Rich single-line row in finalized compact cards
 
-- [ ] **Step 1: Update `EventCard.kt` compact branch**
+- [x] **Step 1: Update `EventCard.kt` compact branch**
 ```kotlin
                 if (compact) {
                     if (isFinalized) {
@@ -98,11 +98,11 @@
                 }
 ```
 
-- [ ] **Step 2: Verify compilation and unit tests**
+- [x] **Step 2: Verify compilation and unit tests**
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/ui/timeline/EventCard.kt
@@ -117,16 +117,16 @@ git commit -m "feat(ui): display category, title, location and time range in fin
 - Modify: `app/build.gradle.kts`
 - Modify/Create: `人偶效果截图对比/`
 
-- [ ] **Step 1: Bump version in `app/build.gradle.kts`**
+- [x] **Step 1: Bump version in `app/build.gradle.kts`**
 Set `versionCode = 44`, `versionName = "1.10.18"`.
 
-- [ ] **Step 2: Build and install APK**
+- [x] **Step 2: Build and install APK**
 Run `assembleDebug` and install to running emulator.
 
-- [ ] **Step 3: Capture screenshot of finalized mode showing short cards**
+- [x] **Step 3: Capture screenshot of finalized mode showing short cards**
 Verify that "登船" and "11" display `[重要事项]`, title, location (if any), and time range.
 
-- [ ] **Step 4: Commit version bump and screenshots**
+- [x] **Step 4: Commit version bump and screenshots**
 
 ```bash
 git add app/build.gradle.kts 人偶效果截图对比/
