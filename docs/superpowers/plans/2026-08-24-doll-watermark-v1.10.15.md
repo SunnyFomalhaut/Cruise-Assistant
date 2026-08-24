@@ -130,13 +130,13 @@ git commit -m "feat(assets): crop transparent padding and convert doll assets to
   - `DollManager.selectDollForCard(eventId: Long, cardHeightDp: Float, durationMinutes: Int, isFinalized: Boolean, isComplex: Boolean): String?`
   - `DollManager.loadDollBitmap(context: Context, assetPath: String, targetSize: Int): Bitmap?`
 
-- [ ] **Step 1: Update `DollModels.kt`**
+- [x] **Step 1: Update `DollModels.kt`**
 Add `DUO` to `DollTier` and `DollCharacter`, and define card selection criteria helper.
 
-- [ ] **Step 2: Update `DollManager.kt`**
+- [x] **Step 2: Update `DollManager.kt`**
 Register all 91 WebP asset paths, register the `DUO` pool, and implement the dual-doll selection algorithm with single-doll fallback.
 
-- [ ] **Step 3: Commit domain layer changes**
+- [x] **Step 3: Commit domain layer changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/domain/DollModels.kt app/src/main/java/com/cruise/assistant/domain/DollManager.kt

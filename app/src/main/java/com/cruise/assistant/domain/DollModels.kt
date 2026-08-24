@@ -22,13 +22,35 @@ enum class DuffyCharacter(
 enum class DollTier(val folderName: String) {
     HEAD("head"),
     HALF_BODY("half_body"),
-    FULL_BODY("full_body");
+    FULL_BODY("full_body"),
+    DUO("duo");
 
     companion object {
-        fun forCardHeight(heightDp: Float): DollTier = when {
-            heightDp <= 61f -> HEAD       // 30 分钟及以下 (<= 60dp)
-            heightDp <= 111f -> HALF_BODY // 31~55 分钟 (61dp ~ 110dp)
+        const val HEAD_MAX_HEIGHT_DP = 61f
+        const val HALF_BODY_MAX_HEIGHT_DP = 111f
+        const val DUO_MIN_DURATION_MINUTES = 70
+        const val DUO_MIN_HEIGHT_DP = 140f
+
+        fun forCardHeight(heightDp: Float): DollTier = fromCardHeight(heightDp)
+
+        fun fromCardHeight(heightDp: Float): DollTier = when {
+            heightDp <= HEAD_MAX_HEIGHT_DP -> HEAD       // 30 分钟及以下 (<= 60dp)
+            heightDp <= HALF_BODY_MAX_HEIGHT_DP -> HALF_BODY // 31~55 分钟 (61dp ~ 110dp)
             else -> FULL_BODY             // 55 分钟以上 (> 110dp)
+        }
+
+        fun isEligibleForDuo(
+            isFinalized: Boolean,
+            durationMinutes: Int,
+            hasWaitSegment: Boolean = false,
+            isShowCategory: Boolean = false,
+            hasConflict: Boolean = false
+        ): Boolean {
+            return isFinalized &&
+                    durationMinutes >= DUO_MIN_DURATION_MINUTES &&
+                    !hasWaitSegment &&
+                    !isShowCategory &&
+                    !hasConflict
         }
     }
 }
