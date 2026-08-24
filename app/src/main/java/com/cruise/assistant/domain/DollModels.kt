@@ -26,9 +26,9 @@ enum class DollTier(val folderName: String) {
 
     companion object {
         fun forCardHeight(heightDp: Float): DollTier = when {
-            heightDp < 44f -> HEAD
-            heightDp < 72f -> HALF_BODY
-            else -> FULL_BODY
+            heightDp <= 61f -> HEAD       // 30 分钟及以下 (<= 60dp)
+            heightDp <= 111f -> HALF_BODY // 31~55 分钟 (61dp ~ 110dp)
+            else -> FULL_BODY             // 55 分钟以上 (> 110dp)
         }
     }
 }

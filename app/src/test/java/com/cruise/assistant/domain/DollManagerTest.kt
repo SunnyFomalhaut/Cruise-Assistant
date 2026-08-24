@@ -9,15 +9,20 @@ class DollManagerTest {
 
     @Test
     fun dollTier_forCardHeight_thresholds() {
+        // 30分钟及以下 (<= 60dp, 钳制到61dp) -> HEAD
         assertEquals(DollTier.HEAD, DollTier.forCardHeight(0f))
         assertEquals(DollTier.HEAD, DollTier.forCardHeight(35f))
-        assertEquals(DollTier.HEAD, DollTier.forCardHeight(43.9f))
-        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(44f))
-        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(55f))
-        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(71.9f))
-        assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(72f))
-        assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(90f))
+        assertEquals(DollTier.HEAD, DollTier.forCardHeight(60f))
+        assertEquals(DollTier.HEAD, DollTier.forCardHeight(61f))
+        // 55分钟及以下 (31~55分钟，62dp ~ 110dp) -> HALF_BODY
+        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(62f))
+        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(90f))
+        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(110f))
+        assertEquals(DollTier.HALF_BODY, DollTier.forCardHeight(111f))
+        // 55分钟以上 (> 111dp) -> FULL_BODY
+        assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(112f))
         assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(150f))
+        assertEquals(DollTier.FULL_BODY, DollTier.forCardHeight(200f))
     }
 
     @Test
@@ -65,22 +70,22 @@ class DollManagerTest {
     }
 
     @Test
-    fun shortCard_under44dp_returnsHeadAsset() {
-        // Cards < 44dp get HEAD tier
+    fun shortCard_30minAndUnder_returnsHeadAsset() {
+        // Cards <= 61dp (<= 30 min) get HEAD tier
         for (eventId in 1L..100L) {
-            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 35f)
+            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 50f)
             assertNotNull("Asset must not be null for event $eventId", asset)
             val tier = DollManager.getTierForAsset(asset!!)
             // Every character has at least 1 head asset, so it should always resolve to HEAD
-            assertEquals("Short card (35dp) should select HEAD tier for event $eventId", DollTier.HEAD, tier)
+            assertEquals("Short card (50dp) should select HEAD tier for event $eventId", DollTier.HEAD, tier)
         }
     }
 
     @Test
-    fun mediumCard_44to72dp_returnsHalfBodyOrFallback() {
-        // Cards between 44dp and 72dp prefer HALF_BODY, fallback to HEAD then FULL_BODY
+    fun mediumCard_31to55min_returnsHalfBodyOrFallback() {
+        // Cards between 62dp and 111dp (31~55 min) prefer HALF_BODY, fallback to HEAD then FULL_BODY
         for (eventId in 1L..100L) {
-            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 55f)
+            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 90f)
             assertNotNull("Asset must not be null for event $eventId", asset)
             val char = DollManager.getCharacterForAsset(asset!!)
             assertNotNull(char)
@@ -102,14 +107,14 @@ class DollManagerTest {
     }
 
     @Test
-    fun largeCard_72dpAndAbove_returnsFullBodyAsset() {
-        // Cards >= 72dp get FULL_BODY tier
+    fun largeCard_over55min_returnsFullBodyAsset() {
+        // Cards > 111dp (> 55 min) get FULL_BODY tier
         for (eventId in 1L..100L) {
-            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 90f)
+            val asset = DollManager.selectDollForCard(eventId = eventId, cardHeightDp = 150f)
             assertNotNull("Asset must not be null for event $eventId", asset)
             val tier = DollManager.getTierForAsset(asset!!)
             // Every character has full_body assets, so it should always resolve to FULL_BODY
-            assertEquals("Large card (90dp) should select FULL_BODY tier for event $eventId", DollTier.FULL_BODY, tier)
+            assertEquals("Large card (150dp) should select FULL_BODY tier for event $eventId", DollTier.FULL_BODY, tier)
         }
     }
 
