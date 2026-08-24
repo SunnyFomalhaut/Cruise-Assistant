@@ -4,40 +4,102 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Ship Funnel & Smoke -->
-    <path
-        android:fillColor="#FFFFD700"
-        android:pathData="M62,38 h6 v10 h-6 z" />
-    <path
-        android:fillColor="#E0FFFFFF"
-        android:pathData="M64,32 a3,3 0 1,0 0,-0.1 z M68,26 a2,2 0 1,0 0,-0.1 z" />
 
-    <!-- Ship Superstructure / Decks -->
+    <!-- Radar Mast & Observation Dome -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M38,50 h32 v4 h-32 z M42,46 h24 v4 h-24 z M46,42 h16 v4 h-16 z" />
-    
-    <!-- Portholes / Deck details -->
+        android:fillColor="#E2E8F0"
+        android:pathData="M69,35 h1.5 v7 h-1.5 z M67.5,38.5 h4.5 v1.2 h-4.5 z" />
     <path
-        android:fillColor="#FF0F2027"
-        android:pathData="M42,51 h2 v2 h-2 z M48,51 h2 v2 h-2 z M54,51 h2 v2 h-2 z M60,51 h2 v2 h-2 z M66,51 h2 v2 h-2 z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M68,34.5 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 Z" />
 
-    <!-- Ship Hull -->
+    <!-- Aft Funnel (Rear) - Black Rim & Disney Red Body -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M26,54 L32,68 C34,71 38,72 42,72 L72,72 C78,72 82,68 84,62 L88,54 Z" />
-    
-    <!-- Hull Gold Stripe -->
+        android:fillColor="#161B22"
+        android:pathData="M43.2,33.0 C43.2,32.5 44.0,32.5 44.5,32.5 L49.5,32.5 C50.0,32.5 50.8,32.5 50.8,33.0 L50.0,35.5 L43.5,35.5 Z" />
     <path
-        android:fillColor="#FFFFD700"
-        android:pathData="M28,57 L30,60 H85 L86.5,57 Z" />
+        android:fillColor="#E51821"
+        android:pathData="M43.5,35.5 L49.5,35.5 L50.0,43.0 L42.5,43.0 Z" />
 
-    <!-- Front & Rear Waves -->
+    <!-- Forward Funnel (Front) - Black Rim & Disney Red Body -->
     <path
-        android:fillColor="#8000E5FF"
-        android:pathData="M18,70 Q30,64 45,70 T75,70 T100,68 L98,73 Q80,75 60,72 T30,75 Z" />
+        android:fillColor="#161B22"
+        android:pathData="M56.2,31.5 C56.2,31.0 57.0,30.8 57.8,30.8 L64.0,30.8 C64.8,30.8 65.6,31.0 65.6,31.5 L64.8,34.0 L56.2,34.0 Z" />
     <path
-        android:fillColor="#B300E5FF"
-        android:pathData="M14,75 Q32,70 50,76 T85,73 T102,74 L100,78 Q82,78 60,80 T20,78 Z" />
+        android:fillColor="#E51821"
+        android:pathData="M56.5,34.0 L64.5,34.0 L65.0,43.0 L55.5,43.0 Z" />
+
+    <!-- Mickey Mouse Silhouette on Forward Funnel (White Head + Two Ears) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60.5,37.1 a1.7,1.7 0 1,0 0.001,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M59.2,36.35 a0.95,0.95 0 1,0 0.001,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M61.8,36.35 a0.95,0.95 0 1,0 0.001,0 Z" />
+
+    <!-- Superstructure Decks (Multi-tier Clean White) -->
+    <!-- Tier 3 / Top Deck -->
+    <path
+        android:fillColor="#F1F5F9"
+        android:pathData="M36,42 L67,42 L68,46 L35,46 Z" />
+
+    <!-- Tier 2 / Bridge Deck -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M31,46 L72,46 L76,49.5 L75,50.5 L30,50.5 Z" />
+
+    <!-- Bridge Windows (Dark Navy Glass) -->
+    <path
+        android:fillColor="#1E3E62"
+        android:pathData="M71,47 L74.8,47.8 L74.2,49.2 L70.5,48.5 Z" />
+
+    <!-- Balcony Shade Divider Line -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M34,48.5 H69 V49.2 H34 Z" />
+
+    <!-- Tier 1 / Promenade Deck -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26.5,50.5 L75.5,50.5 L80,54.5 L25,54.5 Z" />
+
+    <!-- Lifeboat Deck Accent Line (Yellow / Gold) -->
+    <path
+        android:fillColor="#FFC72C"
+        android:pathData="M28,52.2 H75 V53.8 H28 Z" />
+
+    <!-- Sleek Dark Navy Ship Hull -->
+    <path
+        android:fillColor="#141923"
+        android:pathData="M24.5,54.5 L86.5,54.5 C85.5,57.5 82.5,63.5 76,68 C72,70.5 67,71 60,71 L38,71 C32,71 28,68 26,63 L24.5,54.5 Z" />
+
+    <!-- Gold Hull Sheer Stripe -->
+    <path
+        android:fillColor="#FFC72C"
+        android:pathData="M24.8,55.8 L85.5,55.8 C85.0,56.8 84.0,57.5 83.2,57.5 L25.1,57.5 Z" />
+
+    <!-- Red Keel Waterline -->
+    <path
+        android:fillColor="#E51821"
+        android:pathData="M27,65 C28.5,68 32.5,72 38,72 L62,72 C68,72 73,70.5 76.5,67.5 L77.5,69 C73.5,72.5 68,74 61,74 L38,74 C31,74 26.5,69.5 25,65.5 Z" />
+
+    <!-- Dynamic Ocean Waves & Splash -->
+    <!-- Base Wave (Cyan) -->
+    <path
+        android:fillColor="#00B4D8"
+        android:pathData="M12,73 C22,69 32,75 46,72 C60,69 72,74 84,71 C92,69 98,72 104,70 L102,76 C95,78 88,76 80,77 C68,79 56,75 42,78 C28,81 18,77 10,79 Z" />
+
+    <!-- Highlight Wave (Light Turquoise) -->
+    <path
+        android:fillColor="#90E0EF"
+        android:pathData="M15,76 C28,72 40,77 54,74 C68,71 80,76 92,73 C98,71 102,74 106,72 L104,77.5 C98,79.5 90,77 82,79 C68,82 54,77 40,80 C26,83 18,80 13,81 Z" />
+
+    <!-- Bow Wave Splash Highlight (Foam) -->
+    <path
+        android:fillColor="#E0F7FA"
+        android:pathData="M75.5,68 C78.5,66 83,66.5 86.5,68.5 C83.5,70 80,70.5 76.5,70.5 Z" />
+
 </vector>
