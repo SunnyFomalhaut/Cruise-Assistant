@@ -26,7 +26,7 @@
 - Consumes: `MealPeriod`, `event.title`, `event.startTime`, `event.presetKey`
 - Produces: Correct `selectedMealPeriod`, updated `title` when switching meal chips, and clean `presetKey`
 
-- [ ] **Step 1: Update `EventSheetViewModel.kt`**
+- [x] **Step 1: Update `EventSheetViewModel.kt`**
 1. Add `val presetKey: String? = null` to `EventSheetState`.
 2. In `openForEdit(event)`:
    - `presetKey = event.presetKey`
@@ -40,12 +40,12 @@
    - `val newPresetKey = if (s.categoryIconKey == "meal") { if (s.selectedMealPeriod == MealPeriod.DINNER) "dinner" else null } else s.presetKey`
    - Pass `presetKey = newPresetKey`.
 
-- [ ] **Step 2: Run and add unit tests**
+- [x] **Step 2: Run and add unit tests**
 Add test in `EventSheetStateTest.kt` verifying meal period switching updates title and clears dinner presetKey.
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/ui/event/EventSheetViewModel.kt app/src/test/java/com/cruise/assistant/ui/event/EventSheetStateTest.kt
@@ -64,7 +64,7 @@ git commit -m "fix(event): fix meal period resolution, title sync and presetKey 
 - Consumes: `LocationCatalog`, `highlightTarget`, `deck_*.svg`
 - Produces: 100% successful location pin placement and centering on deck maps
 
-- [ ] **Step 1: Update `DeckMap.kt`**
+- [x] **Step 1: Update `DeckMap.kt`**
 1. In Kotlin `inlineHtmlWrapperFor(svgContent, highlightTarget)`:
    Expand `highlightTarget` by looking up in `LocationCatalog.allEntries()` to match Chinese names to full bilingual venue names.
 2. In JavaScript `centerFacilityTarget()`:
@@ -73,14 +73,14 @@ git commit -m "fix(event): fix meal period resolution, title sync and presetKey 
    - Add Chinese-to-English keyword expansions (`航海家 -> navigator`, `盛宴 -> enchanted summer`, `动画师 -> animator`, etc.).
    - Search normalized text nodes.
 
-- [ ] **Step 2: Update `locations.json`**
+- [x] **Step 2: Update `locations.json`**
 Change Deck 17 `露天泳池` to `阳光泳池 Sunnyside Pool`.
 
-- [ ] **Step 3: Run verification script**
+- [x] **Step 3: Run verification script**
 Run: `python scripts/test_location_matching.py`
 Expected: 74/74 venues matched (0 unmatched).
 
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
 
 ```bash
 git add app/src/main/java/com/cruise/assistant/domain/DeckMap.kt app/src/main/assets/locations.json
@@ -95,18 +95,18 @@ git commit -m "fix(map): support quote-insensitive and bilingual location matchi
 - Modify: `app/build.gradle.kts`
 - Modify/Create: `人偶效果截图对比/`
 
-- [ ] **Step 1: Bump version in `app/build.gradle.kts`**
+- [x] **Step 1: Bump version in `app/build.gradle.kts`**
 Set `versionCode = 48`, `versionName = "1.10.22"`.
 
-- [ ] **Step 2: Build and install APK**
+- [x] **Step 2: Build and install APK**
 Run `assembleDebug` and install to running emulator.
 
-- [ ] **Step 3: Test on emulator**
+- [x] **Step 3: Test on emulator**
 - Edit a dinner event -> switch meal chip to "早餐" -> confirm title updates to "早餐" and time to 08:00, save and verify it stays "早餐".
 - Click "定位" on Navigator's Club (航海家俱乐部) -> confirm Deck 6 opens and centers/highlights "Navigator’s Club Restaurant".
 - Capture verification screenshot.
 
-- [ ] **Step 4: Commit version bump and screenshots**
+- [x] **Step 4: Commit version bump and screenshots**
 
 ```bash
 git add app/build.gradle.kts 人偶效果截图对比/
