@@ -55,6 +55,7 @@ data class EventSheetState(
     // WHOLE_GROUP 分支的 groupId 判断就失效，"修改所有重复项" 在真实 UI 路径上会
     // 静默退化成只改当前这一条（仅测试直接调用 repository 才会走到 fan-out 分支）。
     val recurrenceGroupId: String? = null,
+    val presetKey: String? = null,
     val errorResId: Int? = null,
     val saving: Boolean = false,
     /** 当前选中类别的 iconKey（决定是否有预置地点下拉） */
@@ -159,10 +160,16 @@ class EventSheetViewModel(
                     // 计算 iconKey，否则默认类别（餐食）永远拿不到下拉模式
                     val resolvedId = current.selectedCategoryId ?: list.firstOrNull()?.id
                     val iconKey = list.firstOrNull { it.id == resolvedId }?.iconKey
+                    val mealPeriod = if (current.isEditing && (iconKey == "meal" || current.presetKey == "dinner") && current.selectedMealPeriod == null) {
+                        resolveMealPeriod(current.title, current.startTime)
+                    } else {
+                        current.selectedMealPeriod
+                    }
                     current.copy(
                         categories = list,
                         categoryIconKey = iconKey,
                         selectedCategoryId = resolvedId,
+                        selectedMealPeriod = mealPeriod,
                         showMealPeriodRow = current.builtInShip && iconKey == "meal",
                         locationPresetMode = resolvePresetMode(
                             isEditing = current.isEditing,
@@ -193,6 +200,8 @@ class EventSheetViewModel(
                 eventRepository.getById(editingEventId)?.let { event ->
                     val endMinutes = event.startTime.hour * 60 + event.startTime.minute +
                         event.durationMinutes
+                    val resolvedMeal = resolveMealPeriod(event.title, event.startTime)
+                    val catIconKey = categoryRepository.getById(event.categoryId)?.iconKey
                     _state.update {
                         it.copy(
                             editingId = event.id,
@@ -211,6 +220,7 @@ class EventSheetViewModel(
                             isSystemEvent = event.isSystemGenerated,
                             isRecurrenceMember = event.recurrenceGroupId != null,
                             recurrenceGroupId = event.recurrenceGroupId,
+                            presetKey = event.presetKey,
                             waitMinutes = event.waitMinutes ?: event.effectiveWaitMinutes,
                             note = event.note.orEmpty(),
                             lane = event.lane,
@@ -218,9 +228,10 @@ class EventSheetViewModel(
                     }
                     _state.update { current ->
                         val iconKey = current.categories
-                            .firstOrNull { it.id == current.selectedCategoryId }?.iconKey
+                            .firstOrNull { it.id == current.selectedCategoryId }?.iconKey ?: catIconKey
                         current.copy(
                             categoryIconKey = iconKey,
+                            selectedMealPeriod = if (iconKey == "meal" || event.presetKey == "dinner") resolvedMeal else null,
                             showMealPeriodRow = current.builtInShip && iconKey == "meal",
                             locationPresetMode = resolvePresetMode(
                                 isEditing = true,
@@ -295,8 +306,10 @@ class EventSheetViewModel(
         } else {
             it.startTime to it.endTime
         }
+        val newTitle = computeMealPeriodTitle(it.title, period)
         it.copy(
             selectedMealPeriod = period,
+            title = newTitle,
             deck = if (currentVenueOpen) it.deck else null,
             zone = if (currentVenueOpen) it.zone else null,
             placeName = if (currentVenueOpen) it.placeName else "",
@@ -454,6 +467,7 @@ class EventSheetViewModel(
         // 空标题允许：餐食类别的空标题兜底为餐次名（主界面直接显示二级标题）；
         // 非餐食类别或无餐次 → 空着（用户要求不再抄餐厅名/类别名）
         val fallbackTitle = if (s.categoryIconKey == "meal") s.selectedMealPeriod?.label.orEmpty() else ""
+        val newPresetKey = computePresetKey(s.categoryIconKey, s.selectedMealPeriod, s.presetKey)
         val event = CruiseEvent(
             id = s.editingId,
             date = s.date,
@@ -468,6 +482,7 @@ class EventSheetViewModel(
             // 必须带上原始 recurrenceGroupId：EventRepository.updateEvent() 靠这个字段
             // （而不是数据库里 target 行的字段）判断 WHOLE_GROUP 是否要 fan out 到整组。
             recurrenceGroupId = s.recurrenceGroupId,
+            presetKey = newPresetKey,
             waitMinutes = if (s.categoryIconKey == "show") s.waitMinutes else null,
             note = s.note.trim().takeIf { it.isNotEmpty() },
             lane = s.lane,
@@ -535,3 +550,36 @@ class EventSheetViewModel(
         }
     }
 }
+
+/**
+ * 根据事件标题或开始时间解析所属餐次。
+ */
+fun resolveMealPeriod(title: String, startTime: LocalTime): MealPeriod {
+    return MealPeriod.entries.firstOrNull { it.label == title }
+        ?: when {
+            startTime.isBefore(LocalTime.of(10, 30)) -> MealPeriod.BREAKFAST
+            startTime.isBefore(LocalTime.of(15, 0)) -> MealPeriod.LUNCH
+            startTime.isBefore(LocalTime.of(21, 30)) -> MealPeriod.DINNER
+            else -> MealPeriod.LATE_NIGHT
+        }
+}
+
+/**
+ * 切换餐次时同步更新标题：若当前标题为空或为任一餐次默认名，更新为新餐次名；否则保留用户自定义标题。
+ */
+fun computeMealPeriodTitle(currentTitle: String, period: MealPeriod?): String {
+    val isDefaultMealTitle = currentTitle.isBlank() || MealPeriod.entries.any { p -> p.label == currentTitle }
+    return if (isDefaultMealTitle && period != null) period.label else currentTitle
+}
+
+/**
+ * 保存时计算 presetKey：餐食类别仅晚餐保留 "dinner"（用于统一批量修改晚餐时间），其余餐次设为 null；非餐食类别保留原值。
+ */
+fun computePresetKey(categoryIconKey: String?, selectedMealPeriod: MealPeriod?, currentPresetKey: String?): String? {
+    return if (categoryIconKey == "meal") {
+        if (selectedMealPeriod == MealPeriod.DINNER) "dinner" else null
+    } else {
+        currentPresetKey
+    }
+}
+
