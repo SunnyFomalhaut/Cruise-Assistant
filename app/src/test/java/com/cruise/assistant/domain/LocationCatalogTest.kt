@@ -44,6 +44,7 @@ class LocationCatalogTest {
         assertEquals(2, byCategory.getValue("show").size)
         assertEquals(2, byCategory.getValue("meal").size)
         assertEquals("Room Service", byCategory.getValue("meal")[1].placeName)
+        assertEquals(4, LocationCatalog.allEntries().size)
     }
 
     @Test

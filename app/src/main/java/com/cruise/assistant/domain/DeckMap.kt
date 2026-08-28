@@ -52,8 +52,19 @@ object DeckMapRepository {
      */
     fun inlineHtmlWrapperFor(svgContent: String, highlightTarget: String? = null): String {
         val sanitizedHighlight = highlightTarget?.trim()?.takeIf { it.isNotEmpty() }
-        val highlightScript = if (sanitizedHighlight != null) {
-            val jsTarget = sanitizedHighlight.replace("'", "\\'").replace("\n", " ")
+        val expandedTarget = sanitizedHighlight?.let { target ->
+            val allEntries = LocationCatalog.allEntries()
+            allEntries.firstOrNull { it.placeName == target }?.placeName
+                ?: allEntries.firstOrNull { it.placeName.contains(target) }?.placeName
+                ?: allEntries.firstOrNull { target.contains(it.placeName) }?.placeName
+                ?: allEntries.firstOrNull { entry ->
+                    val zhName = entry.placeName.split(" ").firstOrNull() ?: ""
+                    zhName.length >= 2 && target.contains(zhName)
+                }?.placeName
+                ?: target
+        }
+        val highlightScript = if (expandedTarget != null) {
+            val jsTarget = expandedTarget.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ")
             """
             <style>
                 .facility-highlight-box {
@@ -121,6 +132,14 @@ object DeckMapRepository {
                 }
             </style>
             <script>
+                function normalizeText(str) {
+                    if (!str) return '';
+                    var s = str.toLowerCase();
+                    s = s.replace(/['’‘“”`"]/g, '');
+                    s = s.replace(/[\s·,\/'"()\-_]+/g, ' ');
+                    return s.trim();
+                }
+
                 function centerFacilityTarget() {
                     var target = '$jsTarget';
                     var svg = document.querySelector('svg');
@@ -128,28 +147,45 @@ object DeckMapRepository {
                     var textNodes = Array.from(svg.querySelectorAll('text, tspan'));
                     if (!textNodes || textNodes.length === 0) return;
 
-                    var words = target.toLowerCase().split(/[\s·,]+/g).filter(function(w) {
-                        return w.length > 1 && !['deck', 'the', 'and', 'restaurant', 'club'].includes(w);
+                    var normTarget = normalizeText(target);
+                    var rawWords = normTarget.split(' ');
+                    var stopWords = ['deck', 'the', 'and', 'restaurant', 'club'];
+                    var words = rawWords.filter(function(w) {
+                        return w.length > 1 && stopWords.indexOf(w) === -1;
                     });
+
+                    if (target.indexOf('航海家') !== -1) { words.push('navigator'); }
+                    if (target.indexOf('盛宴') !== -1) { words.push('enchanted', 'summer'); }
+                    if (target.indexOf('动画师') !== -1) { words.push('animator'); }
+                    if (target.indexOf('聚光灯') !== -1) { words.push('spotlight'); }
+                    if (target.indexOf('亚洲风味') !== -1 || target.indexOf('怪兽') !== -1) { words.push('flavors', 'asia', 'mike', 'sulley'); }
+                    if (target.indexOf('帕洛') !== -1) { words.push('palo', 'trattoria'); }
                     if (target.indexOf('花园舞台') !== -1) { words.push('garden', 'stage'); }
                     if (target.indexOf('迪士尼剧院') !== -1) { words.push('walt', 'disney', 'theatre', 'theater'); }
                     if (target.indexOf('寻路者') !== -1) { words.push('wayfinder'); }
-                    if (target.indexOf('大白剧院') !== -1) { words.push('baymax', 'cinemas', 'cinema'); }
-                    if (words.length === 0) words = [target.toLowerCase()];
+                    if (target.indexOf('大白') !== -1) { words.push('baymax'); }
+                    if (target.indexOf('泳池') !== -1) { words.push('pool', 'sunnyside'); }
+
+                    if (words.length === 0) {
+                        words = [normTarget];
+                    }
 
                     var bestNode = null;
                     var bestScore = 0;
 
                     for (var i = 0; i < textNodes.length; i++) {
                         var node = textNodes[i];
-                        var content = (node.textContent || '').toLowerCase();
+                        var rawContent = node.textContent || '';
+                        var content = normalizeText(rawContent);
+                        if (!content) continue;
                         var score = 0;
                         for (var j = 0; j < words.length; j++) {
-                            if (content.indexOf(words[j]) !== -1) {
-                                score += words[j].length * 2;
+                            var w = normalizeText(words[j]);
+                            if (w && content.indexOf(w) !== -1) {
+                                score += w.length * 2;
                             }
                         }
-                        if (content.indexOf(target.toLowerCase()) !== -1) {
+                        if (normTarget && content.indexOf(normTarget) !== -1) {
                             score += 50;
                         }
                         if (score > bestScore) {

@@ -60,6 +60,8 @@ object LocationCatalog {
 
     fun venuesByCategory(): Map<String, List<LocationCatalogEntry>> = catalog
 
+    fun allEntries(): List<LocationCatalogEntry> = catalog.values.flatten()
+
     fun setCatalog(venues: List<LocationCatalogEntry>) {
         catalog = venues.groupBy { it.category }
     }

@@ -54,5 +54,25 @@ class DeckMapTest {
         assertTrue(htmlWithHighlight.contains("facility-highlight-box"))
         assertTrue(htmlWithHighlight.contains("facility-pin-badge"))
         assertTrue(htmlWithHighlight.contains("Walt Disney Theatre"))
+        assertTrue(htmlWithHighlight.contains("normalizeText"))
+    }
+
+    @Test
+    fun `test inlineHtmlWrapperFor expands Chinese target to bilingual using LocationCatalog`() {
+        LocationCatalog.setCatalog(
+            listOf(
+                LocationCatalogEntry(
+                    deck = 6,
+                    zone = ShipZone.STERN,
+                    placeName = "航海家俱乐部 Navigator's Club Restaurant",
+                    category = "meal"
+                )
+            )
+        )
+        val svg = "<svg><text>Navigator’s Club</text></svg>"
+        val html = DeckMapRepository.inlineHtmlWrapperFor(svg, "航海家俱乐部")
+        assertTrue(html.contains("航海家俱乐部 Navigator\\'s Club Restaurant"))
+        assertTrue(html.contains("normalizeText"))
+        assertTrue(html.contains("navigator"))
     }
 }
