@@ -3,16 +3,25 @@ package com.cruise.assistant.ui.wishlist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cruise.assistant.data.repo.CategoryRepository
+import com.cruise.assistant.data.repo.EventRepository
+import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.data.repo.WishlistRepository
 import com.cruise.assistant.domain.Category
+import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.WishlistItem
+import com.cruise.assistant.domain.resolveDefaultWaitMinutes
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
 
 data class WishlistUiState(
     val items: List<WishlistItem> = emptyList(),
@@ -25,9 +34,22 @@ data class WishlistUiState(
 class WishlistViewModel(
     private val wishlistRepository: WishlistRepository,
     private val categoryRepository: CategoryRepository,
+    private val eventRepository: EventRepository? = null,
+    private val voyageRepository: VoyageRepository? = null,
+    coroutineScope: CoroutineScope? = null,
 ) : ViewModel() {
 
+    private val scope: CoroutineScope = coroutineScope ?: viewModelScope
+
     private val _selectedCategoryFilter = MutableStateFlow<Long?>(null)
+
+    val activeVoyageDates: StateFlow<List<LocalDate>> = (voyageRepository?.observeVoyage() ?: emptyFlow())
+        .map { it?.datesInVoyage() ?: emptyList() }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList(),
+        )
 
     val state: StateFlow<WishlistUiState> = combine(
         wishlistRepository.observeAll(),
@@ -48,7 +70,7 @@ class WishlistViewModel(
             totalCount = allItems.size,
         )
     }.stateIn(
-        scope = viewModelScope,
+        scope = scope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = WishlistUiState(),
     )
@@ -58,8 +80,43 @@ class WishlistViewModel(
     }
 
     fun toggleCompleted(item: WishlistItem) {
-        viewModelScope.launch {
+        scope.launch {
             wishlistRepository.toggleCompleted(item.id, !item.isCompleted)
+        }
+    }
+
+    fun convertToEvent(
+        item: WishlistItem,
+        date: LocalDate,
+        startTime: LocalTime,
+        durationMinutes: Int,
+        onSuccess: () -> Unit = {},
+    ) {
+        val eventRepo = eventRepository ?: return
+        scope.launch {
+            val waitMinutes = resolveDefaultWaitMinutes(
+                placeName = item.placeName,
+                deck = item.deck,
+                title = item.title,
+                presetKey = null,
+            )
+            val event = CruiseEvent(
+                date = date,
+                startTime = startTime,
+                durationMinutes = maxOf(15, durationMinutes),
+                categoryId = item.categoryId,
+                title = item.title,
+                deck = item.deck,
+                zone = item.zone,
+                placeName = item.placeName,
+                note = item.note,
+                lane = 0,
+                isSystemGenerated = false,
+                waitMinutes = waitMinutes,
+            )
+            eventRepo.addEvent(event, recurring = false)
+            wishlistRepository.toggleCompleted(item.id, true)
+            onSuccess()
         }
     }
 
@@ -73,7 +130,7 @@ class WishlistViewModel(
         note: String?,
         onSuccess: () -> Unit = {},
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val item = WishlistItem(
                 id = id,
                 title = title.trim(),
@@ -89,7 +146,7 @@ class WishlistViewModel(
     }
 
     fun deleteItem(item: WishlistItem, onSuccess: () -> Unit = {}) {
-        viewModelScope.launch {
+        scope.launch {
             wishlistRepository.delete(item)
             onSuccess()
         }

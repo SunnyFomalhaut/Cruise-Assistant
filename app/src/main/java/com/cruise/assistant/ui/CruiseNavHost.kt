@@ -594,10 +594,16 @@ fun CruiseNavHost(container: AppContainer) {
         composable(Routes.WISHLIST) {
             val vm: WishlistViewModel = viewModel(
                 factory = viewModelFactory {
-                    WishlistViewModel(container.wishlistRepository, container.categoryRepository)
+                    WishlistViewModel(
+                        wishlistRepository = container.wishlistRepository,
+                        categoryRepository = container.categoryRepository,
+                        eventRepository = container.eventRepository,
+                        voyageRepository = container.voyageRepository,
+                    )
                 },
             )
             val state by vm.state.collectAsState()
+            val activeDates by vm.activeVoyageDates.collectAsState()
             WishlistScreen(
                 state = state,
                 onBack = { navController.popBackStack() },
@@ -608,6 +614,10 @@ fun CruiseNavHost(container: AppContainer) {
                 onSaveItem = vm::saveItem,
                 onDeleteItem = vm::deleteItem,
                 onFilterCategory = vm::onCategoryFilterSelect,
+                activeVoyageDates = activeDates,
+                onConvertToSchedule = { item, date, startTime, durationMinutes ->
+                    vm.convertToEvent(item, date, startTime, durationMinutes)
+                },
             )
         }
         composable(Routes.FACILITIES) {
