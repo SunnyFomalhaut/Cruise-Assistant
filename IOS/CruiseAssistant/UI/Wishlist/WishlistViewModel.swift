@@ -171,6 +171,12 @@ public final class WishlistViewModel: ObservableObject {
         guard let eventRepo = customEventRepo ?? self.eventRepository else {
             return nil
         }
+        let waitMinutes = resolveDefaultWaitMinutes(
+            placeName: item.placeName,
+            deck: item.deck,
+            title: item.title,
+            presetKey: nil
+        )
 
         let event = CruiseEvent(
             id: 0,
@@ -184,9 +190,10 @@ public final class WishlistViewModel: ObservableObject {
             placeName: item.placeName,
             lane: 0,
             isSystemGenerated: false,
-            isActive: true
+            isActive: true,
+            waitMinutes: waitMinutes,
+            note: item.note
         )
-
         let createdEvent = eventRepo.addEvent(event: event, recurrenceDays: [])
 
         // Mark wishlist item as completed

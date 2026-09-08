@@ -184,10 +184,29 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
                                 lane: lane,
                                 isSystemGenerated: false,
                                 presetKey: show.key,
-                                waitMinutes: show.defaultWaitMinutes
+                                waitMinutes: show.defaultWaitMinutes,
+                                note: show.note
                             )
                             database.saveEvent(showEvent)
                         }
+                    }
+                }
+
+                let existingWishlistTitles = Set(database.getWishlistItems().map { $0.title })
+                for show in WISHLIST_SEED_SHOWS {
+                    if !existingWishlistTitles.contains(show.title) {
+                        let item = WishlistItem(
+                            id: 0,
+                            title: show.title,
+                            categoryId: showId,
+                            deck: show.deck,
+                            zone: show.zone,
+                            placeName: show.placeName,
+                            note: show.note,
+                            isCompleted: false,
+                            createdAt: Int64(Date().timeIntervalSince1970 * 1000)
+                        )
+                        database.saveWishlistItem(item)
                     }
                 }
             }
@@ -243,7 +262,8 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
                         lane: lane,
                         isSystemGenerated: false,
                         presetKey: show.key,
-                        waitMinutes: show.defaultWaitMinutes
+                        waitMinutes: show.defaultWaitMinutes,
+                        note: show.note
                     )
                     database.saveEvent(showEvent)
                 }

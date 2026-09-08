@@ -102,6 +102,59 @@ final class RepositoryTests: XCTestCase {
         XCTAssertFalse(dinners.contains { $0.date == disembarkDate })
     }
 
+    func testCreateVoyage_seedsThreeTimelineShows_andFiveWishlistShows() {
+        let boardDate = SimpleDate(year: 2026, month: 9, day: 10)
+        let boardTime = SimpleTime(hour: 13, minute: 0)
+
+        _ = voyageRepo.createVoyage(
+            shipName: "Disney Adventure",
+            boardDate: boardDate,
+            boardTime: boardTime,
+            disembarkDate: SimpleDate(year: 2026, month: 9, day: 14),
+            maxDeck: 19,
+            minDeck: 1,
+            dinnerTime: SimpleTime(hour: 17, minute: 45),
+            shipPresetName: "Disney Adventure"
+        )
+
+        let allEvents = database.getAllEvents()
+        let showEvents = allEvents.filter { $0.presetKey?.hasPrefix("show_") == true }
+        // 登船日 3 场扬帆起航 + 1 场海洋奇遇 + 第 2 晚 1 场狮子王烟花 = 5 场（3 部）
+        XCTAssertEqual(5, showEvents.count)
+        let keys = Set(showEvents.compactMap { $0.presetKey })
+        XCTAssertEqual(Set(["show_set_sail", "show_seas_adventure", "show_lion_king"]), keys)
+
+        guard let lionKing = showEvents.first(where: { $0.presetKey == "show_lion_king" }) else {
+            XCTFail("Lion King show not found")
+            return
+        }
+        XCTAssertEqual("阳光泳池 Sunnyside Pool", lionKing.placeName)
+        XCTAssertEqual("烟花在右舷，可以在这个泳池旁边的空地或者18甲左舷走廊（人比较多）", lionKing.note)
+
+        // 验证心愿单播种了 5 部浮动演出
+        let wishlistItems = database.getWishlistItems()
+        XCTAssertEqual(5, wishlistItems.count)
+        let titles = Set(wishlistItems.map { $0.title })
+        XCTAssertTrue(titles.contains("回忆：瓦力与伊芙 Remember"))
+        XCTAssertTrue(titles.contains("海洋奇缘 Moana: Call of the Sea"))
+        XCTAssertTrue(titles.contains("复仇者集结 Avengers Assemble!"))
+        XCTAssertTrue(titles.contains("大白超级健身世博会 Baymax Super Exercise Expo"))
+        XCTAssertTrue(titles.contains("达菲与友谊之船 Duffy and The Friend Ship"))
+
+        // 验证幂等性：再次调用不重复生成心愿单项
+        _ = voyageRepo.createVoyage(
+            shipName: "Disney Adventure",
+            boardDate: boardDate,
+            boardTime: boardTime,
+            disembarkDate: SimpleDate(year: 2026, month: 9, day: 14),
+            maxDeck: 19,
+            minDeck: 1,
+            dinnerTime: SimpleTime(hour: 17, minute: 45),
+            shipPresetName: "Disney Adventure"
+        )
+        XCTAssertEqual(5, database.getWishlistItems().count)
+    }
+
     func testVoyageUpdateAndDateTrimming() {
         let boardDate = SimpleDate(year: 2026, month: 8, day: 23)
         let disembarkDate = SimpleDate(year: 2026, month: 8, day: 26)
