@@ -27,6 +27,7 @@ data class ShowPreset(
     val dinnerLinked: Boolean = false,
     /** 默认候场时间（分钟） */
     val defaultWaitMinutes: Int = 30,
+    val note: String? = null,
 )
 
 /**
@@ -83,11 +84,12 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         title = "狮子王烟花 The Lion King: Celebration in the Sky",
         deck = 17,
         zone = ShipZone.MID,
-        placeName = "露天泳池",
+        placeName = "阳光泳池 Sunnyside Pool",
         durationMinutes = 10,
         dayOffsets = listOf(2),
         startTimes = listOf(LocalTime.of(22, 30)),
         defaultWaitMinutes = 45,
+        note = "烟花在右舷，可以在这个泳池旁边的空地或者18甲左舷走廊（人比较多）",
     ),
     ShowPreset(
         key = "show_seas_adventure",
@@ -112,6 +114,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         startTimes = listOf(LocalTime.of(18, 0), LocalTime.of(20, 30)),
         dinnerLinked = true,
         defaultWaitMinutes = 45,
+        note = "主秀之一，各航次日期场次请连船上 Wi-Fi 查阅 Navigator App。剧院演出建议提前 45 分钟候场。",
     ),
     ShowPreset(
         key = "show_moana",
@@ -128,6 +131,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
             LocalTime.of(10, 30),
         ),
         defaultWaitMinutes = 30,
+        note = "露天互动音乐剧，各航次时间以 Navigator App 为准。建议提前 30 分钟候场。",
     ),
     ShowPreset(
         key = "show_avengers",
@@ -143,6 +147,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
             LocalTime.of(20, 45),
         ),
         defaultWaitMinutes = 15,
+        note = "漫威英雄集结舞台秀，各航次时间以 Navigator App 为准。建议提前 15 分钟候场。",
     ),
     ShowPreset(
         key = "show_baymax_expo",
@@ -155,6 +160,7 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         dailyRangeTo = 4,
         startTimes = listOf(LocalTime.of(8, 45)),
         defaultWaitMinutes = 15,
+        note = "大白晨间互动健身，非每日固定，请查阅 Navigator App。建议提前 15 分钟候场。",
     ),
     ShowPreset(
         key = "show_duffy_friend_ship",
@@ -167,11 +173,26 @@ val DISNEY_ADVENTURE_SHOWS: List<ShowPreset> = listOf(
         dailyRangeTo = 4,
         startTimes = listOf(LocalTime.of(9, 45)),
         defaultWaitMinutes = 45,
+        note = "达菲与朋友们的主题秀，非每日固定，请查阅 Navigator App。建议提前 45 分钟候场。",
     ),
 )
 
+val TIMELINE_AUTO_GENERATED_SHOWS: List<ShowPreset> = DISNEY_ADVENTURE_SHOWS.filter {
+    it.key in setOf("show_set_sail", "show_lion_king", "show_seas_adventure")
+}
+
+val WISHLIST_SEED_SHOWS: List<ShowPreset> = DISNEY_ADVENTURE_SHOWS.filter {
+    it.key in setOf(
+        "show_remember",
+        "show_moana",
+        "show_avengers",
+        "show_baymax_expo",
+        "show_duffy_friend_ship",
+    )
+}
+
 /** 弹窗消息中的演出列表摘要：每行 "· {title}（{天数} {场次数}）"，行间 \n 连接 */
-fun presetShowsSummary(): String = DISNEY_ADVENTURE_SHOWS.joinToString("\n") { show ->
+fun presetShowsSummary(): String = TIMELINE_AUTO_GENERATED_SHOWS.joinToString("\n") { show ->
     val dayLabel = show.dailyRangeTo?.let { "第${show.dayOffsets.first()}天起每天" }
         ?: "第${show.dayOffsets.joinToString("、")}天"
     val countLabel = if (show.dinnerLinked) "1场（按晚餐时段）" else "${show.startTimes.size}场"
