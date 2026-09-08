@@ -8,10 +8,13 @@ import com.cruise.assistant.data.db.dao.LocationPresetDao
 import com.cruise.assistant.data.db.dao.PixieDustDao
 import com.cruise.assistant.data.db.dao.PixieLevelDao
 import com.cruise.assistant.data.db.dao.VoyageDao
+import com.cruise.assistant.data.db.dao.WishlistDao
+import com.cruise.assistant.data.db.entity.WishlistItemEntity
 import com.cruise.assistant.data.db.toDomain
 import com.cruise.assistant.data.db.toEntity
 import com.cruise.assistant.domain.CruiseEvent
-import com.cruise.assistant.domain.DISNEY_ADVENTURE_SHOWS
+import com.cruise.assistant.domain.TIMELINE_AUTO_GENERATED_SHOWS
+import com.cruise.assistant.domain.WISHLIST_SEED_SHOWS
 import com.cruise.assistant.domain.DayPlan
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.Voyage
@@ -38,6 +41,7 @@ class VoyageRepository(
     private val locationPresetDao: LocationPresetDao,
     private val pixieDustDao: PixieDustDao,
     private val pixieLevelDao: PixieLevelDao,
+    private val wishlistDao: WishlistDao? = null,
 ) {
     fun observeVoyage(): Flow<Voyage?> =
         voyageDao.observeVoyage().map { it?.toDomain() }
@@ -163,7 +167,7 @@ class VoyageRepository(
                 ?: categories.first().id
             // 按天记录已分配演出的 (lane, 扩展起点, 扩展终点)，供后续场次避让
             val showLanesByDay = mutableMapOf<LocalDate, MutableList<Triple<Int, Int, Int>>>()
-            DISNEY_ADVENTURE_SHOWS.forEach { show ->
+            TIMELINE_AUTO_GENERATED_SHOWS.forEach { show ->
                 show.resolveDates(boardDate, voyage.dayCount).forEach { date ->
                     val times = if (show.dinnerLinked) {
                         listOf(pickDinnerLinkedTime(dinnerTime))
@@ -193,6 +197,26 @@ class VoyageRepository(
                             isSystemGenerated = false,
                             presetKey = show.key,
                             waitMinutes = show.defaultWaitMinutes,
+                            note = show.note,
+                        )
+                    }
+                }
+            }
+
+            wishlistDao?.let { wDao ->
+                val existingTitles = wDao.getAll().map { it.title }.toSet()
+                WISHLIST_SEED_SHOWS.forEach { show ->
+                    if (show.title !in existingTitles) {
+                        wDao.insert(
+                            WishlistItemEntity(
+                                title = show.title,
+                                categoryId = showId,
+                                deck = show.deck,
+                                zone = show.zone.name,
+                                placeName = show.placeName,
+                                note = show.note,
+                                isCompleted = false,
+                            )
                         )
                     }
                 }

@@ -14,6 +14,9 @@ interface WishlistDao {
     @Query("SELECT * FROM wishlist_item ORDER BY isCompleted ASC, createdAt DESC")
     fun observeAll(): Flow<List<WishlistItemEntity>>
 
+    @Query("SELECT * FROM wishlist_item")
+    suspend fun getAll(): List<WishlistItemEntity>
+
     @Query("SELECT * FROM wishlist_item WHERE id = :id")
     suspend fun getById(id: Long): WishlistItemEntity?
 

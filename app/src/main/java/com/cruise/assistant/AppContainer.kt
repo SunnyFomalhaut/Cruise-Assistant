@@ -26,6 +26,7 @@ class AppContainer(context: Context) {
         locationPresetDao = db.locationPresetDao(),
         pixieDustDao = db.pixieDustDao(),
         pixieLevelDao = db.pixieLevelDao(),
+        wishlistDao = db.wishlistDao(),
     )
 
     val eventRepository = EventRepository(
