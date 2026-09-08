@@ -24,6 +24,8 @@ public struct ShowPreset: Hashable, Identifiable, Codable, Sendable {
     public let dinnerLinked: Bool
     /// 默认候场时间（分钟）
     public let defaultWaitMinutes: Int
+    /// 演出专属攻略/备注提示
+    public let note: String?
 
     public var id: String { key }
 
@@ -38,7 +40,8 @@ public struct ShowPreset: Hashable, Identifiable, Codable, Sendable {
         dailyRangeTo: Int? = nil,
         startTimes: [SimpleTime],
         dinnerLinked: Bool = false,
-        defaultWaitMinutes: Int = 30
+        defaultWaitMinutes: Int = 30,
+        note: String? = nil
     ) {
         self.key = key
         self.title = title
@@ -51,6 +54,7 @@ public struct ShowPreset: Hashable, Identifiable, Codable, Sendable {
         self.startTimes = startTimes
         self.dinnerLinked = dinnerLinked
         self.defaultWaitMinutes = defaultWaitMinutes
+        self.note = note
     }
 
     /**
@@ -109,11 +113,12 @@ public let DISNEY_ADVENTURE_SHOWS: [ShowPreset] = [
         title: "狮子王烟花 The Lion King: Celebration in the Sky",
         deck: 17,
         zone: .mid,
-        placeName: "露天泳池",
+        placeName: "阳光泳池 Sunnyside Pool",
         durationMinutes: 10,
         dayOffsets: [2],
         startTimes: [SimpleTime(hour: 22, minute: 30)],
-        defaultWaitMinutes: 45
+        defaultWaitMinutes: 45,
+        note: "烟花在右舷，可以在这个泳池旁边的空地或者18甲左舷走廊（人比较多）"
     ),
     ShowPreset(
         key: "show_seas_adventure",
@@ -137,7 +142,8 @@ public let DISNEY_ADVENTURE_SHOWS: [ShowPreset] = [
         dayOffsets: [2],
         startTimes: [SimpleTime(hour: 18, minute: 0), SimpleTime(hour: 20, minute: 30)],
         dinnerLinked: true,
-        defaultWaitMinutes: 45
+        defaultWaitMinutes: 45,
+        note: "主秀之一，各航次日期场次请连船上 Wi-Fi 查阅 Navigator App。剧院演出建议提前 45 分钟候场。"
     ),
     ShowPreset(
         key: "show_moana",
@@ -153,7 +159,8 @@ public let DISNEY_ADVENTURE_SHOWS: [ShowPreset] = [
             SimpleTime(hour: 10, minute: 0),
             SimpleTime(hour: 10, minute: 30),
         ],
-        defaultWaitMinutes: 30
+        defaultWaitMinutes: 30,
+        note: "露天互动音乐剧，各航次时间以 Navigator App 为准。建议提前 30 分钟候场。"
     ),
     ShowPreset(
         key: "show_avengers",
@@ -168,7 +175,8 @@ public let DISNEY_ADVENTURE_SHOWS: [ShowPreset] = [
             SimpleTime(hour: 18, minute: 15),
             SimpleTime(hour: 20, minute: 45),
         ],
-        defaultWaitMinutes: 15
+        defaultWaitMinutes: 15,
+        note: "漫威英雄集结舞台秀，各航次时间以 Navigator App 为准。建议提前 15 分钟候场。"
     ),
     ShowPreset(
         key: "show_baymax_expo",
@@ -180,7 +188,8 @@ public let DISNEY_ADVENTURE_SHOWS: [ShowPreset] = [
         dayOffsets: [2],
         dailyRangeTo: 4,
         startTimes: [SimpleTime(hour: 8, minute: 45)],
-        defaultWaitMinutes: 15
+        defaultWaitMinutes: 15,
+        note: "大白晨间互动健身，非每日固定，请查阅 Navigator App。建议提前 15 分钟候场。"
     ),
     ShowPreset(
         key: "show_duffy_friend_ship",
@@ -192,18 +201,26 @@ public let DISNEY_ADVENTURE_SHOWS: [ShowPreset] = [
         dayOffsets: [2],
         dailyRangeTo: 4,
         startTimes: [SimpleTime(hour: 9, minute: 45)],
-        defaultWaitMinutes: 45
+        defaultWaitMinutes: 45,
+        note: "达菲与朋友们的主题秀，非每日固定，请查阅 Navigator App。建议提前 45 分钟候场。"
     ),
 ]
 
-/** 迪士尼探险号自动生成的演出目录（排除非固定上演的大白健身与达菲演出） */
-public let AUTO_GENERATED_DISNEY_ADVENTURE_SHOWS: [ShowPreset] = DISNEY_ADVENTURE_SHOWS.filter {
-    $0.key != "show_baymax_expo" && $0.key != "show_duffy_friend_ship"
+/** 迪士尼探险号自动排入时间轴的演出目录（固定 3 部） */
+public let TIMELINE_AUTO_GENERATED_SHOWS: [ShowPreset] = DISNEY_ADVENTURE_SHOWS.filter {
+    ["show_set_sail", "show_lion_king", "show_seas_adventure"].contains($0.key)
 }
+
+/** 迪士尼探险号播种入心愿单的浮动演出目录（5 部） */
+public let WISHLIST_SEED_SHOWS: [ShowPreset] = DISNEY_ADVENTURE_SHOWS.filter {
+    ["show_remember", "show_moana", "show_avengers", "show_baymax_expo", "show_duffy_friend_ship"].contains($0.key)
+}
+
+public let AUTO_GENERATED_DISNEY_ADVENTURE_SHOWS: [ShowPreset] = TIMELINE_AUTO_GENERATED_SHOWS
 
 /** 弹窗消息中的演出列表摘要：每行 "· {title}（{天数} {场次数}）"，行间 \n 连接 */
 public func presetShowsSummary() -> String {
-    AUTO_GENERATED_DISNEY_ADVENTURE_SHOWS.map { show in
+    TIMELINE_AUTO_GENERATED_SHOWS.map { show in
         let dayLabel = show.dailyRangeTo != nil
             ? "第\(show.dayOffsets.first ?? 1)天起每天"
             : "第\(show.dayOffsets.map(String.init).joined(separator: "、"))天"

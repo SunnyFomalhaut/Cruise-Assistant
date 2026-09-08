@@ -286,6 +286,7 @@ public struct CruiseEvent: Identifiable, Codable, Hashable, Sendable {
     public var isActive: Bool
     public var presetKey: String?
     public var waitMinutes: Int?
+    public var note: String?
 
     public init(
         id: Int64 = 0,
@@ -303,7 +304,8 @@ public struct CruiseEvent: Identifiable, Codable, Hashable, Sendable {
         isSystemGenerated: Bool = false,
         isActive: Bool = true,
         presetKey: String? = nil,
-        waitMinutes: Int? = nil
+        waitMinutes: Int? = nil,
+        note: String? = nil
     ) {
         self.id = id
         self.date = date
@@ -321,6 +323,7 @@ public struct CruiseEvent: Identifiable, Codable, Hashable, Sendable {
         self.isActive = isActive
         self.presetKey = presetKey
         self.waitMinutes = waitMinutes
+        self.note = note
     }
 
     public var startMinute: Int {
