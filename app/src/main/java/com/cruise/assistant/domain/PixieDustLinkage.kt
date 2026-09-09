@@ -63,6 +63,32 @@ fun pairByRoom(
 }
 
 /**
+ * 按楼层和房号顺号配对，方便按楼层扫楼巡查
+ */
+fun pairByRoomForSweep(
+    given: List<PixieDustRecord>,
+    received: List<PixieDustRecord>,
+    levelRankOf: (PixieDustRecord) -> Int = { 0 },
+): List<RoomPair> {
+    val rooms = (given.map { it.deck to it.room } + received.map { it.deck to it.room }).toSet()
+    return rooms.map { (deck, room) ->
+        val g = given.filter { it.deck == deck && it.room == room }
+        val r = received.filter { it.deck == deck && it.room == room }
+        RoomPair(
+            deck = deck,
+            room = room,
+            given = g,
+            received = r,
+            unrepliedReceived = r.filter { !it.replied },
+            lastInteractTs = (g.map { it.timestamp } + r.map { it.timestamp }).maxOrNull() ?: 0L,
+        )
+    }.sortedWith(
+        compareBy<RoomPair> { it.deck }
+            .thenBy { it.room.toIntOrNull() ?: 0 }
+    )
+}
+
+/**
  * 方向一镜像：该房间是否已有发出记录。
  * 登记收到时判断要不要自动把刚登记的这条勾成已回礼（回礼动作在登记前已发生）。
  */

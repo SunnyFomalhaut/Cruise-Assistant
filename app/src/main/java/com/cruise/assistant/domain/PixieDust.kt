@@ -91,6 +91,24 @@ fun sortReceived(records: List<PixieDustRecord>, levels: List<PixieLevel>): List
     return unreplied + replied
 }
 
+/**
+ * 扫楼回礼排序：优先按 Deck 升序、同层按 Room 数字升序；同房间内未回礼在先（高等级优先）、已回礼沉底
+ */
+fun sortForSweepDelivery(
+    records: List<PixieDustRecord>,
+    levels: List<PixieLevel>,
+): List<PixieDustRecord> {
+    val rank = levels.associate { it.id to it.rank }
+    return records
+        .sortedWith(
+            compareBy<PixieDustRecord> { it.deck }
+                .thenBy { it.room.toIntOrNull() ?: 0 }
+                .thenBy { if (it.replied) 1 else 0 }
+                .thenByDescending { rank[it.levelId] ?: 0 }
+                .thenByDescending { it.timestamp }
+        )
+}
+
 /** 该房间最近一次发出（用于"上次等级"预选与历史小字）。不含收到记录。 */
 fun lastLevelForRoom(records: List<PixieDustRecord>, deck: Int, room: String): PixieDustRecord? =
     records

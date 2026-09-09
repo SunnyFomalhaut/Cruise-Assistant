@@ -24,6 +24,8 @@ import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -194,78 +196,107 @@ fun ReceivedList(
     onEditRecord: (PixieDustRecord) -> Unit,
     onRequestReply: (PixieDustRecord) -> Unit,
     onCancelReply: (Long) -> Unit,
+    onFilterChange: (PixieFilter) -> Unit = {},
 ) {
-    if (state.received.isEmpty()) {
-        EmptyHint(stringResource(R.string.pixie_empty_received))
-        return
-    }
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(state.received, key = { it.id }) { rec ->
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
-                modifier = Modifier.fillMaxWidth(),
+    Column(Modifier.fillMaxSize()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            FilterChip(
+                selected = state.filter == PixieFilter.ALL,
+                onClick = { onFilterChange(PixieFilter.ALL) },
+                label = { Text("全部") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = CruiseAzureContainer,
+                    selectedLabelColor = CruiseMarine,
+                ),
+            )
+            FilterChip(
+                selected = state.filter == PixieFilter.PENDING_ONLY,
+                onClick = { onFilterChange(PixieFilter.PENDING_ONLY) },
+                label = { Text("🔴 待回与需补") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = CruiseAzureContainer,
+                    selectedLabelColor = CruiseMarine,
+                ),
+            )
+        }
+        if (state.received.isEmpty()) {
+            EmptyHint(stringResource(R.string.pixie_empty_received))
+        } else {
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Row(
-                    Modifier.fillMaxWidth().clickable { onEditRecord(rec) }.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    LevelDot(levelColorOf(state, rec))
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "${rec.deck}${rec.room}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Slate900,
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(levelColorOf(state, rec).copy(alpha = 0.15f))
-                                    .padding(horizontal = 6.dp, vertical = 1.dp),
-                            ) {
-                                Text(
-                                    levelNameOf(state, rec),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Slate900,
-                                    fontWeight = FontWeight.Medium,
-                                )
+                items(state.received, key = { it.id }) { rec ->
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().clickable { onEditRecord(rec) }.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            LevelDot(levelColorOf(state, rec))
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        "${rec.deck}${rec.room}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Slate900,
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(levelColorOf(state, rec).copy(alpha = 0.15f))
+                                            .padding(horizontal = 6.dp, vertical = 1.dp),
+                                    ) {
+                                        Text(
+                                            levelNameOf(state, rec),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Slate900,
+                                            fontWeight = FontWeight.Medium,
+                                        )
+                                    }
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        formatTs(rec.timestamp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Slate500,
+                                    )
+                                }
+                                if (rec.note.isNotEmpty()) {
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        rec.note,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Slate700,
+                                    )
+                                }
                             }
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                formatTs(rec.timestamp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Slate500,
-                            )
-                        }
-                        if (rec.note.isNotEmpty()) {
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                rec.note,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Slate700,
+                            Checkbox(
+                                checked = rec.replied,
+                                onCheckedChange = { checked ->
+                                    if (checked) onRequestReply(rec)
+                                    else onCancelReply(rec.id)
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = CruiseAzure,
+                                    checkmarkColor = Color.White,
+                                ),
                             )
                         }
                     }
-                    Checkbox(
-                        checked = rec.replied,
-                        onCheckedChange = { checked ->
-                            if (checked) onRequestReply(rec)
-                            else onCancelReply(rec.id)
-                        },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = CruiseAzure,
-                            checkmarkColor = Color.White,
-                        ),
-                    )
                 }
             }
         }

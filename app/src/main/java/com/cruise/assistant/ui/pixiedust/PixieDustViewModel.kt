@@ -20,6 +20,8 @@ import com.cruise.assistant.domain.StateroomValidationStatus
 import com.cruise.assistant.domain.validateStateroomInput
 import com.cruise.assistant.domain.lastLevelForRoom
 import com.cruise.assistant.domain.pairByRoom
+import com.cruise.assistant.domain.pairByRoomForSweep
+import com.cruise.assistant.domain.sortForSweepDelivery
 import com.cruise.assistant.domain.sortReceived
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +38,8 @@ enum class PixieTab { GIVEN, RECEIVED }
 
 enum class GivenViewMode { GROUPED, FLOW }
 
+enum class PixieFilter { ALL, PENDING_ONLY }
+
 /** 键盘下方"上次：豪华 ×2"的数据 */
 @Immutable
 data class RoomHistory(val levelName: String, val count: Int)
@@ -44,6 +48,7 @@ data class RoomHistory(val levelName: String, val count: Int)
 data class PixieDustUiState(
     val loading: Boolean = true,
     val tab: PixieTab = PixieTab.GIVEN,
+    val filter: PixieFilter = PixieFilter.ALL,
     val levels: List<PixieLevel> = emptyList(),
     val levelById: Map<Long, PixieLevel> = emptyMap(),
     /** 楼层可选范围：航次 minDeck..maxDeck，未配置回退 1..20 */
@@ -88,6 +93,7 @@ class PixieDustViewModel(
     private val savedEvent = MutableStateFlow<PixieDustRecord?>(null)
     private val pendingReply = MutableStateFlow<PixieDustRecord?>(null)
     private val autoRepliedRoom = MutableStateFlow<String?>(null)
+    private val filter = MutableStateFlow(PixieFilter.ALL)
 
     // 快捷录入防重入守卫（仿 EventSheetViewModel 的 saving 挡板）：
     // 入库协程在途时忽略再次点击，避免连点把同一条记录重复写库
@@ -105,10 +111,10 @@ class PixieDustViewModel(
         }.launchIn(viewModelScope)
     }
 
-    /** 9 个 UI 输入流打包（combine 类型化重载最多 5 个） */
+    /** 10 个 UI 输入流打包（combine 类型化重载最多 5 个） */
     private val ui = combine(
         tab, viewMode, keypadCollapsed, roomInput, selectedLevelId, deck, savedEvent,
-        pendingReply, autoRepliedRoom,
+        pendingReply, autoRepliedRoom, filter,
     ) { arr ->
         UiInputs(
             tab = arr[0] as PixieTab,
@@ -120,6 +126,7 @@ class PixieDustViewModel(
             savedEvent = arr[6] as PixieDustRecord?,
             pendingReply = arr[7] as PixieDustRecord?,
             autoRepliedRoom = arr[8] as String?,
+            filter = arr[9] as PixieFilter,
         )
     }
 
@@ -133,6 +140,7 @@ class PixieDustViewModel(
         val savedEvent: PixieDustRecord?,
         val pendingReply: PixieDustRecord?,
         val autoRepliedRoom: String?,
+        val filter: PixieFilter,
     )
 
     val state: StateFlow<PixieDustUiState?> = combine(
@@ -163,9 +171,30 @@ class PixieDustViewModel(
         } else {
             null
         }
+        val sortedReceived = sortForSweepDelivery(
+            dust.filter { it.direction == PixieDustDirection.RECEIVED },
+            levels,
+        )
+        val received = if (input.filter == PixieFilter.PENDING_ONLY) {
+            sortedReceived.filter { !it.replied }
+        } else {
+            sortedReceived
+        }
+        val sweepPairs = pairByRoomForSweep(
+            given = given,
+            received = dust.filter { it.direction == PixieDustDirection.RECEIVED },
+        ) { rec ->
+            levels.firstOrNull { it.id == rec.levelId }?.rank ?: 0
+        }
+        val roomPairs = if (input.filter == PixieFilter.PENDING_ONLY) {
+            sweepPairs.filter { it.unrepliedReceived.isNotEmpty() || it.given.size != it.received.size }
+        } else {
+            sweepPairs
+        }
         PixieDustUiState(
             loading = false,
             tab = input.tab,
+            filter = input.filter,
             levels = levels,
             levelById = levels.associateBy { it.id },
             deckRange = deckRange,
@@ -174,7 +203,7 @@ class PixieDustViewModel(
             validation = validation,
             selectedLevelId = input.selectedLevelId,
             given = given,
-            received = sortReceived(dust, levels),
+            received = received,
             grouped = groupGivenByRoom(dust, levels),
             viewMode = input.viewMode,
             keypadCollapsed = input.keypadCollapsed,
@@ -182,9 +211,7 @@ class PixieDustViewModel(
             savedEvent = input.savedEvent,
             pendingReply = input.pendingReply,
             autoRepliedRoom = input.autoRepliedRoom,
-            roomPairs = pairByRoom(given, dust.filter { it.direction == PixieDustDirection.RECEIVED }) { rec ->
-                levels.firstOrNull { it.id == rec.levelId }?.rank ?: 0
-            },
+            roomPairs = roomPairs,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -192,6 +219,10 @@ class PixieDustViewModel(
         tab.value = newTab
     }
 
+
+    fun onFilterChange(newFilter: PixieFilter) {
+        filter.value = newFilter
+    }
     /** 换楼层后房号指向不同房间，清空重输 */
     fun onDeckChange(newDeck: Int) {
         deck.value = newDeck
