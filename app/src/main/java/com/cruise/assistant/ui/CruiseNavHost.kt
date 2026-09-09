@@ -51,7 +51,7 @@ import com.cruise.assistant.ui.facilities.FacilityGuideViewModel
 import com.cruise.assistant.ui.onboarding.OnboardingScreen
 import com.cruise.assistant.ui.onboarding.OnboardingViewModel
 import com.cruise.assistant.ui.pixiedust.GivenList
-import com.cruise.assistant.ui.pixiedust.LinkageViewDialog
+import com.cruise.assistant.ui.pixiedust.LinkageViewSheet
 import com.cruise.assistant.ui.pixiedust.PixieDustEditDialog
 import com.cruise.assistant.ui.pixiedust.PixieDustKeypad
 import com.cruise.assistant.ui.pixiedust.PixieDustScreen
@@ -81,12 +81,13 @@ object Routes {
     const val DECK_MAP = "deck_map"
     const val DECK_MAP_PATTERN = "deck_map?deck={deck}&highlight={highlight}"
 
-    fun deckMap(deck: Int? = null, highlight: String? = null): String {
+    fun deckMap(deck: Int? = null, highlight: String? = null, pixieMode: Boolean = false): String {
         return buildString {
             append("deck_map")
             val params = mutableListOf<String>()
             if (deck != null) params.add("deck=$deck")
             if (!highlight.isNullOrBlank()) params.add("highlight=${Uri.encode(highlight)}")
+            if (pixieMode) params.add("pixie=true")
             if (params.isNotEmpty()) {
                 append("?").append(params.joinToString("&"))
             }
@@ -537,7 +538,14 @@ fun CruiseNavHost(container: AppContainer) {
             // ---- 联动检视（统计条末尾链接图标触发）：只读展示，pixieState 为空不渲染 ----
             if (showLinkage) {
                 pixieState?.let { s ->
-                    LinkageViewDialog(state = s, onDismiss = { showLinkage = false })
+                    LinkageViewSheet(
+                        state = s,
+                        onNavigateToDeckMap = { targetDeck ->
+                            showLinkage = false
+                            navController.navigate(Routes.deckMap(deck = targetDeck, pixieMode = true))
+                        },
+                        onDismiss = { showLinkage = false },
+                    )
                 }
             }
         }

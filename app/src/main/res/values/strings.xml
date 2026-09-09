@@ -164,6 +164,12 @@
     <string name="pixie_linkage_given_label">发出 %1$d</string>
     <string name="pixie_linkage_received_label">收到 %1$d</string>
     <string name="pixie_linkage_unreplied_format">待回礼 %1$d</string>
+    <string name="pixie_linkage_view_map">查看本层地图</string>
+    <string name="pixie_status_unreplied">待回礼</string>
+    <string name="pixie_status_supplement">需补礼</string>
+    <string name="pixie_status_completed">已回清</string>
+    <string name="pixie_linkage_summary_format">共 %1$d 间 · 🔴 待回 %2$d · 🟡 需补 %3$d · 🟢 已回 %4$d</string>
+    <string name="pixie_deck_summary_format">待回 %1$d · 需补 %2$d · 已回 %3$d</string>
 
     <!-- 设置 -->
     <string name="settings">设置</string>
