@@ -276,7 +276,7 @@ fun DeckMapScreen(
                         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Slate200),
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
+                            .align(Alignment.BottomEnd)
                             .padding(12.dp),
                     ) {
                         Column(
