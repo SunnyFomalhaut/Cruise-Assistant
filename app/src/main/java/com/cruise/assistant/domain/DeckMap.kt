@@ -14,6 +14,7 @@ enum class PixieRoomStatus {
     UNREPLIED,
     NEED_SUPPLEMENT,
     COMPLETED,
+    GIVEN_PENDING,
 }
 
 /** 仙尘客房标记数据模型 */
@@ -269,7 +270,8 @@ object DeckMapRepository {
                 val label = when (marker.status) {
                     PixieRoomStatus.UNREPLIED -> if (marker.unrepliedCount > 0) "🔴 待回 ${marker.unrepliedCount}" else "🔴 待回"
                     PixieRoomStatus.NEED_SUPPLEMENT -> "🟡 补礼"
-                    PixieRoomStatus.COMPLETED -> "🟢 已回"
+                    PixieRoomStatus.COMPLETED -> "🟢 持平"
+                    PixieRoomStatus.GIVEN_PENDING -> "🔵 已发"
                 }
                 val safeRoom = marker.roomNumber.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ")
                 val safeLabel = label.replace("\\", "\\\\").replace("\"", "\\\"")
@@ -299,6 +301,12 @@ object DeckMapRepository {
                     border: 2px solid #10B981;
                     background: rgba(16, 185, 129, 0.18);
                     box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+                    z-index: 999;
+                }
+                .pixie-box-given-pending {
+                    border: 2px solid #0284C7;
+                    background: rgba(2, 132, 199, 0.20);
+                    box-shadow: 0 0 8px rgba(2, 132, 199, 0.5);
                     z-index: 999;
                 }
                 @keyframes pixieRedPulse {
@@ -356,6 +364,9 @@ object DeckMapRepository {
                 .pixie-marker-completed {
                     background: #10B981;
                 }
+                .pixie-marker-given-pending {
+                    background: #0284C7;
+                }
                 .pixie-pin-arrow {
                     width: 0;
                     height: 0;
@@ -371,6 +382,9 @@ object DeckMapRepository {
                 }
                 .pixie-arrow-completed {
                     border-top: 5px solid #10B981;
+                }
+                .pixie-arrow-given-pending {
+                    border-top: 5px solid #0284C7;
                 }
             </style>
             <script>
@@ -437,12 +451,15 @@ object DeckMapRepository {
                             boxClass += ' pixie-box-supplement';
                             markerClass = 'pixie-marker-supplement';
                             arrowClass = 'pixie-arrow-supplement';
+                        } else if (item.status === 'GIVEN_PENDING') {
+                            boxClass += ' pixie-box-given-pending';
+                            markerClass = 'pixie-marker-given-pending';
+                            arrowClass = 'pixie-arrow-given-pending';
                         } else {
                             boxClass += ' pixie-box-completed';
                             markerClass = 'pixie-marker-completed';
                             arrowClass = 'pixie-arrow-completed';
                         }
-
                         box.className = boxClass;
                         box.style.left = (absLeft - 2) + 'px';
                         box.style.top = (absTop - 2) + 'px';

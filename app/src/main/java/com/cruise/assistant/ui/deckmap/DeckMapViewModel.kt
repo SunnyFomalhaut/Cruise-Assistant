@@ -63,6 +63,7 @@ class DeckMapViewModel(
                     val status = when {
                         unreplied > 0 -> PixieRoomStatus.UNREPLIED
                         receivedCount > givenCount -> PixieRoomStatus.NEED_SUPPLEMENT
+                        givenCount > receivedCount -> PixieRoomStatus.GIVEN_PENDING
                         else -> PixieRoomStatus.COMPLETED
                     }
                     PixieRoomMarker(

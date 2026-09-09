@@ -186,6 +186,7 @@ fun DeckMapScreen(
                             val u = state.pixieMarkers.count { it.status == PixieRoomStatus.UNREPLIED }
                             val s = state.pixieMarkers.count { it.status == PixieRoomStatus.NEED_SUPPLEMENT }
                             val c = state.pixieMarkers.count { it.status == PixieRoomStatus.COMPLETED }
+                            val g = state.pixieMarkers.count { it.status == PixieRoomStatus.GIVEN_PENDING }
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
                                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
@@ -198,7 +199,7 @@ fun DeckMapScreen(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.deck_map_pixie_banner_format, state.selectedDeck, u, s, c),
+                                        text = stringResource(R.string.deck_map_pixie_banner_format, state.selectedDeck, u, s, c, g),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.SemiBold,
                                         color = Slate900,

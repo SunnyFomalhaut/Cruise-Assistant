@@ -164,7 +164,11 @@ class PixieDustViewModel(
         val deckToUse = validation.deck ?: deckValue
         val given = dust
             .filter { it.direction == PixieDustDirection.GIVEN }
-            .sortedByDescending { it.timestamp }
+            .sortedWith(
+                compareBy<PixieDustRecord> { it.deck }
+                    .thenBy { it.room.toIntOrNull() ?: 0 }
+                    .thenByDescending { it.timestamp }
+            )
         val roomHistory = if (validation.status == StateroomValidationStatus.VALID) {
             val d = validation.deck!!
             val r = validation.room!!

@@ -70,7 +70,10 @@ fun LinkageViewSheet(
         state.roomPairs.count { it.unrepliedReceived.isEmpty() && it.received.size > it.given.size }
     }
     val completedRooms = remember(state.roomPairs) {
-        state.roomPairs.count { it.unrepliedReceived.isEmpty() && it.given.size >= it.received.size }
+        state.roomPairs.count { it.unrepliedReceived.isEmpty() && it.given.size == it.received.size && it.given.isNotEmpty() }
+    }
+    val givenPendingRooms = remember(state.roomPairs) {
+        state.roomPairs.count { it.unrepliedReceived.isEmpty() && it.given.size > it.received.size }
     }
     val groupedByDeck = remember(state.roomPairs) {
         state.roomPairs.groupBy { it.deck }
@@ -127,6 +130,7 @@ fun LinkageViewSheet(
                         unrepliedRooms,
                         supplementRooms,
                         completedRooms,
+                        givenPendingRooms,
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
@@ -188,9 +192,11 @@ private fun DeckSectionCard(
         pairs.count { it.unrepliedReceived.isEmpty() && it.received.size > it.given.size }
     }
     val deckCompleted = remember(pairs) {
-        pairs.count { it.unrepliedReceived.isEmpty() && it.given.size >= it.received.size }
+        pairs.count { it.unrepliedReceived.isEmpty() && it.given.size == it.received.size && it.given.isNotEmpty() }
     }
-
+    val deckGivenPending = remember(pairs) {
+        pairs.count { it.unrepliedReceived.isEmpty() && it.given.size > it.received.size }
+    }
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -220,6 +226,7 @@ private fun DeckSectionCard(
                             deckUnreplied,
                             deckSupplement,
                             deckCompleted,
+                            deckGivenPending,
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = Slate500,
@@ -308,6 +315,20 @@ private fun RoomPairRow(
                         Color(0xFFFEF3C7),
                         Color(0xFFD97706),
                         Color(0xFFFDE68A),
+                    )
+                }
+                pair.given.size > pair.received.size -> {
+                    val label = if (pair.received.isEmpty()) {
+                        "🔵 ${stringResource(R.string.pixie_status_given_pending)}"
+                    } else {
+                        val diff = pair.given.size - pair.received.size
+                        "🔵 超发 $diff 笔"
+                    }
+                    Quad(
+                        label,
+                        Color(0xFFDBEAFE),
+                        Color(0xFF1D4ED8),
+                        Color(0xFFBFDBFE),
                     )
                 }
                 else -> {

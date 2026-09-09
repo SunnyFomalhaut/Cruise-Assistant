@@ -37,4 +37,20 @@ class PixieDustSweepSortingTest {
         assertEquals(11, pairs[1].deck)
         assertEquals("216", pairs[1].room)
     }
+
+    @Test
+    fun testGroupGivenByRoom_SortedByDeckAndRoomAscending() {
+        val g1 = PixieDustRecord(id = 1, direction = PixieDustDirection.GIVEN, deck = 11, room = "530", levelId = 1, levelNameSnapshot = "普通", replied = false, timestamp = 100)
+        val g2 = PixieDustRecord(id = 2, direction = PixieDustDirection.GIVEN, deck = 6, room = "012", levelId = 1, levelNameSnapshot = "普通", replied = false, timestamp = 200)
+        val g3 = PixieDustRecord(id = 3, direction = PixieDustDirection.GIVEN, deck = 11, room = "216", levelId = 1, levelNameSnapshot = "普通", replied = false, timestamp = 300)
+
+        val grouped = groupGivenByRoom(listOf(g1, g2, g3), listOf(levelStandard))
+        assertEquals(3, grouped.size)
+        assertEquals(6, grouped[0].deck)
+        assertEquals("012", grouped[0].room)
+        assertEquals(11, grouped[1].deck)
+        assertEquals("216", grouped[1].room)
+        assertEquals(11, grouped[2].deck)
+        assertEquals("530", grouped[2].room)
+    }
 }

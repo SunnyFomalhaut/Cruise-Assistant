@@ -113,6 +113,18 @@ class DeckMapViewModelTest {
                 note = "",
                 timestamp = 450,
             ),
+            // Deck 11 Room 230: 1 given, 0 received -> GIVEN_PENDING
+            PixieDustEntity(
+                id = 8,
+                direction = "GIVEN",
+                deck = 11,
+                room = "230",
+                levelId = 1,
+                levelNameSnapshot = "普通",
+                replied = false,
+                note = "",
+                timestamp = 500,
+            ),
             // Deck 6 Room 012: on Deck 6, should be ignored when Deck 11 is selected
             PixieDustEntity(
                 id = 7,
@@ -143,7 +155,7 @@ class DeckMapViewModelTest {
         val state = vm.state.value
         assertEquals(11, state.selectedDeck)
         assertTrue(state.pixieMode)
-        assertEquals(3, state.pixieMarkers.size)
+        assertEquals(4, state.pixieMarkers.size)
 
         val marker216 = state.pixieMarkers.first { it.roomNumber == "11216" }
         assertEquals(PixieRoomStatus.UNREPLIED, marker216.status)
@@ -163,6 +175,11 @@ class DeckMapViewModelTest {
         assertEquals(1, marker220.givenCount)
         assertEquals(1, marker220.receivedCount)
 
+        val marker230 = state.pixieMarkers.first { it.roomNumber == "11230" }
+        assertEquals(PixieRoomStatus.GIVEN_PENDING, marker230.status)
+        assertEquals(0, marker230.unrepliedCount)
+        assertEquals(1, marker230.givenCount)
+        assertEquals(0, marker230.receivedCount)
         // Test clearPixieMode
         vm.clearPixieMode()
         val clearedState = vm.state.value

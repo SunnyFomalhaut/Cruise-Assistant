@@ -63,7 +63,7 @@ fun levelCountsOf(records: List<PixieDustRecord>, levels: List<PixieLevel>): Lis
         .sortedByDescending { it.level.rank }
 }
 
-/** 发出记录按房间归组，房间按最近一次发出时间降序 */
+/** 发出记录按房间归组：按 Deck 升序、同层按 Room 数字升序排列（便于顺着走廊扫楼） */
 fun groupGivenByRoom(records: List<PixieDustRecord>, levels: List<PixieLevel>): List<RoomGroup> =
     records
         .filter { it.direction == PixieDustDirection.GIVEN }
@@ -77,7 +77,10 @@ fun groupGivenByRoom(records: List<PixieDustRecord>, levels: List<PixieLevel>): 
                 levelCounts = levelCountsOf(list, levels),
             )
         }
-        .sortedByDescending { it.lastTimestamp }
+        .sortedWith(
+            compareBy<RoomGroup> { it.deck }
+                .thenBy { it.room.toIntOrNull() ?: 0 }
+        )
 
 /** 收到排序：未回礼在前按等级 rank 降序（贵重优先）、同级时间降序；已回礼沉底按时间降序 */
 fun sortReceived(records: List<PixieDustRecord>, levels: List<PixieLevel>): List<PixieDustRecord> {
