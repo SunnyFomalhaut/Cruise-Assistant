@@ -9,6 +9,22 @@ data class DeckInfo(
     val assetPath: String,
 )
 
+/** 仙尘客房回礼状态 */
+enum class PixieRoomStatus {
+    UNREPLIED,
+    NEED_SUPPLEMENT,
+    COMPLETED,
+}
+
+/** 仙尘客房标记数据模型 */
+data class PixieRoomMarker(
+    val roomNumber: String,
+    val status: PixieRoomStatus,
+    val unrepliedCount: Int = 0,
+    val givenCount: Int = 0,
+    val receivedCount: Int = 0,
+)
+
 /** 全船甲板地图管理仓储 */
 object DeckMapRepository {
 
@@ -50,7 +66,11 @@ object DeckMapRepository {
     /**
      * 将 SVG 字符串内联到响应式 HTML 容器中，免受安全沙箱限制；支持高亮与地图钉定位指定设施
      */
-    fun inlineHtmlWrapperFor(svgContent: String, highlightTarget: String? = null): String {
+    fun inlineHtmlWrapperFor(
+        svgContent: String,
+        highlightTarget: String? = null,
+        pixieMarkers: List<PixieRoomMarker> = emptyList(),
+    ): String {
         val sanitizedHighlight = highlightTarget?.trim()?.takeIf { it.isNotEmpty() }
         val expandedTarget = sanitizedHighlight?.let { target ->
             val allEntries = LocationCatalog.allEntries()
@@ -244,6 +264,226 @@ object DeckMapRepository {
             """.trimIndent()
         } else ""
 
+        val pixieScript = if (pixieMarkers.isNotEmpty()) {
+            val markersJson = pixieMarkers.joinToString(prefix = "[", postfix = "]") { marker ->
+                val label = when (marker.status) {
+                    PixieRoomStatus.UNREPLIED -> if (marker.unrepliedCount > 0) "🔴 待回 ${marker.unrepliedCount}" else "🔴 待回"
+                    PixieRoomStatus.NEED_SUPPLEMENT -> "🟡 补礼"
+                    PixieRoomStatus.COMPLETED -> "🟢 已回"
+                }
+                val safeRoom = marker.roomNumber.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ")
+                val safeLabel = label.replace("\\", "\\\\").replace("\"", "\\\"")
+                """{"room":"$safeRoom","status":"${marker.status.name}","label":"$safeLabel"}"""
+            }
+            """
+            <style>
+                .pixie-highlight-box {
+                    position: absolute;
+                    pointer-events: none;
+                    border-radius: 6px;
+                    z-index: 1000;
+                }
+                .pixie-box-unreplied {
+                    border: 2.5px solid #EF4444;
+                    background: rgba(239, 68, 68, 0.22);
+                    box-shadow: 0 0 12px rgba(239, 68, 68, 0.85);
+                    animation: pixieRedPulse 1.8s infinite ease-in-out;
+                }
+                .pixie-box-supplement {
+                    border: 2.5px solid #F59E0B;
+                    background: rgba(245, 158, 11, 0.22);
+                    box-shadow: 0 0 12px rgba(245, 158, 11, 0.85);
+                    animation: pixieYellowPulse 1.8s infinite ease-in-out;
+                }
+                .pixie-box-completed {
+                    border: 2px solid #10B981;
+                    background: rgba(16, 185, 129, 0.18);
+                    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+                    z-index: 999;
+                }
+                @keyframes pixieRedPulse {
+                    0% {
+                        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85);
+                        transform: scale(0.99);
+                    }
+                    50% {
+                        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+                        transform: scale(1.01);
+                    }
+                    100% {
+                        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+                        transform: scale(0.99);
+                    }
+                }
+                @keyframes pixieYellowPulse {
+                    0% {
+                        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.85);
+                        transform: scale(0.99);
+                    }
+                    50% {
+                        box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+                        transform: scale(1.01);
+                    }
+                    100% {
+                        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+                        transform: scale(0.99);
+                    }
+                }
+                .pixie-pin-badge {
+                    position: absolute;
+                    pointer-events: none;
+                    z-index: 1002;
+                    transform: translate(-50%, -100%);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                .pixie-pin-content {
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 2px 7px;
+                    border-radius: 12px;
+                    color: #FFFFFF;
+                    white-space: nowrap;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+                }
+                .pixie-marker-unreplied {
+                    background: #EF4444;
+                }
+                .pixie-marker-supplement {
+                    background: #F59E0B;
+                }
+                .pixie-marker-completed {
+                    background: #10B981;
+                }
+                .pixie-pin-arrow {
+                    width: 0;
+                    height: 0;
+                    border-left: 4px solid transparent;
+                    border-right: 4px solid transparent;
+                    margin-top: -1px;
+                }
+                .pixie-arrow-unreplied {
+                    border-top: 5px solid #EF4444;
+                }
+                .pixie-arrow-supplement {
+                    border-top: 5px solid #F59E0B;
+                }
+                .pixie-arrow-completed {
+                    border-top: 5px solid #10B981;
+                }
+            </style>
+            <script>
+                var pixieMarkersData = $markersJson;
+
+                function renderPixieMarkers() {
+                    if (!pixieMarkersData || pixieMarkersData.length === 0) return;
+                    var existing = document.querySelectorAll('.pixie-highlight-box, .pixie-pin-badge');
+                    for (var i = 0; i < existing.length; i++) {
+                        existing[i].remove();
+                    }
+
+                    var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft || 0;
+                    var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+                    var priorityBounds = null;
+                    var allBounds = null;
+
+                    function updateBounds(bounds, rect, absLeft, absTop) {
+                        if (!bounds) {
+                            return {
+                                minX: absLeft,
+                                 maxX: absLeft + rect.width,
+                                 minY: absTop,
+                                 maxY: absTop + rect.height
+                            };
+                        }
+                        bounds.minX = Math.min(bounds.minX, absLeft);
+                        bounds.maxX = Math.max(bounds.maxX, absLeft + rect.width);
+                        bounds.minY = Math.min(bounds.minY, absTop);
+                        bounds.maxY = Math.max(bounds.maxY, absTop + rect.height);
+                        return bounds;
+                    }
+
+                    for (var m = 0; m < pixieMarkersData.length; m++) {
+                        var item = pixieMarkersData[m];
+                        var elem = document.getElementById('room-' + item.room) ||
+                                   document.getElementById('outline-' + item.room) ||
+                                   document.getElementById('number-' + item.room) ||
+                                   document.querySelector('[data-finder-group-id="' + item.room + '"]');
+                        if (!elem) continue;
+
+                        var rect = elem.getBoundingClientRect();
+                        if (rect.width === 0 && rect.height === 0) continue;
+
+                        var absLeft = rect.left + scrollLeft;
+                        var absTop = rect.top + scrollTop;
+
+                        if (item.status === 'UNREPLIED' || item.status === 'NEED_SUPPLEMENT') {
+                            priorityBounds = updateBounds(priorityBounds, rect, absLeft, absTop);
+                        }
+                        allBounds = updateBounds(allBounds, rect, absLeft, absTop);
+
+                        var box = document.createElement('div');
+                        var boxClass = 'pixie-highlight-box';
+                        var markerClass = 'pixie-marker-unreplied';
+                        var arrowClass = 'pixie-arrow-unreplied';
+
+                        if (item.status === 'UNREPLIED') {
+                            boxClass += ' pixie-box-unreplied';
+                            markerClass = 'pixie-marker-unreplied';
+                            arrowClass = 'pixie-arrow-unreplied';
+                        } else if (item.status === 'NEED_SUPPLEMENT') {
+                            boxClass += ' pixie-box-supplement';
+                            markerClass = 'pixie-marker-supplement';
+                            arrowClass = 'pixie-arrow-supplement';
+                        } else {
+                            boxClass += ' pixie-box-completed';
+                            markerClass = 'pixie-marker-completed';
+                            arrowClass = 'pixie-arrow-completed';
+                        }
+
+                        box.className = boxClass;
+                        box.style.left = (absLeft - 2) + 'px';
+                        box.style.top = (absTop - 2) + 'px';
+                        box.style.width = (rect.width + 4) + 'px';
+                        box.style.height = (rect.height + 4) + 'px';
+                        document.body.appendChild(box);
+
+                        var pin = document.createElement('div');
+                        pin.className = 'pixie-pin-badge';
+                        pin.style.left = (absLeft + rect.width / 2) + 'px';
+                        pin.style.top = (absTop - 2) + 'px';
+                        pin.innerHTML = '<div class="pixie-pin-content ' + markerClass + '">' + item.label + '</div><div class="pixie-pin-arrow ' + arrowClass + '"></div>';
+                        document.body.appendChild(pin);
+                    }
+
+                    var targetBounds = priorityBounds || allBounds;
+                    if (targetBounds) {
+                        var centerX = (targetBounds.minX + targetBounds.maxX) / 2;
+                        var centerY = (targetBounds.minY + targetBounds.maxY) / 2;
+                        var targetX = centerX - (window.innerWidth / 2);
+                        var targetY = centerY - (window.innerHeight / 2);
+                        window.scrollTo({
+                            left: Math.max(0, targetX),
+                            top: Math.max(0, targetY),
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+
+                window.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(renderPixieMarkers, 80);
+                    setTimeout(renderPixieMarkers, 250);
+                    setTimeout(renderPixieMarkers, 600);
+                });
+                window.addEventListener('load', function() {
+                    setTimeout(renderPixieMarkers, 120);
+                });
+            </script>
+            """.trimIndent()
+        } else ""
+
         return """
             <!DOCTYPE html>
             <html>
@@ -277,6 +517,7 @@ object DeckMapRepository {
                     }
                 </style>
                 $highlightScript
+                $pixieScript
             </head>
             <body>
                 <div id="svg-wrapper">
