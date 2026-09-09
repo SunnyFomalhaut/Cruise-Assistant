@@ -79,7 +79,7 @@ object Routes {
     const val WISHLIST = "wishlist"
     const val FACILITIES = "facilities"
     const val DECK_MAP = "deck_map"
-    const val DECK_MAP_PATTERN = "deck_map?deck={deck}&highlight={highlight}"
+    const val DECK_MAP_PATTERN = "deck_map?deck={deck}&highlight={highlight}&pixie={pixie}"
 
     fun deckMap(deck: Int? = null, highlight: String? = null, pixieMode: Boolean = false): String {
         return buildString {
@@ -689,14 +689,24 @@ fun CruiseNavHost(container: AppContainer) {
                     nullable = true
                     defaultValue = null
                 },
+                navArgument("pixie") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
             ),
         ) { backStackEntry ->
             val initialDeck = backStackEntry.arguments?.getInt("deck") ?: 5
             val highlightTarget = backStackEntry.arguments?.getString("highlight")
+            val initialPixie = backStackEntry.arguments?.getBoolean("pixie") ?: false
             val vm: DeckMapViewModel = viewModel(
-                key = "deck_map_${initialDeck}_${highlightTarget}",
+                key = "deck_map_${initialDeck}_${highlightTarget}_${initialPixie}",
                 factory = viewModelFactory {
-                    DeckMapViewModel(initialDeck = initialDeck, initialHighlight = highlightTarget)
+                    DeckMapViewModel(
+                        initialDeck = initialDeck,
+                        initialHighlight = highlightTarget,
+                        initialPixieMode = initialPixie,
+                        pixieDustRepository = container.pixieDustRepository,
+                    )
                 },
             )
             val state by vm.state.collectAsState()
@@ -706,6 +716,7 @@ fun CruiseNavHost(container: AppContainer) {
                 onSelectDeck = vm::onSelectDeck,
                 onNavigateToFacility = vm::navigateToFacility,
                 onClearHighlight = vm::clearHighlight,
+                onClearPixieMode = vm::clearPixieMode,
             )
         }
     }

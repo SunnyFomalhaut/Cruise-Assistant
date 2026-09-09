@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +61,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.DeckInfo
 import com.cruise.assistant.domain.DeckMapRepository
+import com.cruise.assistant.domain.PixieRoomStatus
 import com.cruise.assistant.ui.theme.CruiseAzure
 import com.cruise.assistant.ui.theme.CruiseAzureContainer
 import com.cruise.assistant.ui.theme.CruiseMarine
@@ -77,15 +79,16 @@ fun DeckMapScreen(
     onSelectDeck: (Int) -> Unit,
     onNavigateToFacility: (Int, String) -> Unit = { _, _ -> },
     onClearHighlight: () -> Unit = {},
+    onClearPixieMode: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var showSearchSheet by remember { mutableStateOf(false) }
-    val htmlContent = remember(state.selectedDeck, state.highlightTarget) {
+    val htmlContent = remember(state.selectedDeck, state.highlightTarget, state.pixieMarkers) {
         val svg = runCatching {
             context.assets.open("decks/deck_${state.selectedDeck}.svg").bufferedReader().use { it.readText() }
         }.getOrDefault("")
-        DeckMapRepository.inlineHtmlWrapperFor(svg, state.highlightTarget)
+        DeckMapRepository.inlineHtmlWrapperFor(svg, state.highlightTarget, state.pixieMarkers)
     }
 
     if (showSearchSheet) {
@@ -170,43 +173,98 @@ fun DeckMapScreen(
                         modifier = Modifier.fillMaxSize(),
                     )
 
-                    // 顶部聚焦提示标签（当由设施指南导航而来时显示）
-                    state.highlightTarget?.let { target ->
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = CruiseAzureContainer.copy(alpha = 0.95f),
-                            border = BorderStroke(1.dp, CruiseAzure.copy(alpha = 0.6f)),
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = 10.dp),
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    // 顶部浮动控制与提示卡片列
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        // 仙尘回礼顶部浮动横幅
+                        if (state.pixieMode && state.pixieMarkers.isNotEmpty()) {
+                            val u = state.pixieMarkers.count { it.status == PixieRoomStatus.UNREPLIED }
+                            val s = state.pixieMarkers.count { it.status == PixieRoomStatus.NEED_SUPPLEMENT }
+                            val c = state.pixieMarkers.count { it.status == PixieRoomStatus.COMPLETED }
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                border = BorderStroke(1.dp, Slate200),
+                                shadowElevation = 4.dp,
                             ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.LocationOn,
-                                    contentDescription = null,
-                                    tint = CruiseMarine,
-                                    modifier = Modifier.size(15.dp),
-                                )
-                                Text(
-                                    text = stringResource(R.string.deck_map_focused_format, target),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = CruiseMarine,
-                                )
-                                IconButton(
-                                    onClick = onClearHighlight,
-                                    modifier = Modifier.size(18.dp),
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.deck_map_pixie_banner_format, state.selectedDeck, u, s, c),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Slate900,
+                                    )
+                                    TextButton(
+                                        onClick = onBack,
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                        modifier = Modifier.height(28.dp),
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.deck_map_pixie_back),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = CruiseMarine,
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = onClearPixieMode,
+                                        modifier = Modifier.size(20.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Close,
+                                            contentDescription = stringResource(R.string.deck_map_pixie_exit),
+                                            tint = Slate500,
+                                            modifier = Modifier.size(14.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // 顶部聚焦提示标签（当由设施指南导航而来时显示）
+                        state.highlightTarget?.let { target ->
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = CruiseAzureContainer.copy(alpha = 0.95f),
+                                border = BorderStroke(1.dp, CruiseAzure.copy(alpha = 0.6f)),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Outlined.Close,
-                                        contentDescription = stringResource(R.string.cancel),
-                                        tint = Slate500,
-                                        modifier = Modifier.size(13.dp),
+                                        imageVector = Icons.Outlined.LocationOn,
+                                        contentDescription = null,
+                                        tint = CruiseMarine,
+                                        modifier = Modifier.size(15.dp),
                                     )
+                                    Text(
+                                        text = stringResource(R.string.deck_map_focused_format, target),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = CruiseMarine,
+                                    )
+                                    IconButton(
+                                        onClick = onClearHighlight,
+                                        modifier = Modifier.size(18.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Close,
+                                            contentDescription = stringResource(R.string.cancel),
+                                            tint = Slate500,
+                                            modifier = Modifier.size(13.dp),
+                                        )
+                                    }
                                 }
                             }
                         }
