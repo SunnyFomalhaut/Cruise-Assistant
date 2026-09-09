@@ -169,7 +169,7 @@
     <string name="pixie_status_supplement">需补礼</string>
     <string name="pixie_status_completed">已持平</string>
     <string name="pixie_status_given_pending">已发未回</string>
-    <string name="pixie_linkage_summary_format">共 %1$d 间 · 🔴 待回 %2$d · 🟡 需补 %3$d · 🟢 持平 %4$d · 🔵 已发未回 %5$d</string>
+    <string name="pixie_linkage_summary_format">共 %1$d 间 · 🔴 待回 %2$d · 🟡 需补 %3$d · 🟢 持平 %4$d · 🔵 已发 %5$d</string>
     <string name="pixie_deck_summary_format">待回 %1$d · 需补 %2$d · 持平 %3$d · 已发 %4$d</string>
 
     <!-- 设置 -->
