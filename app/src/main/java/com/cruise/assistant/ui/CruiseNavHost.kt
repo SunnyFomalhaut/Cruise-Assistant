@@ -179,6 +179,8 @@ fun CruiseNavHost(container: AppContainer) {
             }
             var highlightIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
             var conflictCheckDate by remember { mutableStateOf<LocalDate?>(null) }
+            // 长按菜单删除循环成员事件时先挂起，等用户在 scope 弹窗里选"整组/仅本日"
+            var pendingDeleteEvent by remember { mutableStateOf<CruiseEvent?>(null) }
 
             if (current == null) {
                 TimelineLoading()
@@ -209,7 +211,15 @@ fun CruiseNavHost(container: AppContainer) {
                     onMoveToLane = vm::moveToLane,
                     onToggleActive = vm::toggleActive,
                     onKeepOnlyThisShow = vm::keepOnlyThisShow,
-                    onDeleteEvent = vm::deleteEvent,
+                    onDeleteEvent = { event, _ ->
+                        // 循环成员不给静默删：长按菜单只传 THIS_DAY_ONLY，先弹 scope 弹窗
+                        // 让用户选"删整组/仅本日"，否则循环事件没有"删除所有重复项"入口
+                        if (event.recurrenceGroupId != null) {
+                            pendingDeleteEvent = event
+                        } else {
+                            vm.deleteEvent(event, RecurrenceScope.THIS_DAY_ONLY)
+                        }
+                    },
                     onGeneratePlan = {
                         val date = current.selectedDate
                         coroutineScope.launch {
@@ -370,6 +380,28 @@ fun CruiseNavHost(container: AppContainer) {
                     )
                 }
             }
+
+            // ---- 循环事件删除 scope 弹窗：长按删除循环成员时让用户选"整组/仅本日"。
+            // 放在 sheetRequest 块外（TIMELINE 作用域）：长按删除入口打开时没有事件弹窗，
+            // 放进 sheetRequest?.let 里永远渲染不出来。----
+            pendingDeleteEvent?.let { event ->
+                AlertDialog(
+                    onDismissRequest = { pendingDeleteEvent = null },
+                    title = { Text(stringResource(R.string.recur_delete_title)) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            pendingDeleteEvent = null
+                            vm.deleteEvent(event, RecurrenceScope.WHOLE_GROUP)
+                        }) { Text(stringResource(R.string.recur_delete_whole_group)) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            pendingDeleteEvent = null
+                            vm.deleteEvent(event, RecurrenceScope.THIS_DAY_ONLY)
+                        }) { Text(stringResource(R.string.recur_delete_this_day)) }
+                    },
+                )
+            }
         }
         composable(Routes.PIXIE_DUST) {
             val vm: PixieDustViewModel = viewModel(
@@ -442,6 +474,7 @@ fun CruiseNavHost(container: AppContainer) {
                                 onEditRecord = { editTarget = it },
                                 onRequestReply = { vm.onRequestReply(it) },
                                 onCancelReply = { vm.onToggleReplied(it, false) },
+                                onFilterChange = vm::onFilterChange,
                             )
                         }
                     }
