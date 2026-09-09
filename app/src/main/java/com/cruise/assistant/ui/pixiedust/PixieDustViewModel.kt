@@ -15,7 +15,9 @@ import com.cruise.assistant.domain.autoReplyTarget
 import com.cruise.assistant.domain.fullRoom
 import com.cruise.assistant.domain.groupGivenByRoom
 import com.cruise.assistant.domain.hasGivenForRoom
-import com.cruise.assistant.domain.isValidRoomInput
+import com.cruise.assistant.domain.StateroomValidationResult
+import com.cruise.assistant.domain.StateroomValidationStatus
+import com.cruise.assistant.domain.validateStateroomInput
 import com.cruise.assistant.domain.lastLevelForRoom
 import com.cruise.assistant.domain.pairByRoom
 import com.cruise.assistant.domain.sortReceived
@@ -48,6 +50,7 @@ data class PixieDustUiState(
     val deckRange: IntRange = 1..20,
     val deck: Int = 1,
     val roomInput: String = "",
+    val validation: StateroomValidationResult = StateroomValidationResult(StateroomValidationStatus.INCOMPLETE),
     val selectedLevelId: Long? = null,
     /** 发出记录，时间倒序原始流 */
     val given: List<PixieDustRecord> = emptyList(),
@@ -85,6 +88,10 @@ class PixieDustViewModel(
     private val savedEvent = MutableStateFlow<PixieDustRecord?>(null)
     private val pendingReply = MutableStateFlow<PixieDustRecord?>(null)
     private val autoRepliedRoom = MutableStateFlow<String?>(null)
+
+    // 快捷录入防重入守卫（仿 EventSheetViewModel 的 saving 挡板）：
+    // 入库协程在途时忽略再次点击，避免连点把同一条记录重复写库
+    private var saveInFlight = false
 
     init {
         // 等级列表加载/变化时：无选择 → 默认选第一个；当前选择被删 → 回落到第一个
@@ -140,15 +147,17 @@ class PixieDustViewModel(
         val deckValue = input.deck
             ?: settings.lastPixieDeck?.takeIf { it in deckRange }
             ?: deckRange.first
+        val validation = validateStateroomInput(input.roomInput)
+        val deckToUse = validation.deck ?: deckValue
         val given = dust
             .filter { it.direction == PixieDustDirection.GIVEN }
             .sortedByDescending { it.timestamp }
-        val roomHistory = if (isValidRoomInput(input.roomInput)) {
-            lastLevelForRoom(dust, deckValue, input.roomInput)?.let { last ->
+        val roomHistory = if (validation.status == StateroomValidationStatus.VALID) {
+            lastLevelForRoom(dust, validation.deck!!, validation.room!!)?.let { last ->
                 RoomHistory(
                     levelName = levels.firstOrNull { it.id == last.levelId }?.name
                         ?: last.levelNameSnapshot,
-                    count = given.count { it.deck == deckValue && it.room == input.roomInput },
+                    count = given.count { it.deck == validation.deck && it.room == validation.room },
                 )
             }
         } else {
@@ -160,8 +169,9 @@ class PixieDustViewModel(
             levels = levels,
             levelById = levels.associateBy { it.id },
             deckRange = deckRange,
-            deck = deckValue,
+            deck = deckToUse,
             roomInput = input.roomInput,
+            validation = validation,
             selectedLevelId = input.selectedLevelId,
             given = given,
             received = sortReceived(dust, levels),
@@ -190,15 +200,16 @@ class PixieDustViewModel(
     }
 
     fun onDigit(d: Char) {
-        if (!d.isDigit() || roomInput.value.length >= 3) return
+        if (!d.isDigit() || roomInput.value.length >= 5) return
         roomInput.value += d
-        // 房号输满三位且该房间有历史 → 预选上次等级
-        if (roomInput.value.length == 3) {
-            val s = state.value ?: return
-            // 等级已删则不再预选（避免记一笔点亮但静默无效）
-            lastLevelForRoom(s.given, s.deck, roomInput.value)
-                ?.takeIf { last -> s.levels.any { it.id == last.levelId } }
-                ?.let { selectedLevelId.value = it.levelId }
+        if (roomInput.value.length >= 4) {
+            val v = validateStateroomInput(roomInput.value)
+            if (v.status == StateroomValidationStatus.VALID) {
+                val s = state.value ?: return
+                lastLevelForRoom(s.given, v.deck!!, v.room!!)
+                    ?.takeIf { last -> s.levels.any { it.id == last.levelId } }
+                    ?.let { selectedLevelId.value = it.levelId }
+            }
         }
     }
 
@@ -216,46 +227,55 @@ class PixieDustViewModel(
 
     /** 快捷录入：校验通过即入库，房号清空、等级保留（连记场景） */
     fun saveRecord() {
+        if (saveInFlight) return
         val s = state.value ?: return
-        if (!isValidRoomInput(s.roomInput) || s.selectedLevelId == null) return
+        val v = s.validation
+        if (v.status != StateroomValidationStatus.VALID || s.selectedLevelId == null) return
         val level = s.levelById[s.selectedLevelId] ?: return
         val record = PixieDustRecord(
             direction = if (s.tab == PixieTab.GIVEN) PixieDustDirection.GIVEN else PixieDustDirection.RECEIVED,
-            deck = s.deck,
-            room = s.roomInput,
+            deck = v.deck!!,
+            room = v.room!!,
             levelId = level.id,
             levelNameSnapshot = level.name,
             replied = false,
             note = "",
             timestamp = nowMs(),
         )
+        // 校验全部通过、即将入库才置位：置早了校验失败提前 return 会把守卫永久卡死
+        saveInFlight = true
         viewModelScope.launch {
-            val newId = dustRepository.save(record)
-            savedEvent.value = record
-            roomInput.value = ""
-            // 联动方向一：仅发出记录触发（收到 tab 记一笔不该自勾自己）
-            if (record.direction == PixieDustDirection.GIVEN) {
-                val all = dustRepository.observeAll().first()
-                val target = autoReplyTarget(
-                    all.filter { it.direction == PixieDustDirection.RECEIVED },
-                    record.deck, record.room,
-                )
-                if (target != null) {
-                    dustRepository.save(target.copy(replied = true))
-                    autoRepliedRoom.value = record.fullRoom
+            try {
+                val newId = dustRepository.save(record)
+                savedEvent.value = record
+                roomInput.value = ""
+                // 联动方向一：仅发出记录触发（收到 tab 记一笔不该自勾自己）
+                if (record.direction == PixieDustDirection.GIVEN) {
+                    val all = dustRepository.observeAll().first()
+                    val target = autoReplyTarget(
+                        all.filter { it.direction == PixieDustDirection.RECEIVED },
+                        record.deck, record.room,
+                    )
+                    if (target != null) {
+                        dustRepository.save(target.copy(replied = true))
+                        autoRepliedRoom.value = record.fullRoom
+                    }
                 }
-            }
-            // 联动方向一镜像：登记收到时该房间已有发出 → 刚登记的这条直接已回礼
-            if (record.direction == PixieDustDirection.RECEIVED) {
-                val all = dustRepository.observeAll().first()
-                val hasGiven = hasGivenForRoom(
-                    all.filter { it.direction == PixieDustDirection.GIVEN },
-                    record.deck, record.room,
-                )
-                if (hasGiven) {
-                    dustRepository.save(record.copy(id = newId, replied = true))
-                    autoRepliedRoom.value = record.fullRoom
+                // 联动方向一镜像：登记收到时该房间已有发出 → 刚登记的这条直接已回礼
+                if (record.direction == PixieDustDirection.RECEIVED) {
+                    val all = dustRepository.observeAll().first()
+                    val hasGiven = hasGivenForRoom(
+                        all.filter { it.direction == PixieDustDirection.GIVEN },
+                        record.deck, record.room,
+                    )
+                    if (hasGiven) {
+                        dustRepository.save(record.copy(id = newId, replied = true))
+                        autoRepliedRoom.value = record.fullRoom
+                    }
                 }
+            } finally {
+                // 无论成功/取消/异常都复位，保证守卫不会永久挡住后续保存
+                saveInFlight = false
             }
         }
     }

@@ -15,11 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Backspace
-import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -29,10 +26,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,10 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.PixieLevel
-import com.cruise.assistant.domain.isValidRoomInput
+import com.cruise.assistant.domain.StateroomValidationStatus
 import com.cruise.assistant.ui.common.iconFor
 import com.cruise.assistant.ui.theme.CruiseAzure
-import com.cruise.assistant.ui.theme.CruiseAzureContainer
 import com.cruise.assistant.ui.theme.CruiseMarine
 import com.cruise.assistant.ui.theme.Slate100
 import com.cruise.assistant.ui.theme.Slate200
@@ -55,11 +47,11 @@ import com.cruise.assistant.ui.theme.Slate500
 import com.cruise.assistant.ui.theme.Slate700
 import com.cruise.assistant.ui.theme.Slate900
 
-/** 快捷录入区：楼层下拉 + 大房号显示 + 数字键盘 + 等级按钮 + 记一笔 */
+/** 快捷录入区：全房号直输 + 实时验房徽章 + 数字键盘 + 等级按钮 + 记一笔 */
 @Composable
 fun PixieDustKeypad(
     state: PixieDustUiState,
-    onDeckChange: (Int) -> Unit,
+    onDeckChange: (Int) -> Unit = {},
     onDigit: (Char) -> Unit,
     onBackspace: () -> Unit,
     onClearRoom: () -> Unit,
@@ -75,14 +67,18 @@ fun PixieDustKeypad(
             .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         Column(Modifier.padding(12.dp)) {
-            // ---- 楼层下拉与清空 ----
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                DeckDropdown(
-                    deck = state.deck,
-                    deckRange = state.deckRange,
-                    onDeckChange = onDeckChange,
+            // ---- 顶部清空与提示 ----
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    stringResource(R.string.pixie_room_hint),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Slate500,
+                    fontWeight = FontWeight.Medium,
                 )
-                Spacer(Modifier.weight(1f))
                 TextButton(onClick = onClearRoom) {
                     Text(
                         stringResource(R.string.pixie_keypad_clear),
@@ -105,12 +101,37 @@ fun PixieDustKeypad(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = state.roomInput.ifEmpty { stringResource(R.string.pixie_room_hint) },
-                        fontSize = 32.sp,
+                        text = state.roomInput.ifEmpty { stringResource(R.string.pixie_room_hint_direct) },
+                        fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 4.sp,
+                        letterSpacing = 3.sp,
                         color = if (state.roomInput.isEmpty()) Slate400 else Slate900,
                     )
+                    when (state.validation.status) {
+                        StateroomValidationStatus.VALID -> {
+                            Text(
+                                text = stringResource(R.string.pixie_room_valid_format, state.validation.deck ?: 0),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF16A34A),
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                        StateroomValidationStatus.INVALID -> {
+                            Text(
+                                text = stringResource(R.string.pixie_room_invalid),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                        StateroomValidationStatus.INCOMPLETE -> {
+                            Text(
+                                text = stringResource(R.string.pixie_room_hint_direct),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Slate400,
+                            )
+                        }
+                    }
                     state.roomHistory?.let { h ->
                         Text(
                             stringResource(R.string.pixie_last_level_format, h.levelName, h.count),
@@ -182,7 +203,7 @@ fun PixieDustKeypad(
             Spacer(Modifier.height(10.dp))
             Button(
                 onClick = onSave,
-                enabled = isValidRoomInput(state.roomInput) &&
+                enabled = state.validation.status == StateroomValidationStatus.VALID &&
                     state.selectedLevelId != null &&
                     state.selectedLevelId?.let { state.levelById.containsKey(it) } == true,
                 shape = RoundedCornerShape(14.dp),
@@ -195,48 +216,6 @@ fun PixieDustKeypad(
     }
 }
 
-@Composable
-private fun DeckDropdown(deck: Int, deckRange: IntRange, onDeckChange: (Int) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = CruiseAzureContainer,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                    .clickable { expanded = true },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    stringResource(R.string.pixie_deck_format, deck),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = CruiseMarine,
-                )
-                Icon(
-                    Icons.Outlined.ArrowDropDown,
-                    contentDescription = null,
-                    tint = CruiseMarine,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            deckRange.forEach { d ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.pixie_deck_format, d)) },
-                    onClick = {
-                        expanded = false
-                        onDeckChange(d)
-                    },
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun KeypadKey(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {

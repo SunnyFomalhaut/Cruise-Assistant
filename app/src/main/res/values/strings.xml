@@ -75,6 +75,9 @@
     <string name="recur_scope_title">这是一个重复事件</string>
     <string name="recur_scope_this_day">仅本日</string>
     <string name="recur_scope_whole_group">所有重复项</string>
+    <string name="recur_delete_title">删除重复事件</string>
+    <string name="recur_delete_whole_group">删除所有重复项</string>
+    <string name="recur_delete_this_day">仅删除这一天</string>
     <string name="hours_check_title">营业时间提醒</string>
     <string name="hours_check_confirm">仍要保存</string>
     <string name="hours_check_back">返回修改</string>
@@ -118,6 +121,9 @@
     <string name="pixie_deck_label">楼层</string>
     <string name="pixie_deck_format">Deck %1$d</string>
     <string name="pixie_room_hint">房间号</string>
+    <string name="pixie_room_valid_format">✓ Deck %1$d 客房有效</string>
+    <string name="pixie_room_invalid">⚠️ 地图上无此房间，请核对</string>
+    <string name="pixie_room_hint_direct">输入 4 或 5 位房号</string>
     <string name="pixie_keypad_clear">清空</string>
     <string name="pixie_keypad_backspace">退格</string>
     <string name="pixie_save">记一笔</string>
