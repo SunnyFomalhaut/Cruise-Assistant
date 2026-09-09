@@ -107,38 +107,120 @@ fun PixieDustKeypad(
                         letterSpacing = 3.sp,
                         color = if (state.roomInput.isEmpty()) Slate400 else Slate900,
                     )
-                    when (state.validation.status) {
-                        StateroomValidationStatus.VALID -> {
-                            Text(
-                                text = stringResource(R.string.pixie_room_valid_format, state.validation.deck ?: 0),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF16A34A),
-                                fontWeight = FontWeight.Bold,
-                            )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 4.dp),
+                    ) {
+                        when (state.validation.status) {
+                            StateroomValidationStatus.VALID -> {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Color(0xFFDCFCE7),
+                                ) {
+                                    Text(
+                                        text = "✓ Deck ${state.validation.deck}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF15803D),
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    )
+                                }
+                                state.roomHistory?.let { h ->
+                                    if (state.tab == PixieTab.GIVEN) {
+                                        if (h.unrepliedCount > 0) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Color(0xFFFEE2E2),
+                                            ) {
+                                                Text(
+                                                    text = "收到 ${h.lastReceivedLevelName ?: ""} · 待回礼",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFFDC2626),
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                )
+                                            }
+                                        } else if (h.receivedCount > 0 && h.givenCount == 0) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Color(0xFFFEF3C7),
+                                            ) {
+                                                Text(
+                                                    text = "曾收到 ${h.lastReceivedLevelName ?: ""}×${h.receivedCount}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFFB45309),
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                )
+                                            }
+                                        } else if (h.givenCount > 0) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Slate200,
+                                            ) {
+                                                Text(
+                                                    text = "已发 ${h.lastGivenLevelName ?: ""}×${h.givenCount}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Slate700,
+                                                    fontWeight = FontWeight.Medium,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        if (h.givenCount > 0) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Color(0xFFDBEAFE),
+                                            ) {
+                                                Text(
+                                                    text = "已发过 ${h.lastGivenLevelName ?: ""}×${h.givenCount}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFF1D4ED8),
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                )
+                                            }
+                                        } else if (h.receivedCount > 0) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Slate200,
+                                            ) {
+                                                Text(
+                                                    text = "已收 ${h.lastReceivedLevelName ?: ""}×${h.receivedCount}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Slate700,
+                                                    fontWeight = FontWeight.Medium,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            StateroomValidationStatus.INVALID -> {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.pixie_room_invalid),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    )
+                                }
+                            }
+                            StateroomValidationStatus.INCOMPLETE -> {
+                                Text(
+                                    text = stringResource(R.string.pixie_room_hint_direct),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Slate400,
+                                )
+                            }
                         }
-                        StateroomValidationStatus.INVALID -> {
-                            Text(
-                                text = stringResource(R.string.pixie_room_invalid),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        StateroomValidationStatus.INCOMPLETE -> {
-                            Text(
-                                text = stringResource(R.string.pixie_room_hint_direct),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Slate400,
-                            )
-                        }
-                    }
-                    state.roomHistory?.let { h ->
-                        Text(
-                            stringResource(R.string.pixie_last_level_format, h.levelName, h.count),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = CruiseMarine,
-                            fontWeight = FontWeight.Medium,
-                        )
                     }
                 }
             }

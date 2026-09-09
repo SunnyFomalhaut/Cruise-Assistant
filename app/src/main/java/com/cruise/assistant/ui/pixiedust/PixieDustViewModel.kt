@@ -40,10 +40,15 @@ enum class GivenViewMode { GROUPED, FLOW }
 
 enum class PixieFilter { ALL, PENDING_ONLY }
 
-/** 键盘下方"上次：豪华 ×2"的数据 */
+/** 键盘下方房间历史统计与回礼提示 */
 @Immutable
-data class RoomHistory(val levelName: String, val count: Int)
-
+data class RoomHistory(
+    val lastGivenLevelName: String? = null,
+    val givenCount: Int = 0,
+    val lastReceivedLevelName: String? = null,
+    val receivedCount: Int = 0,
+    val unrepliedCount: Int = 0,
+)
 @Immutable
 data class PixieDustUiState(
     val loading: Boolean = true,
@@ -161,12 +166,23 @@ class PixieDustViewModel(
             .filter { it.direction == PixieDustDirection.GIVEN }
             .sortedByDescending { it.timestamp }
         val roomHistory = if (validation.status == StateroomValidationStatus.VALID) {
-            lastLevelForRoom(dust, validation.deck!!, validation.room!!)?.let { last ->
+            val d = validation.deck!!
+            val r = validation.room!!
+            val roomGiven = dust.filter { it.direction == PixieDustDirection.GIVEN && it.deck == d && it.room == r }
+            val roomReceived = dust.filter { it.direction == PixieDustDirection.RECEIVED && it.deck == d && it.room == r }
+            val lastGiven = roomGiven.maxByOrNull { it.timestamp }
+            val lastReceived = roomReceived.maxByOrNull { it.timestamp }
+            val unreplied = roomReceived.count { !it.replied }
+            if (roomGiven.isNotEmpty() || roomReceived.isNotEmpty()) {
                 RoomHistory(
-                    levelName = levels.firstOrNull { it.id == last.levelId }?.name
-                        ?: last.levelNameSnapshot,
-                    count = given.count { it.deck == validation.deck && it.room == validation.room },
+                    lastGivenLevelName = lastGiven?.let { levels.firstOrNull { l -> l.id == it.levelId }?.name ?: it.levelNameSnapshot },
+                    givenCount = roomGiven.size,
+                    lastReceivedLevelName = lastReceived?.let { levels.firstOrNull { l -> l.id == it.levelId }?.name ?: it.levelNameSnapshot },
+                    receivedCount = roomReceived.size,
+                    unrepliedCount = unreplied,
                 )
+            } else {
+                null
             }
         } else {
             null
@@ -237,9 +253,12 @@ class PixieDustViewModel(
             val v = validateStateroomInput(roomInput.value)
             if (v.status == StateroomValidationStatus.VALID) {
                 val s = state.value ?: return
-                lastLevelForRoom(s.given, v.deck!!, v.room!!)
-                    ?.takeIf { last -> s.levels.any { it.id == last.levelId } }
-                    ?.let { selectedLevelId.value = it.levelId }
+                val lastGiven = lastLevelForRoom(s.given, v.deck!!, v.room!!)
+                val targetLevelId = lastGiven?.levelId
+                    ?: s.received.firstOrNull { it.deck == v.deck && it.room == v.room && !it.replied }?.levelId
+                targetLevelId
+                    ?.takeIf { id -> s.levels.any { it.id == id } }
+                    ?.let { selectedLevelId.value = it }
             }
         }
     }
