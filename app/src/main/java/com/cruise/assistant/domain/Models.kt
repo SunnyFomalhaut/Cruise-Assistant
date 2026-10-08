@@ -20,6 +20,19 @@ data class Voyage(
     val maxDeck: Int = 20,
     /** 客用最低楼层（如迪士尼探险号 Deck 5-19，minDeck=5） */
     val minDeck: Int = 1,
+    /** 礼宾（Concierge）客户：不受登船批次限制，11:00 即可优先登船 */
+    val isConcierge: Boolean = false,
+    /**
+     * 联程航次各程晚数（如 [3, 4] = 3夜+4夜 back-to-back），空 = 单程（默认，兼容旧行为）。
+     * 联程链交替拼接：3夜（周一起）止于周四，4夜恰从周四起，游客不下船、在船上办理出入境交接。
+     */
+    val legs: List<Int> = emptyList(),
+    /**
+     * 登岸兰卡威的程下标集合（对 legs 的 0-based 下标，仅对 4夜程有意义）：
+     * 明年1月起部分 4夜航线变为 新加坡-兰卡威-新加坡，第三天停靠兰卡威岛，
+     * 客人可选上岸游玩或留在船上。空集 = 全程不留岸（默认）。
+     */
+    val ashoreLegs: Set<Int> = emptySet(),
 ) {
     /** 航次总天数，含登船日和下船日 */
     val dayCount: Int
@@ -27,6 +40,33 @@ data class Voyage(
 
     fun datesInVoyage(): List<LocalDate> =
         (0 until dayCount).map { boardDate.plusDays(it.toLong()) }
+
+    /**
+     * 各程登船日：首程 = boardDate，之后逐程累积（前一程登船日 + 前一程晚数）。
+     * 单程（legs 为空）返回 [boardDate]。
+     * 例：boardDate=周一、legs=[3,4] → [周一, 周四]。
+     */
+    fun legBoardDates(): List<LocalDate> {
+        if (legs.isEmpty()) return listOf(boardDate)
+        val result = mutableListOf(boardDate)
+        for (i in 0 until legs.size - 1) {
+            result += result.last().plusDays(legs[i].toLong())
+        }
+        return result
+    }
+
+    /**
+     * 各程交接日（办理出入境交接手续的日子）= 除最后一程外各程的下船日。
+     * 单程（legs 为空）无交接，返回空列表。
+     * 例：boardDate=周一、legs=[3,4] → [周四]（周四早上不下船，在船上办手续继续第二程）。
+     */
+    fun junctionDates(): List<LocalDate> {
+        if (legs.isEmpty()) return emptyList()
+        val boardDates = legBoardDates()
+        // 除最后一程外，每程的登船日 + 该程晚数即交接日（也是下一程的登船日）
+        return boardDates.dropLast(1)
+            .mapIndexed { i, board -> board.plusDays(legs[i].toLong()) }
+    }
 
     fun containsDate(date: LocalDate): Boolean =
         !date.isBefore(boardDate) && !date.isAfter(disembarkDate)

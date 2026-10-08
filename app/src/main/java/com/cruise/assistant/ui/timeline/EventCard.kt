@@ -78,8 +78,6 @@ fun EventCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    /** 卡片所在栏是否是最窄的那栏（栏2），影响 compact 分支的排版取舍 */
-    narrow: Boolean = false,
     dollsEnabled: Boolean = true,
     isFinalized: Boolean = false,
 ) {
@@ -360,15 +358,13 @@ fun EventCard(
                             if (hasConflict) {
                                 ConflictBadge()
                             }
-                            if (!narrow) {
-                                Text(
-                                    text = formatStart(event),
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                    color = textColor.copy(alpha = 0.8f),
-                                    maxLines = 1,
-                                    modifier = Modifier.padding(start = 2.dp),
-                                )
-                            }
+                            Text(
+                                text = formatStart(event),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                color = textColor.copy(alpha = 0.8f),
+                                maxLines = 1,
+                                modifier = Modifier.padding(start = 2.dp),
+                            )
                         }
                     }
                 } else {

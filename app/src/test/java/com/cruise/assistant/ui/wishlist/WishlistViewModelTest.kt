@@ -20,6 +20,7 @@ import com.cruise.assistant.data.repo.CategoryRepository
 import com.cruise.assistant.data.repo.EventRepository
 import com.cruise.assistant.data.repo.VoyageRepository
 import com.cruise.assistant.data.repo.WishlistRepository
+import com.cruise.assistant.domain.Category
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.WishlistItem
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +82,8 @@ class WishlistViewModelTest {
             toggledId = id
             toggledCompleted = completed
         }
+
+        override suspend fun reassignCategory(fromCategoryId: Long, toCategoryId: Long) {}
     }
 
     private class FakeCategoryDao : CategoryDao {
@@ -107,6 +110,7 @@ class WishlistViewModelTest {
     private class FakePixieDustDao : PixieDustDao {
         override fun observeAll(): Flow<List<PixieDustEntity>> = emptyFlow()
         override suspend fun getById(id: Long): PixieDustEntity? = null
+        override suspend fun getAll(): List<PixieDustEntity> = emptyList()
         override suspend fun insert(record: PixieDustEntity): Long = 1L
         override suspend fun update(record: PixieDustEntity) {}
         override suspend fun delete(record: PixieDustEntity) {}
@@ -134,7 +138,7 @@ class WishlistViewModelTest {
         override suspend fun upsertVoyage(voyage: VoyageEntity) {}
         override suspend fun clearVoyage() {}
         override fun observeDayPlans(): Flow<List<DayPlanEntity>> = emptyFlow()
-        override suspend fun observeDayPlansOnce(): List<DayPlanEntity> = emptyList()
+        override suspend fun getDayPlansOnce(): List<DayPlanEntity> = emptyList()
         override fun observeDayPlan(date: LocalDate): Flow<DayPlanEntity?> = emptyFlow()
         override suspend fun upsertDayPlans(plans: List<DayPlanEntity>) {}
         override suspend fun upsertDayPlan(plan: DayPlanEntity) {}
@@ -153,7 +157,7 @@ class WishlistViewModelTest {
         val fakePixieLevelDao = FakePixieLevelDao()
 
         val wishlistRepo = WishlistRepository(fakeWishlistDao, fakeCategoryDao)
-        val categoryRepo = CategoryRepository(fakeCategoryDao, fakeEventDao)
+        val categoryRepo = CategoryRepository(fakeCategoryDao, fakeEventDao, FakeWishlistDao())
         val eventRepo = EventRepository(fakeEventDao, fakeVoyageDao, fakeCategoryDao)
         val voyageRepo = VoyageRepository(
             voyageDao = fakeVoyageDao,
@@ -177,6 +181,7 @@ class WishlistViewModelTest {
             id = 42L,
             title = "回忆：瓦力与伊芙 Remember",
             categoryId = 3L,
+            category = Category(id = 3L, name = "演出", colorArgb = 0xFFF5B301.toInt(), iconKey = "show"),
             deck = 6,
             zone = ShipZone.BOW,
             placeName = "华特迪士尼剧院 Walt Disney Theatre",
@@ -213,6 +218,54 @@ class WishlistViewModelTest {
     }
 
     @Test
+    fun convertToEvent_nonShowCategory_writesNullWaitMinutes() {
+        // 与 EventSheetViewModel.save 的约定对齐：只有演出类别保留 waitMinutes，
+        // 其他类别转日程必须写 null（showEffectiveRange 的扩展区间只对 show 生效，
+        // 但数据层面脏的 waitMinutes 会在后续编辑时泄露到表单）。
+        val fakeWishlistDao = FakeWishlistDao()
+        val fakeCategoryDao = FakeCategoryDao()
+        val fakeEventDao = FakeEventDao()
+
+        val vm = WishlistViewModel(
+            wishlistRepository = WishlistRepository(fakeWishlistDao, fakeCategoryDao),
+            categoryRepository = CategoryRepository(fakeCategoryDao, fakeEventDao, FakeWishlistDao()),
+            eventRepository = EventRepository(fakeEventDao, FakeVoyageDao(), fakeCategoryDao),
+            voyageRepository = VoyageRepository(
+                voyageDao = FakeVoyageDao(),
+                eventDao = fakeEventDao,
+                categoryDao = fakeCategoryDao,
+                locationPresetDao = FakeLocationPresetDao(),
+                pixieDustDao = FakePixieDustDao(),
+                pixieLevelDao = FakePixieLevelDao(),
+                wishlistDao = fakeWishlistDao,
+            ),
+            coroutineScope = CoroutineScope(Dispatchers.Unconfined),
+        )
+
+        val item = WishlistItem(
+            id = 7L,
+            title = "泳池派对",
+            categoryId = 4L,
+            category = Category(id = 4L, name = "娱乐项目", colorArgb = 0xFF9B5DE5.toInt(), iconKey = "fun"),
+            deck = 12,
+            zone = ShipZone.MID,
+            placeName = "无边际泳池 Infinity Pool",
+            isCompleted = false,
+        )
+
+        vm.convertToEvent(
+            item = item,
+            date = LocalDate.of(2026, 9, 12),
+            startTime = LocalTime.of(14, 0),
+            durationMinutes = 60,
+        )
+
+        assertEquals(1, fakeEventDao.insertedEvents.size)
+        val inserted = fakeEventDao.insertedEvents.first().toDomain()
+        assertEquals(null, inserted.waitMinutes)
+    }
+
+    @Test
     fun activeVoyageDates_mapsDatesFromVoyageRepository() {
         val fakeWishlistDao = FakeWishlistDao()
         val fakeCategoryDao = FakeCategoryDao()
@@ -234,7 +287,7 @@ class WishlistViewModelTest {
         val fakeVoyageDao = FakeVoyageDao(voyageFlow = voyageFlow)
 
         val wishlistRepo = WishlistRepository(fakeWishlistDao, fakeCategoryDao)
-        val categoryRepo = CategoryRepository(fakeCategoryDao, fakeEventDao)
+        val categoryRepo = CategoryRepository(fakeCategoryDao, fakeEventDao, FakeWishlistDao())
         val eventRepo = EventRepository(fakeEventDao, fakeVoyageDao, fakeCategoryDao)
         val voyageRepo = VoyageRepository(
             voyageDao = fakeVoyageDao,

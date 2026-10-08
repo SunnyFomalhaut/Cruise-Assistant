@@ -39,12 +39,48 @@ private fun actionForSlot(slot: Int): String? = when (slot) {
     else -> null
 }
 
+/**
+ * 保存事件后重排提醒的窄接口：ReminderScheduler 依赖 Android Context，JVM 单测无法构造，
+ * EventSheetViewModel 只依赖这个接口，测试里用 lambda 替身。
+ */
+fun interface ReminderRescheduler {
+    suspend fun rescheduleAll()
+}
+
+/**
+ * 计算单个事件的提醒触发点（纯函数，便于 JVM 单测直接覆盖槽位逻辑）：
+ * - 非演出：启用槽位（slot 0/1/2）相对开场时刻。
+ * - 演出：启用槽位相对候场开始（开场 - waitMinutes）；另加 slot 3"开场前 5 分钟"。
+ * - 演出且 waitMinutes == 0（不候场）：跳过 slot 0/1/2——它们的基准就是开场时刻，
+ *   "开始候场"语义不成立，通知文案不应再出现"候场"字样；仅保留 slot 3。
+ * 早于 [nowMs] 的触发点被丢弃。返回 (slot, 触发时刻) 列表（未排序）。
+ */
+internal fun reminderTriggersFor(
+    showMs: Long,
+    isShow: Boolean,
+    waitMinutes: Int,
+    enabledSlots: List<Int>,
+    nowMs: Long,
+): List<Pair<Int, Long>> = buildList {
+    if (!isShow || waitMinutes > 0) {
+        val baseMs = showMs - waitMinutes * 60_000L
+        enabledSlots.forEach { slot ->
+            val triggerMs = baseMs - SLOT_LEAD_MINUTES[slot] * 60_000L
+            if (triggerMs > nowMs) add(slot to triggerMs)
+        }
+    }
+    if (isShow) {
+        val openTriggerMs = showMs - 5 * 60_000L
+        if (openTriggerMs > nowMs) add(3 to openTriggerMs)
+    }
+}
+
 class ReminderScheduler(
     private val context: Context,
     private val eventRepository: EventRepository,
     private val categoryRepository: CategoryRepository,
     private val settingsStore: SettingsStore,
-) {
+) : ReminderRescheduler {
     private val alarmManager: AlarmManager? =
         context.getSystemService(AlarmManager::class.java)
 
@@ -62,7 +98,7 @@ class ReminderScheduler(
      * 取消所有旧闹钟并按当前数据重排。
      * 事件增删改、设置变更、定稿/解锁、开机、App 启动时都要调。
      */
-    suspend fun rescheduleAll() = rescheduleMutex.withLock {
+    override suspend fun rescheduleAll() = rescheduleMutex.withLock {
         val manager = alarmManager ?: return
         val settings = settingsStore.settings.first()
         val events = eventRepository.getAllEvents()
@@ -106,16 +142,11 @@ class ReminderScheduler(
                 val showMs = event.date.atTime(event.startTime).atZone(zone).toInstant().toEpochMilli()
                 // 演出：提醒基准 = 候场开始（按该演出的候场时间），三个开关都相对候场；
                 // 另加 slot 3"开场前 5 分钟"安全网。非演出保持原语义。
+                // 候场 0（不候场）时跳过候场相对槽位，仅保留 slot 3（见 reminderTriggersFor）。
                 val isShow = categories[event.categoryId]?.iconKey == "show"
-                val baseMs = if (isShow) showMs - event.effectiveWaitMinutes * 60_000L else showMs
-                enabledSlots.forEach { slot ->
-                    val triggerMs = baseMs - SLOT_LEAD_MINUTES[slot] * 60_000L
-                    if (triggerMs > nowMs) pendingAlarms += Triple(event, triggerMs, slot)
-                }
-                if (isShow) {
-                    val openTriggerMs = showMs - 5 * 60_000L
-                    if (openTriggerMs > nowMs) pendingAlarms += Triple(event, openTriggerMs, 3)
-                }
+                val waitMinutes = if (isShow) event.effectiveWaitMinutes else 0
+                reminderTriggersFor(showMs, isShow, waitMinutes, enabledSlots, nowMs)
+                    .forEach { (slot, triggerMs) -> pendingAlarms += Triple(event, triggerMs, slot) }
             }
         pendingAlarms.sortedBy { it.second }.take(MAX_SCHEDULED).forEach { (event, triggerMs, slot) ->
             val categoryName = categories[event.categoryId]?.name.orEmpty()
@@ -133,6 +164,7 @@ class ReminderScheduler(
                 when {
                     slot == 3 -> append(" · 还有 5 分钟开场")
                     isShow && lead > 0 -> append(" · 还有 ").append(lead).append(" 分钟开始候场")
+                    // 不候场（waitMinutes==0）时 slot 0/1/2 不会生成，此分支实际不可达，防御性保留
                     isShow -> append(" · 现在开始候场")
                     lead > 0 -> append(" · 还有 ").append(lead).append(" 分钟开始")
                     else -> append(" · 现在开始")

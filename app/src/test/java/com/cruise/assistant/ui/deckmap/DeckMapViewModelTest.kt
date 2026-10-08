@@ -22,6 +22,7 @@ class DeckMapViewModelTest {
     ) : PixieDustDao {
         override fun observeAll(): Flow<List<PixieDustEntity>> = flow
         override suspend fun getById(id: Long): PixieDustEntity? = null
+        override suspend fun getAll(): List<PixieDustEntity> = flow.value
         override suspend fun insert(record: PixieDustEntity): Long = 1L
         override suspend fun update(record: PixieDustEntity) {}
         override suspend fun delete(record: PixieDustEntity) {}

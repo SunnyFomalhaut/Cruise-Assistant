@@ -31,4 +31,11 @@ interface WishlistDao {
 
     @Query("UPDATE wishlist_item SET isCompleted = :completed WHERE id = :id")
     suspend fun toggleCompleted(id: Long, completed: Boolean)
+
+    /**
+     * 把一个类别下的所有收藏条目迁移到另一个类别。
+     * 删除自定义类别时必须先迁移，否则 wishlist_item.categoryId 会指向已不存在的类别。
+     */
+    @Query("UPDATE wishlist_item SET categoryId = :toCategoryId WHERE categoryId = :fromCategoryId")
+    suspend fun reassignCategory(fromCategoryId: Long, toCategoryId: Long)
 }

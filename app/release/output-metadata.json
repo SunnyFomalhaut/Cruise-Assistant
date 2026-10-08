@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 39,
-      "versionName": "1.10.13",
-      "outputFile": "CruiseAssistant-v1.10.13.apk"
+      "versionCode": 51,
+      "versionName": "1.11.0",
+      "outputFile": "CruiseAssistant-v1.11.0.apk"
     }
   ],
   "elementType": "File",
@@ -22,14 +22,14 @@
       "minApi": 28,
       "maxApi": 30,
       "baselineProfiles": [
-        "baselineProfiles/1/CruiseAssistant-v1.10.13.dm"
+        "baselineProfiles/1/CruiseAssistant-v1.11.0.dm"
       ]
     },
     {
       "minApi": 31,
       "maxApi": 2147483647,
       "baselineProfiles": [
-        "baselineProfiles/0/CruiseAssistant-v1.10.13.dm"
+        "baselineProfiles/0/CruiseAssistant-v1.11.0.dm"
       ]
     }
   ],

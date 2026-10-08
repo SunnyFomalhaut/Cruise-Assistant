@@ -16,6 +16,10 @@ interface PixieDustDao {
     @Query("SELECT * FROM pixie_dust WHERE id = :id")
     suspend fun getById(id: Long): PixieDustEntity?
 
+    /** 一次性读全表（存档快照用，无需排序保证） */
+    @Query("SELECT * FROM pixie_dust")
+    suspend fun getAll(): List<PixieDustEntity>
+
     @Insert
     suspend fun insert(record: PixieDustEntity): Long
 

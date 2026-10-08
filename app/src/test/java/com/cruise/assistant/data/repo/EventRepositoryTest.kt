@@ -85,7 +85,7 @@ class EventRepositoryTest {
         override suspend fun upsertVoyage(voyage: VoyageEntity) {}
         override suspend fun clearVoyage() {}
         override fun observeDayPlans(): Flow<List<DayPlanEntity>> = emptyFlow()
-        override suspend fun observeDayPlansOnce(): List<DayPlanEntity> = emptyList()
+        override suspend fun getDayPlansOnce(): List<DayPlanEntity> = emptyList()
         override fun observeDayPlan(date: LocalDate): Flow<DayPlanEntity?> = emptyFlow()
         override suspend fun upsertDayPlans(plans: List<DayPlanEntity>) {}
         override suspend fun upsertDayPlan(plan: DayPlanEntity) {}

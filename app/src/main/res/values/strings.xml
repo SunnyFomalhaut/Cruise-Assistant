@@ -18,6 +18,27 @@
     <string name="dinner_time_late">20:15</string>
     <string name="max_deck_label">最高层数</string>
     <string name="generate_timeline">生成时间轴</string>
+    <!-- 礼宾优先登船：礼宾客户不受登船批次限制，11:00 即可登船 -->
+    <string name="concierge_toggle_label">礼宾优先登船</string>
+    <string name="concierge_board_banner">礼宾通道 · 11:00 优先登船</string>
+    <string name="concierge_badge">礼宾</string>
+    <!-- 联程航次（back-to-back）：连续多程不下船，船上办出入境交接 -->
+    <string name="multileg_toggle_label">联程航次</string>
+    <string name="multileg_leg_count_format">%1$d 程</string>
+    <string name="multileg_summary_format">%1$s夜 · 共%2$d晚 · %3$s登船 → %4$s7:00下船</string>
+    <string name="multileg_disembark_auto_hint">联程下船日自动计算，为最后一程结束当天</string>
+    <!-- 联程编排弹层：班次只有 3夜/4夜，链强制交替拼接（3+4+3+4…），仅可从末尾追加/缩短 -->
+    <string name="multileg_editor_title">联程编排</string>
+    <string name="multileg_leg_chip_format">第%1$d程 · %2$d夜</string>
+    <string name="multileg_add_leg_format">添加%1$d夜</string>
+    <string name="multileg_editor_empty_hint">点下方按钮追加航程</string>
+    <string name="multileg_alternate_hint">3夜与4夜交替拼接，仅可从末尾缩短</string>
+    <string name="multileg_restore_single">恢复单程</string>
+    <!-- 兰卡威登岸：明年1月起部分 4夜航线变为 新加坡-兰卡威-新加坡，第三天停靠兰卡威可选上岸 -->
+    <string name="ashore_toggle_label">登岸兰卡威</string>
+    <string name="ashore_leg_chip_format">第%1$d程 · 登岸兰卡威</string>
+    <string name="ashore_section_title">登岸设置</string>
+    <string name="ashore_card_hint">新加坡-兰卡威-新加坡航线：第三天靠港，可上岸游玩或留在船上</string>
     <string name="error_disembark_before_board">下船日期不能早于登船日期</string>
     <string name="preset_shows_dialog_title">已添加预置演出</string>
     <string name="preset_shows_dialog_header">已按迪士尼探险号的演出安排，将以下演出加入日程表第二栏：</string>
@@ -171,6 +192,8 @@
     <string name="pixie_status_given_pending">已发未回</string>
     <string name="pixie_linkage_summary_format">共 %1$d 间 · 🔴 待回 %2$d · 🟡 需补 %3$d · 🟢 持平 %4$d · 🔵 已发 %5$d</string>
     <string name="pixie_deck_summary_format">待回 %1$d · 需补 %2$d · 持平 %3$d · 已发 %4$d</string>
+    <string name="pixie_linkage_deck_expand">展开本层房间明细</string>
+    <string name="pixie_linkage_deck_collapse">收起本层房间明细</string>
 
     <!-- 设置 -->
     <string name="settings">设置</string>
@@ -257,10 +280,51 @@
     <!-- 候场时间 -->
     <string name="lead_time_label">提前候场时间</string>
     <string name="lead_time_format">%d 分钟</string>
+    <string name="lead_time_none">不候场</string>
     <string name="lead_time_hint">建议提前候场以获取较好座位</string>
 
     <!-- 卡片萌趣装饰 -->
     <string name="card_dolls_section_title">卡片萌趣装饰</string>
     <string name="card_dolls_enabled">卡片人偶立绘点缀</string>
     <string name="card_dolls_desc">在日程卡片空白处半透明点缀达菲家族七位宝宝</string>
+
+    <!-- 航次存档 -->
+    <string name="archive_list_title">航次存档</string>
+    <string name="archive_empty">暂无存档</string>
+    <string name="archive_custom_voyage">自定义航次</string>
+    <string name="archive_date_range_format">%1$s ~ %2$s</string>
+    <string name="archive_created_at_format">存档于 %1$s</string>
+    <string name="archive_delete_confirm_title">删除存档</string>
+    <string name="archive_delete_confirm_text">删除后这段旅程回忆无法恢复，确定删除？</string>
+    <string name="archive_load_failed">存档读取失败或已损坏</string>
+    <string name="archive_empty_day">这一天没有安排</string>
+    <string name="archive_tab_summary">概要</string>
+    <string name="archive_tab_timeline">时间轴</string>
+    <string name="archive_tab_pixie">仙尘</string>
+    <string name="archive_tab_wishlist">心愿</string>
+    <string name="archive_ship_label">船名</string>
+    <string name="archive_board_label">登船</string>
+    <string name="archive_disembark_label">下船</string>
+    <string name="archive_nights_label">晚数</string>
+    <string name="archive_legs_label">联程</string>
+    <string name="archive_days_label">天数</string>
+    <string name="archive_saved_at_label">存档时间</string>
+    <string name="archive_wishlist_empty">这段旅程没有留下心愿</string>
+    <string name="archive_wishlist_created_at_format">创建于 %1$s</string>
+    <string name="archive_wishlist_completed">已完成</string>
+    <string name="archive_wishlist_not_completed">未完成</string>
+    <string name="settings_archive_voyage">存档此航次</string>
+    <string name="archive_saved_toast">已存档</string>
+    <string name="archive_no_voyage_toast">当前无航次</string>
+    <!-- 存档详情时间轴：回放模式切换（日程表=定稿样式仅生效日程；草稿=三栏卡片含未启用备选） -->
+    <string name="archive_mode_schedule">日程表</string>
+    <string name="archive_mode_draft">草稿</string>
+    <string name="archive_mode_schedule_unfinalized_hint">日程表样式展示（该日当时未定稿）</string>
+    <string name="archive_mode_draft_finalized_hint">草稿视角：含当时未启用的备选日程</string>
+    <string name="settings_archives_entry">航次存档</string>
+    <string name="settings_archives_count_format">%1$d 份</string>
+    <string name="reset_voyage_archive_first">存档后重建</string>
+    <string name="reset_voyage_direct">直接重建</string>
+    <string name="reset_voyage_choice_warning">重建会清空当前航次的全部数据（事件、定稿、仙尘、心愿单），无法恢复。可以先存档，留下这段旅程的完整回忆。</string>
+    <string name="onboarding_view_archives">查看航次存档</string>
 </resources>

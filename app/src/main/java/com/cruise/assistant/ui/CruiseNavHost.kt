@@ -39,6 +39,10 @@ import com.cruise.assistant.domain.presetShowsSummary
 import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.PixieDustDirection
 import com.cruise.assistant.domain.PixieDustRecord
+import com.cruise.assistant.ui.archive.ArchiveDetailScreen
+import com.cruise.assistant.ui.archive.ArchiveDetailViewModel
+import com.cruise.assistant.ui.archive.ArchiveListScreen
+import com.cruise.assistant.ui.archive.ArchiveListViewModel
 import com.cruise.assistant.ui.category.CategorySheet
 import com.cruise.assistant.ui.category.CategoryViewModel
 import com.cruise.assistant.ui.common.viewModelFactory
@@ -80,6 +84,8 @@ object Routes {
     const val FACILITIES = "facilities"
     const val DECK_MAP = "deck_map"
     const val DECK_MAP_PATTERN = "deck_map?deck={deck}&highlight={highlight}&pixie={pixie}"
+    const val ARCHIVE_LIST = "archives"
+    const val ARCHIVE_DETAIL = "archive/{id}"
 
     fun deckMap(deck: Int? = null, highlight: String? = null, pixieMode: Boolean = false): String {
         return buildString {
@@ -93,6 +99,9 @@ object Routes {
             }
         }
     }
+
+    /** 存档详情路由 builder（仿 deckMap 模式） */
+    fun archiveDetail(id: Long): String = "archive/$id"
 }
 
 /** 显示范围最小跨度，和 domain 层（TimelineLayout.kt 的 MIN_RANGE_MINUTES）保持一致。 */
@@ -132,8 +141,14 @@ fun CruiseNavHost(container: AppContainer) {
                 },
             )
             val state by vm.state.collectAsState()
+            // 有存档时引导页 hero 区显示"查看航次存档"入口（重建航次后回来的回忆入口）
+            val archives by container.voyageArchiveRepository
+                .observeAll()
+                .collectAsState(initial = emptyList())
             OnboardingScreen(
                 state = state,
+                archiveCount = archives.size,
+                onViewArchives = { navController.navigate(Routes.ARCHIVE_LIST) },
                 onShipNameChange = vm::onShipNameChange,
                 onShipSelected = vm::onShipSelected,
                 onScheduleSelected = vm::onScheduleSelected,
@@ -142,6 +157,11 @@ fun CruiseNavHost(container: AppContainer) {
                 onDisembarkDateChange = vm::onDisembarkDateChange,
                 onMaxDeckChange = vm::onMaxDeckChange,
                 onDinnerTimeChange = vm::onDinnerTimeChange,
+                onConciergeToggle = vm::onConciergeToggle,
+                onAddLeg = vm::onAddLeg,
+                onRemoveLeg = vm::onRemoveLeg,
+                onClearLegs = vm::onClearLegs,
+                onToggleAshore = vm::onToggleAshore,
                 onSubmit = {
                     if (state.isBuiltInShip) showPresetShowsDialog = true
                     vm.submit {
@@ -557,12 +577,20 @@ fun CruiseNavHost(container: AppContainer) {
                         container.voyageRepository,
                         container.eventRepository,
                         container.reminderScheduler,
+                        container.voyageArchiveRepository,
                     )
                 },
             )
             val settingsState by vm.state.collectAsState()
             val current = settingsState
             val context = LocalContext.current
+            // 存档结果一次性 Toast（已存档/当前无航次），消费后清除防旋转重复弹
+            LaunchedEffect(current?.archiveResultResId) {
+                current?.archiveResultResId?.let { resId ->
+                    Toast.makeText(context, context.getString(resId), Toast.LENGTH_SHORT).show()
+                    vm.onArchiveResultShown()
+                }
+            }
             val photoPickerLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.PickVisualMedia(),
             ) { uri ->
@@ -604,6 +632,15 @@ fun CruiseNavHost(container: AppContainer) {
                         )
                     },
                     onCardDollsToggle = vm::setCardDollsEnabled,
+                    onArchiveVoyage = vm::archiveVoyage,
+                    onArchiveAndResetVoyage = {
+                        vm.archiveAndResetVoyage {
+                            navController.navigate(Routes.ONBOARDING) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    },
+                    onNavigateToArchives = { navController.navigate(Routes.ARCHIVE_LIST) },
                 )
             }
 
@@ -717,6 +754,52 @@ fun CruiseNavHost(container: AppContainer) {
                 onNavigateToFacility = vm::navigateToFacility,
                 onClearHighlight = vm::clearHighlight,
                 onClearPixieMode = vm::clearPixieMode,
+            )
+        }
+        // ---- 航次存档列表 ----
+        composable(Routes.ARCHIVE_LIST) {
+            val vm: ArchiveListViewModel = viewModel(
+                factory = viewModelFactory {
+                    ArchiveListViewModel(container.voyageArchiveRepository)
+                },
+            )
+            val state by vm.state.collectAsState()
+            ArchiveListScreen(
+                state = state,
+                onBack = { navController.popBackStack() },
+                onOpenArchive = { id -> navController.navigate(Routes.archiveDetail(id)) },
+                onRequestDelete = vm::requestDelete,
+                onConfirmDelete = vm::delete,
+                onCancelDelete = vm::cancelDelete,
+            )
+        }
+        // ---- 航次存档详情（只读回放）----
+        composable(
+            route = Routes.ARCHIVE_DETAIL,
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.LongType
+                },
+            ),
+        ) { backStackEntry ->
+            val archiveId = backStackEntry.arguments?.getLong("id") ?: 0L
+            val vm: ArchiveDetailViewModel = viewModel(
+                factory = viewModelFactory {
+                    ArchiveDetailViewModel(
+                        repository = container.voyageArchiveRepository,
+                        // 查看偏好（显示范围/缩放/折叠）跟随当前设置，不属快照
+                        settingsFlow = container.settingsStore.settings,
+                        archiveId = archiveId,
+                    )
+                },
+            )
+            val state by vm.state.collectAsState()
+            ArchiveDetailScreen(
+                state = state,
+                onBack = { navController.popBackStack() },
+                onSelectDate = vm::selectDate,
+                onToggleFullDay = vm::toggleFullDay,
+                onSetTimelineMode = vm::setTimelineMode,
             )
         }
     }

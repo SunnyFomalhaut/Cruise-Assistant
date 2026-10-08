@@ -27,6 +27,7 @@ class CruiseApp : Application() {
             val roomJson = assets.open("staterooms.json").bufferedReader().use { it.readText() }
             StateroomCatalog.setStaterooms(StateroomCatalog.parseStateroomsJson(roomJson))
         }
+        // 启动后台初始化：播种与排程合并为同一个协程按序执行，避免并发竞态。
         // 幂等补缺内置类别：升级用户（已有航次/类别表非空）也能拿到新增的内置类别
         // （如 v1.7.4 的 泳池娱乐/商店/青少年活动）——createVoyage 只在首次建航次时跑。
         CoroutineScope(Dispatchers.Default).launch {
@@ -35,10 +36,10 @@ class CruiseApp : Application() {
                 repo.seedMissingBuiltInCategories()
                 container.pixieLevelRepository.seedBuiltIns()
             }
-        }
-        // App 每次启动都补排一次：捡回上次未排上的（超过 100 个上限的部分）、
-        // 以及设置/数据在应用未运行时被外部改动（理论上不会，但便宜且安全）的情况。
-        CoroutineScope(Dispatchers.Default).launch {
+            // 排程放在播种之后：ReminderScheduler 靠类别 iconKey 判定演出事件，
+            // 若与播种并发，可能拿到不完整的类别表。
+            // App 每次启动都补排一次：捡回上次未排上的（超过 100 个上限的部分）、
+            // 以及设置/数据在应用未运行时被外部改动（理论上不会，但便宜且安全）的情况。
             // 与 BootReceiver/TimeChangeReceiver 一致：排程异常不得让 App 启动即崩。
             // DataStore 损坏等异常在此吞掉，UI 仍可进入让用户在设置页恢复。
             runCatching { container.reminderScheduler.rescheduleAll() }

@@ -93,8 +93,6 @@ fun LaneCanvas(
                 val widthFraction = LANE_WEIGHTS[lane] / weightSum
                 (totalWidth * leftFraction) to (totalWidth * widthFraction - LANE_GAP)
             }
-            // 三栏等宽后不再有"窄栏"概念；narrow 恒为 false（compact 分支的取舍逻辑保留但不再触发窄栏路径）
-            val narrow = false
 
             Box(
                 Modifier
@@ -113,7 +111,6 @@ fun LaneCanvas(
                     dollsEnabled = dollsEnabled,
                     isFinalized = singleLane,
                     modifier = Modifier.fillMaxSize(),
-                    narrow = narrow,
                 )
                 if (menuFor?.id == event.id) {
                     menuContent(event)

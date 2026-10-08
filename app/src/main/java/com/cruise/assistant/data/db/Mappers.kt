@@ -18,13 +18,44 @@ import com.cruise.assistant.domain.PixieDustRecord
 import com.cruise.assistant.domain.PixieLevel
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.Voyage
+import org.json.JSONArray
+
+/** 联程各程晚数 List ↔ JSON 数组文本（如 "[3,4]"）的双向转换 */
+fun List<Int>.toLegNightsJson(): String? =
+    if (isEmpty()) null else JSONArray(this).toString()
+
+fun String?.toLegNights(): List<Int> {
+    if (isNullOrBlank()) return emptyList()
+    // 数据库出现脏数据（手改/旧版本残留）时不让整表加载崩溃，兜底为单程
+    return runCatching {
+        val array = JSONArray(this)
+        (0 until array.length()).map { array.getInt(it) }
+    }.getOrDefault(emptyList())
+}
+
+/** 登岸兰卡威的程下标集合 Set ↔ JSON int 数组文本（如 "[0,2]"）的双向转换 */
+fun Set<Int>.toAshoreLegsJson(): String? =
+    if (isEmpty()) null else JSONArray(this).toString()
+
+fun String?.toAshoreLegs(): Set<Int> {
+    if (isNullOrBlank()) return emptySet()
+    // 数据库出现脏数据（手改/旧版本残留）时不让整表加载崩溃，兜底为无登岸程
+    return runCatching {
+        val array = JSONArray(this)
+        (0 until array.length()).map { array.getInt(it) }.toSet()
+    }.getOrDefault(emptySet())
+}
 
 fun VoyageEntity.toDomain() = Voyage(
-    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck, minDeck,
+    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck, minDeck, isConcierge,
+    legs = legNights.toLegNights(),
+    ashoreLegs = ashoreLegs.toAshoreLegs(),
 )
 
 fun Voyage.toEntity() = VoyageEntity(
-    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck, minDeck,
+    id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck, minDeck, isConcierge,
+    legNights = legs.toLegNightsJson(),
+    ashoreLegs = ashoreLegs.toAshoreLegsJson(),
 )
 
 fun CategoryEntity.toDomain() = Category(
@@ -57,16 +88,22 @@ fun CruiseEvent.toEntity() = EventEntity(
 fun DayPlanEntity.toDomain() = DayPlan(date, finalized, finalizedAt)
 fun DayPlan.toEntity() = DayPlanEntity(date, finalized, finalizedAt)
 
+// 数据库出现未知 zone 值（旧库脏数据/枚举改名）时兜底为船中，避免整表加载崩溃
 fun LocationPresetEntity.toDomain() = LocationPreset(
-    id, deck, ShipZone.valueOf(zone), placeName, lastUsedEpochMs, useCount,
+    id, deck, runCatching { ShipZone.valueOf(zone) }.getOrNull() ?: ShipZone.MID,
+    placeName, lastUsedEpochMs, useCount,
 )
 
 fun LocationPreset.toEntity() = LocationPresetEntity(
     id, deck, zone.name, placeName, lastUsedEpochMs, useCount,
 )
 
+// 数据库出现未知 direction 值（旧库脏数据/枚举改名）时兜底为 GIVEN，避免整表加载崩溃
 fun PixieDustEntity.toDomain() = PixieDustRecord(
-    id = id, direction = PixieDustDirection.valueOf(direction), deck = deck, room = room,
+    id = id,
+    direction = runCatching { PixieDustDirection.valueOf(direction) }
+        .getOrNull() ?: PixieDustDirection.GIVEN,
+    deck = deck, room = room,
     levelId = levelId, levelNameSnapshot = levelNameSnapshot, replied = replied, note = note,
     timestamp = timestamp,
 )
@@ -87,7 +124,7 @@ fun WishlistItemEntity.toDomain(category: com.cruise.assistant.domain.Category? 
     categoryId = categoryId,
     category = category,
     deck = deck,
-    zone = zone?.let { com.cruise.assistant.domain.ShipZone.valueOf(it) },
+    zone = zone?.let { runCatching { com.cruise.assistant.domain.ShipZone.valueOf(it) }.getOrNull() },
     placeName = placeName,
     note = note,
     isCompleted = isCompleted,

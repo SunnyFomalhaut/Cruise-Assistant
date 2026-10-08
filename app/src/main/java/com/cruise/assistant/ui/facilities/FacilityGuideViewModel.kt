@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.cruise.assistant.domain.FacilityItemUiModel
 import com.cruise.assistant.domain.filterFacilities
 import com.cruise.assistant.domain.getAllFacilityItems
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +67,18 @@ class FacilityGuideViewModel : ViewModel() {
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = FacilityGuideUiState(),
     )
+
+    init {
+        // allFacilities 里的 isOpen 是 VM 创建时刻用 LocalTime.now() 算的：页面开着跨过
+        // 营业时间边界后（如 14:59 开到 15:01），"只看营业中"过滤会基于过期状态。
+        // 这里每 60 秒用当前时间重算一次，不依赖用户手动刷新或重进页面。
+        viewModelScope.launch {
+            while (isActive) {
+                delay(60_000)
+                allFacilities.value = getAllFacilityItems(LocalTime.now())
+            }
+        }
+    }
 
     fun refreshTime() {
         allFacilities.value = getAllFacilityItems(LocalTime.now())

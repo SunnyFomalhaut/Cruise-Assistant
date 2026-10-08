@@ -449,7 +449,11 @@ fun EventSheet(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             OutlinedTextField(
-                                value = stringResource(R.string.lead_time_format, state.waitMinutes),
+                                value = if (state.waitMinutes == 0) {
+                                    stringResource(R.string.lead_time_none)
+                                } else {
+                                    stringResource(R.string.lead_time_format, state.waitMinutes)
+                                },
                                 onValueChange = {},
                                 label = { Text(stringResource(R.string.lead_time_label)) },
                                 readOnly = true,
@@ -464,12 +468,16 @@ fun EventSheet(
                                 expanded = waitMenuOpen,
                                 onDismissRequest = { waitMenuOpen = false },
                             ) {
-                                (10..120 step 5).forEach { mins ->
+                                (0..120 step 5).forEach { mins ->
                                     val selected = state.waitMinutes == mins
                                     DropdownMenuItem(
                                         text = {
                                             Text(
-                                                text = stringResource(R.string.lead_time_format, mins),
+                                                text = if (mins == 0) {
+                                                    stringResource(R.string.lead_time_none)
+                                                } else {
+                                                    stringResource(R.string.lead_time_format, mins)
+                                                },
                                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                                 color = if (selected) CruiseMarine else Slate900,
                                             )

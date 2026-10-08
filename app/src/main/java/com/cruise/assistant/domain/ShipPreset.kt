@@ -10,7 +10,6 @@ data class SchedulePreset(
     val boardDayOfWeek: DayOfWeek,
     val disembarkDayOfWeek: DayOfWeek,
     val boardTime: LocalTime,
-    val disembarkTime: LocalTime,
 ) {
     /** Compute board date as the next occurrence of boardDayOfWeek from `today` (inclusive). */
     fun boardDateFrom(today: LocalDate): LocalDate =
@@ -62,7 +61,6 @@ val BUILT_IN_SHIPS: List<ShipPreset> = listOf(
                 boardDayOfWeek = DayOfWeek.MONDAY,
                 disembarkDayOfWeek = DayOfWeek.THURSDAY,
                 boardTime = LocalTime.of(12, 0),
-                disembarkTime = LocalTime.of(7, 0),
             ),
             SchedulePreset(
                 label = "五天四夜",
@@ -70,7 +68,6 @@ val BUILT_IN_SHIPS: List<ShipPreset> = listOf(
                 boardDayOfWeek = DayOfWeek.THURSDAY,
                 disembarkDayOfWeek = DayOfWeek.MONDAY,
                 boardTime = LocalTime.of(12, 0),
-                disembarkTime = LocalTime.of(7, 0),
             ),
         ),
         maxDeck = 19,

@@ -77,6 +77,8 @@ fun EventDetailDialog(
     category: Category?,
     onNavigateToMap: (deck: Int, target: String) -> Unit,
     onDismiss: () -> Unit,
+    /** 只读回放（航次存档）模式：隐藏"定位"等操作入口，只保留信息展示与关闭 */
+    readOnly: Boolean = false,
 ) {
     val fullLocation = formatLocation(event.deck, event.zone, event.placeName, compact = false)
 
@@ -92,7 +94,8 @@ fun EventDetailDialog(
     }
 
     val isShow = category?.iconKey == "show"
-    val waitStartStr = if (isShow) formatWaitStart(event) else null
+    // 候场 0（不候场）时整条候场横幅不显示，避免出现"提前 0 分钟"的无效提示
+    val waitStartStr = if (isShow && event.effectiveWaitMinutes > 0) formatWaitStart(event) else null
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -270,7 +273,8 @@ fun EventDetailDialog(
                                     color = Slate900,
                                     modifier = Modifier.weight(1f),
                                 )
-                                if (event.deck != null) {
+                                // 只读回放（存档）不给"定位"入口：跳甲板地图会离开存档上下文
+                                if (event.deck != null && !readOnly) {
                                     Spacer(Modifier.width(8.dp))
                                     FilledTonalButton(
                                         onClick = {

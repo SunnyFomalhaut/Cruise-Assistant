@@ -106,6 +106,13 @@ fun SettingsScreen(
     onWallpaperAlphaChange: (Float) -> Unit = {},
     onPickCustomWallpaper: () -> Unit = {},
     onCardDollsToggle: (Boolean) -> Unit = {},
+    // ---- 航次存档 ----
+    /** 存档此航次 */
+    onArchiveVoyage: () -> Unit = {},
+    /** 存档后重建（重建三选弹窗的推荐项） */
+    onArchiveAndResetVoyage: () -> Unit = {},
+    /** 航次存档入口行 → 存档列表 */
+    onNavigateToArchives: () -> Unit = {},
 ) {
     var confirmReset by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(16.dp)
@@ -818,19 +825,93 @@ fun SettingsScreen(
             cardShape = cardShape,
         ) {
             state.voyage?.let { voyage ->
-                Text(
-                    "${voyage.boardDate.format(DATE_FMT)} ${voyage.boardTime} → " +
-                        "${voyage.disembarkDate.format(DATE_FMT)} ${voyage.disembarkTime}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = Slate900,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${voyage.boardDate.format(DATE_FMT)} ${voyage.boardTime} → " +
+                            "${voyage.disembarkDate.format(DATE_FMT)} ${voyage.disembarkTime}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Slate900,
+                        modifier = Modifier.weight(1f),
+                    )
+                    // 礼宾航次标记：登船时间旁的小徽标
+                    if (voyage.isConcierge) {
+                        Spacer(Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = CruiseAzureContainer,
+                        ) {
+                            Text(
+                                stringResource(R.string.concierge_badge),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = CruiseMarine,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                }
                 Spacer(Modifier.height(2.dp))
                 Text(
                     stringResource(R.string.voyage_summary_format, voyage.dayCount, voyage.maxDeck),
                     style = MaterialTheme.typography.bodySmall,
                     color = Slate500,
                 )
+            }
+            Spacer(Modifier.height(12.dp))
+            // 航次存档入口行：数量徽标 + 箭头
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onNavigateToArchives)
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Outlined.AutoAwesome,
+                    contentDescription = null,
+                    tint = CruiseAzure,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    stringResource(R.string.settings_archives_entry),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = Slate900,
+                    modifier = Modifier.weight(1f),
+                )
+                if (state.archiveCount > 0) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = CruiseAzureContainer,
+                    ) {
+                        Text(
+                            stringResource(R.string.settings_archives_count_format, state.archiveCount),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = CruiseMarine,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.width(6.dp))
+                Icon(
+                    Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = Slate500,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            // 存档此航次：把当前航次完整快照留存，供重建后回忆
+            OutlinedButton(
+                onClick = onArchiveVoyage,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = CruiseAzure),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.settings_archive_voyage), fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(12.dp))
             OutlinedButton(
@@ -865,15 +946,30 @@ fun SettingsScreen(
     }
 
     if (confirmReset) {
+        // 重建三选：存档后重建（推荐）/ 直接重建 / 取消
         AlertDialog(
             onDismissRequest = { confirmReset = false },
             title = { Text(stringResource(R.string.reset_voyage), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(R.string.reset_voyage_warning)) },
+            text = { Text(stringResource(R.string.reset_voyage_choice_warning)) },
             confirmButton = {
-                TextButton(onClick = {
-                    confirmReset = false
-                    onResetVoyage()
-                }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
+                Row {
+                    TextButton(onClick = {
+                        confirmReset = false
+                        onArchiveAndResetVoyage()
+                    }) {
+                        Text(stringResource(R.string.reset_voyage_archive_first), color = CruiseAzure)
+                    }
+                    Spacer(Modifier.width(4.dp))
+                    TextButton(onClick = {
+                        confirmReset = false
+                        onResetVoyage()
+                    }) {
+                        Text(
+                            stringResource(R.string.reset_voyage_direct),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
             },
             dismissButton = {
                 TextButton(onClick = { confirmReset = false }) {

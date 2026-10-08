@@ -33,6 +33,9 @@ class EventRepository(
     private val eventDao: EventDao,
     private val voyageDao: VoyageDao,
     private val categoryDao: CategoryDao,
+    // 可注入的事务执行器：生产环境由 AppContainer 传 db.withTransaction，
+    // 单元测试 Fake DAO 没有 Room 数据库，默认直跑（不包事务）语义正确。
+    private val runInTransaction: suspend (suspend () -> Unit) -> Unit = { it() },
 ) {
     fun observeByDate(date: LocalDate): Flow<List<CruiseEvent>> =
         eventDao.observeByDate(date).map { list -> list.map { it.toDomain() } }
@@ -54,12 +57,15 @@ class EventRepository(
             listOf(event.copy(id = 0))
         }
         val showIds = showCategoryIds()
-        copies.forEach { copy ->
-            val sameDay = eventDao.getByDate(copy.date).map { it.toDomain() }.filter { it.isActive }
-            // 放置区间也用扩展区间（show 类别）：否则演出与普通事件等待段重叠时会叠进同一栏
-            val range = showEffectiveRange(copy, isShow = copy.categoryId in showIds)
-            val lane = assignLane(range.first, range.second, sameDay, rangeOf = showRangeOf(showIds))
-            eventDao.insert(copy.copy(lane = lane).toEntity())
+        // 循环展开出的多天插入包进事务：部分成功会让循环组"缺天"且 groupId 已写死，无法事后补。
+        runInTransaction {
+            copies.forEach { copy ->
+                val sameDay = eventDao.getByDate(copy.date).map { it.toDomain() }.filter { it.isActive }
+                // 放置区间也用扩展区间（show 类别）：否则演出与普通事件等待段重叠时会叠进同一栏
+                val range = showEffectiveRange(copy, isShow = copy.categoryId in showIds)
+                val lane = assignLane(range.first, range.second, sameDay, rangeOf = showRangeOf(showIds))
+                eventDao.insert(copy.copy(lane = lane).toEntity())
+            }
         }
         return copies.size
     }
@@ -77,7 +83,7 @@ class EventRepository(
             // 不能悄悄改写某个已定稿成员的行，否则破坏"定稿=只读"的承诺，且不会重新触发冲突检查。
             // 但用户直接点开来编辑的那一条必须始终生效——即使它自己所在的日子已定稿；
             // Task 7/8 已经在 UI 层挡掉了"打开已定稿日子的卡片"这条路径，这里只过滤*其他*成员。
-            val finalizedDates = voyageDao.observeDayPlansOnce()
+            val finalizedDates = voyageDao.getDayPlansOnce()
                 .filter { it.finalized }
                 .mapTo(mutableSetOf()) { it.date }
             eventDao.getByGroup(groupId).map { it.toDomain() }
@@ -86,43 +92,46 @@ class EventRepository(
             val existing = eventDao.getById(event.id)?.toDomain()
             listOf(existing ?: event)
         }
-        targets.forEach { target ->
-            val merged = event.copy(
-                id = target.id,
-                date = target.date,
-                // THIS_DAY_ONLY 编辑必须让这一天从循环组里"脱钩"永久独立：否则这天的自定义
-                // 标题/地点/类别会在之后某次从别的仍属于该组的日子发起的 WHOLE_GROUP 编辑中被
-                // 静默覆盖回去（复现场景：Day2-5 循环早餐，Day3 仅改本日改了地点，随后从 Day2
-                // 发起修改所有重复项——若不脱钩，Day3 的改动会被 Day2 的值覆盖）。非循环事件
-                // target.recurrenceGroupId 本就是 null，这里置 null 无影响；系统事件不受循环
-                // 编辑入口触达，同样安全。
-                recurrenceGroupId = if (scope == RecurrenceScope.THIS_DAY_ONLY) {
-                    null
-                } else {
-                    target.recurrenceGroupId
-                },
-                isSystemGenerated = target.isSystemGenerated,
-                // 保留目标行的激活状态：UI 层构造的 event 不带 isActive（恒为 true），
-                // 若不保留，编辑会静默"复活"被停用的事件（WHOLE_GROUP 时整组已停用成员一起复活）。
-                isActive = target.isActive,
-            )
-            val timingUnchanged = merged.startTime == target.startTime &&
-                merged.durationMinutes == target.durationMinutes
-            val lane = if (timingUnchanged) {
-                target.lane
-            } else {
-                val showIds = showCategoryIds()
-                val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }.filter { it.isActive }
-                val range = showEffectiveRange(merged, isShow = merged.categoryId in showIds)
-                assignLane(
-                    range.first,
-                    range.second,
-                    sameDay,
-                    excludeId = merged.id,
-                    rangeOf = showRangeOf(showIds),
+        // 整组更新包进事务：WHOLE_GROUP 编辑中途失败会留下"改了一半的循环组"。
+        runInTransaction {
+            targets.forEach { target ->
+                val merged = event.copy(
+                    id = target.id,
+                    date = target.date,
+                    // THIS_DAY_ONLY 编辑必须让这一天从循环组里"脱钩"永久独立：否则这天的自定义
+                    // 标题/地点/类别会在之后某次从别的仍属于该组的日子发起的 WHOLE_GROUP 编辑中被
+                    // 静默覆盖回去（复现场景：Day2-5 循环早餐，Day3 仅改本日改了地点，随后从 Day2
+                    // 发起修改所有重复项——若不脱钩，Day3 的改动会被 Day2 的值覆盖）。非循环事件
+                    // target.recurrenceGroupId 本就是 null，这里置 null 无影响；系统事件不受循环
+                    // 编辑入口触达，同样安全。
+                    recurrenceGroupId = if (scope == RecurrenceScope.THIS_DAY_ONLY) {
+                        null
+                    } else {
+                        target.recurrenceGroupId
+                    },
+                    isSystemGenerated = target.isSystemGenerated,
+                    // 保留目标行的激活状态：UI 层构造的 event 不带 isActive（恒为 true），
+                    // 若不保留，编辑会静默"复活"被停用的事件（WHOLE_GROUP 时整组已停用成员一起复活）。
+                    isActive = target.isActive,
                 )
+                val timingUnchanged = merged.startTime == target.startTime &&
+                    merged.durationMinutes == target.durationMinutes
+                val lane = if (timingUnchanged) {
+                    target.lane
+                } else {
+                    val showIds = showCategoryIds()
+                    val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }.filter { it.isActive }
+                    val range = showEffectiveRange(merged, isShow = merged.categoryId in showIds)
+                    assignLane(
+                        range.first,
+                        range.second,
+                        sameDay,
+                        excludeId = merged.id,
+                        rangeOf = showRangeOf(showIds),
+                    )
+                }
+                eventDao.update(merged.copy(lane = lane).toEntity())
             }
-            eventDao.update(merged.copy(lane = lane).toEntity())
         }
     }
 
@@ -175,14 +184,17 @@ class EventRepository(
      * 同一演出判断条件：除时间（startTime/durationMinutes/date）外其他一致（categoryId, title, deck, zone, placeName）。
      */
     suspend fun keepOnlyThisShow(target: CruiseEvent) {
-        val allEvents = eventDao.getAll().map { it.toDomain() }
-        val matches = allEvents.filter { it.isSameShowAs(target) }
-        // 先停用其他场次（释放它们的栏位，供目标场复活时判断冲突）
-        matches.filter { it.id != target.id && it.isActive }.forEach {
-            eventDao.setActive(it.id, false)
+        // "停用其他场次 + 激活目标场"包进事务：两步之间失败会让同一演出所有场次都处于停用态。
+        runInTransaction {
+            val allEvents = eventDao.getAll().map { it.toDomain() }
+            val matches = allEvents.filter { it.isSameShowAs(target) }
+            // 先停用其他场次（释放它们的栏位，供目标场复活时判断冲突）
+            matches.filter { it.id != target.id && it.isActive }.forEach {
+                eventDao.setActive(it.id, false)
+            }
+            // 再激活目标场：统一走 setActive（内含"优先保留原栏位"逻辑）
+            setActive(target.id, true)
         }
-        // 再激活目标场：统一走 setActive（内含"优先保留原栏位"逻辑）
-        setActive(target.id, true)
     }
 
     /**
@@ -192,8 +204,11 @@ class EventRepository(
      */
     suspend fun updateDinnerEventsTime(newTime: LocalTime) {
         val dinners = eventDao.getByPresetKey("dinner")
-        dinners.forEach { entity ->
-            eventDao.update(entity.copy(startTime = newTime))
+        // 批量改时间包进事务：部分成功会出现"一部分晚餐在新时间、一部分在旧时间"的分裂态。
+        runInTransaction {
+            dinners.forEach { entity ->
+                eventDao.update(entity.copy(startTime = newTime))
+            }
         }
     }
 
@@ -203,36 +218,40 @@ class EventRepository(
      * 被删除过的演出不会"复活"（只有当前仍在表里的会被更新，与 updateDinnerEventsTime 一致）。
      */
     suspend fun resyncShowTimes(dinnerTime: LocalTime) {
-        val target = pickDinnerLinkedTime(dinnerTime)
-        val dinnerLinkedShows = DISNEY_ADVENTURE_SHOWS.filter { it.dinnerLinked }
-        val knownShowTimes = dinnerLinkedShows.flatMap { it.startTimes }.toSet()
-        val affectedDates = mutableSetOf<LocalDate>()
-        dinnerLinkedShows.map { it.key }.forEach { key ->
-            eventDao.getByPresetKey(key).forEach { entity ->
-                if (entity.startTime in knownShowTimes) {
-                    eventDao.update(entity.copy(startTime = target))
-                    affectedDates += entity.date
+        // 换场 + 逐日重排 lane 是一组相关写入，包进事务：中途失败会让联动演出
+        // "时间换了但栏位没重排"，与晚餐时段视觉重叠。
+        runInTransaction {
+            val target = pickDinnerLinkedTime(dinnerTime)
+            val dinnerLinkedShows = DISNEY_ADVENTURE_SHOWS.filter { it.dinnerLinked }
+            val knownShowTimes = dinnerLinkedShows.flatMap { it.startTimes }.toSet()
+            val affectedDates = mutableSetOf<LocalDate>()
+            dinnerLinkedShows.map { it.key }.forEach { key ->
+                eventDao.getByPresetKey(key).forEach { entity ->
+                    if (entity.startTime in knownShowTimes) {
+                        eventDao.update(entity.copy(startTime = target))
+                        affectedDates += entity.date
+                    }
                 }
             }
-        }
-        val presetKeyOrder = DISNEY_ADVENTURE_SHOWS.mapIndexed { idx, s -> s.key to idx }.toMap()
-        for (date in affectedDates) {
-            val dayEvents = eventDao.getByDate(date)
-            val showPresetsOnDay = dayEvents
-                .filter { it.presetKey != null && it.presetKey in presetKeyOrder }
-                .sortedWith(compareBy({ presetKeyOrder[it.presetKey] ?: Int.MAX_VALUE }, { it.startTime }))
-            if (showPresetsOnDay.isNotEmpty()) {
-                val occupied = mutableListOf<Triple<Int, Int, Int>>()
-                val updated = showPresetsOnDay.map { entity ->
-                    val startMin = entity.startTime.hour * 60 + entity.startTime.minute
-                    val waitMins = entity.waitMinutes ?: resolveDefaultWaitMinutes(entity.placeName, entity.deck, entity.title, entity.presetKey)
-                    val effStart = startMin - waitMins
-                    val effEnd = startMin + entity.durationMinutes
-                    val newLane = assignShowLane(effStart, effEnd, occupied)
-                    occupied += Triple(newLane, effStart, effEnd)
-                    entity.copy(lane = newLane)
+            val presetKeyOrder = DISNEY_ADVENTURE_SHOWS.mapIndexed { idx, s -> s.key to idx }.toMap()
+            for (date in affectedDates) {
+                val dayEvents = eventDao.getByDate(date)
+                val showPresetsOnDay = dayEvents
+                    .filter { it.presetKey != null && it.presetKey in presetKeyOrder }
+                    .sortedWith(compareBy({ presetKeyOrder[it.presetKey] ?: Int.MAX_VALUE }, { it.startTime }))
+                if (showPresetsOnDay.isNotEmpty()) {
+                    val occupied = mutableListOf<Triple<Int, Int, Int>>()
+                    val updated = showPresetsOnDay.map { entity ->
+                        val startMin = entity.startTime.hour * 60 + entity.startTime.minute
+                        val waitMins = entity.waitMinutes ?: resolveDefaultWaitMinutes(entity.placeName, entity.deck, entity.title, entity.presetKey)
+                        val effStart = startMin - waitMins
+                        val effEnd = startMin + entity.durationMinutes
+                        val newLane = assignShowLane(effStart, effEnd, occupied)
+                        occupied += Triple(newLane, effStart, effEnd)
+                        entity.copy(lane = newLane)
+                    }
+                    eventDao.updateAll(updated)
                 }
-                eventDao.updateAll(updated)
             }
         }
     }

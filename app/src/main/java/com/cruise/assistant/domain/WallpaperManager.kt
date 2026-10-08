@@ -50,11 +50,11 @@ object WallpaperManager {
 
     fun saveCustomWallpaper(context: Context, uri: Uri): Boolean {
         return try {
-            val inputStream = context.contentResolver.openInputStream(uri) ?: return false
-            val original = BitmapFactory.decodeStream(inputStream)
-            inputStream.close()
-            if (original == null) return false
+            // 用户相册图可能几十兆像素，若全尺寸解码极易 OOM（catch(Exception) 拦不住
+            // OutOfMemoryError），所以先按 MAX_DIMENSION×MAX_DIMENSION 采样解码。
+            val original = decodeSampledStream(context, uri) ?: return false
 
+            // 采样值是 2 的幂、不精确，解码后仍超出 MAX_DIMENSION 时再做等比缩放兜底
             val scaled = if (original.width > MAX_DIMENSION || original.height > MAX_DIMENSION) {
                 val ratio = minOf(
                     MAX_DIMENSION.toFloat() / original.width,
@@ -66,6 +66,8 @@ object WallpaperManager {
             } else {
                 original
             }
+            // 不主动 recycle original：scaled 可能就是 original 本身（无需缩放时），
+            // 且 scaled 随后进了缓存，强行回收容易引入竞态，简单交给 GC。
 
             val targetFile = File(context.filesDir, CUSTOM_WALLPAPER_FILE)
             FileOutputStream(targetFile).use { out ->
@@ -103,5 +105,36 @@ object WallpaperManager {
             inJustDecodeBounds = false
         }
         return BitmapFactory.decodeFile(filePath, decodeOptions)
+    }
+
+    /**
+     * decodeSampledBitmap 的流版：ContentResolver 的流只能读一次，
+     * 两遍解码（先量边界、再带 inSampleSize 真解码）必须各自重新 openInputStream，
+     * 并用 use{} 确保无论解码成败都关闭，避免 fd 泄漏。
+     */
+    private fun decodeSampledStream(context: Context, uri: Uri): Bitmap? {
+        // 第一遍：inJustDecodeBounds 只解析图片头量出宽高，不分配像素内存
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        val boundsStream = context.contentResolver.openInputStream(uri) ?: return null
+        boundsStream.use { BitmapFactory.decodeStream(it, null, bounds) }
+
+        // 与 decodeSampledBitmap 相同的循环：inSampleSize 只能取 2 的幂，
+        // 采样到"再翻倍就会小于目标尺寸"为止；不精确由调用方 createScaledBitmap 兜底
+        var inSampleSize = 1
+        if (bounds.outHeight > MAX_DIMENSION || bounds.outWidth > MAX_DIMENSION) {
+            val halfHeight = bounds.outHeight / 2
+            val halfWidth = bounds.outWidth / 2
+            while (halfHeight / inSampleSize >= MAX_DIMENSION && halfWidth / inSampleSize >= MAX_DIMENSION) {
+                inSampleSize *= 2
+            }
+        }
+
+        // 第二遍：上一遍已把流读耗尽，重新打开并带采样真解码；损坏图片返回 null
+        val decodeOptions = BitmapFactory.Options().apply {
+            this.inSampleSize = inSampleSize
+            inJustDecodeBounds = false
+        }
+        val decodeStream = context.contentResolver.openInputStream(uri) ?: return null
+        return decodeStream.use { BitmapFactory.decodeStream(it, null, decodeOptions) }
     }
 }

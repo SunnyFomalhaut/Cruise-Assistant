@@ -20,8 +20,9 @@ import com.cruise.assistant.domain.effectiveWaitMinutes
 import com.cruise.assistant.domain.isOpenAt
 import com.cruise.assistant.domain.isOpenFor
 import com.cruise.assistant.domain.resolveDefaultWaitMinutes
-import com.cruise.assistant.reminder.ReminderScheduler
+import com.cruise.assistant.reminder.ReminderRescheduler
 import androidx.compose.runtime.Immutable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,7 +76,7 @@ data class EventSheetState(
     val hoursCheckMessage: String? = null,
     /** 用户确认"仍要保存"后为 true：跳过本次校验 */
     val hoursCheckOverride: Boolean = false,
-    /** 提前候场时间（分钟），默认 30，演出类别时可选 10~120m */
+    /** 提前候场时间（分钟），默认 30；演出类别可选 0（不候场）~120 分钟，其他类别保存时写 null */
     val waitMinutes: Int = 30,
     val note: String = "",
     val lane: Int = 0,
@@ -91,11 +92,15 @@ class EventSheetViewModel(
     private val categoryRepository: CategoryRepository,
     private val locationPresetRepository: LocationPresetRepository,
     private val voyageRepository: VoyageRepository,
-    private val reminderScheduler: ReminderScheduler,
+    private val reminderScheduler: ReminderRescheduler,
     date: LocalDate,
     defaultStartMinute: Int,
     private val editingEventId: Long,
+    // 与 WishlistViewModel 同一模式：测试注入 Unconfined 作用域，生产缺省走 viewModelScope
+    coroutineScope: CoroutineScope? = null,
 ) : ViewModel() {
+
+    private val vmScope: CoroutineScope = coroutineScope ?: viewModelScope
 
     private val _state = MutableStateFlow(
         EventSheetState(
@@ -113,7 +118,7 @@ class EventSheetViewModel(
     val state: StateFlow<EventSheetState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch {
+        vmScope.launch {
             val voyage = voyageRepository.getVoyage()
             // 内置船判定：船名匹配内置列表，或船名为空（老版本引导没有"选船"概念、
             // 船名留空——本 App 只有一个内置船，老航次视为探险号以启用预置地点）
@@ -153,7 +158,7 @@ class EventSheetViewModel(
                 )
             }
         }
-        viewModelScope.launch {
+        vmScope.launch {
             categoryRepository.observeActive().collect { list ->
                 _state.update { current ->
                     // 新建事件初始 selectedCategoryId 为 null：用 fallback 到第一个类别的 id
@@ -190,13 +195,13 @@ class EventSheetViewModel(
                 }
             }
         }
-        viewModelScope.launch {
+        vmScope.launch {
             locationPresetRepository.observeAll().collect { presets ->
                 _state.update { it.copy(presets = presets) }
             }
         }
         if (editingEventId != 0L) {
-            viewModelScope.launch {
+            vmScope.launch {
                 eventRepository.getById(editingEventId)?.let { event ->
                     val endMinutes = event.startTime.hour * 60 + event.startTime.minute +
                         event.durationMinutes
@@ -275,6 +280,7 @@ class EventSheetViewModel(
             showMealPeriodRow = it.builtInShip && iconKey == "meal",
             waitMinutes = waitMins,
             errorResId = null,
+            hoursCheckOverride = false,
         )
     }
 
@@ -315,14 +321,19 @@ class EventSheetViewModel(
             placeName = if (currentVenueOpen) it.placeName else "",
             startTime = newStart,
             endTime = newEnd,
+            hoursCheckOverride = false,
         )
     }
     fun onTitleChange(value: String) = _state.update { it.copy(title = value, errorResId = null) }
     fun onNoteChange(value: String) = _state.update { it.copy(note = value) }
-    fun onDeckChange(value: Int) = _state.update { it.copy(deck = value, noLocation = false) }
-    fun onZoneChange(value: ShipZone) = _state.update { it.copy(zone = value, noLocation = false) }
+    fun onDeckChange(value: Int) = _state.update {
+        it.copy(deck = value, noLocation = false, hoursCheckOverride = false)
+    }
+    fun onZoneChange(value: ShipZone) = _state.update {
+        it.copy(zone = value, noLocation = false, hoursCheckOverride = false)
+    }
     fun onPlaceNameChange(value: String) = _state.update {
-        it.copy(placeName = value, locationPresetMode = false)
+        it.copy(placeName = value, locationPresetMode = false, hoursCheckOverride = false)
     }
     fun onRecurringToggle(value: Boolean) = _state.update { it.copy(recurring = value) }
 
@@ -339,6 +350,7 @@ class EventSheetViewModel(
             noLocation = false,
             locationPresetMode = true,
             waitMinutes = waitMins,
+            hoursCheckOverride = false,
         )
     }
 
@@ -360,6 +372,7 @@ class EventSheetViewModel(
             showPresetMode = true,
             waitMinutes = preset.defaultWaitMinutes,
             errorResId = null,
+            hoursCheckOverride = false,
         )
     }
 
@@ -379,21 +392,24 @@ class EventSheetViewModel(
      */
     fun onNoLocationToggle(value: Boolean) = _state.update {
         if (it.isSystemEvent) {
-            it.copy(noLocation = true, deck = null)
+            it.copy(noLocation = true, deck = null, hoursCheckOverride = false)
         } else if (value) {
-            it.copy(noLocation = true, deck = null)
+            it.copy(noLocation = true, deck = null, hoursCheckOverride = false)
         } else {
             // 重新启用地点：deck 已被清空且没有备份，zone/placeName 一并清掉，
             // 否则保存时 deck=null + zone/placeName 残留会写出"幽灵地点"
             // （卡片不显示地点、再编辑时"不设地点"又被勾上）。
             if (it.deck == null) {
-                it.copy(noLocation = false, zone = null, placeName = "")
+                it.copy(noLocation = false, zone = null, placeName = "", hoursCheckOverride = false)
             } else {
-                it.copy(noLocation = false)
+                it.copy(noLocation = false, hoursCheckOverride = false)
             }
         }
     }
 
+    // 用户改了时间/地点后，先前的"仍要保存"豁免（hoursCheckOverride）不再适用，需重新校验：
+    // 凡影响营业时间校验结果的输入（起止时间/楼层/区域/地点/类别/餐次）都重置豁免，
+    // 否则同一弹窗会话里换到另一个不营业的地点/时间会被旧豁免永久短路。
     fun onStartChange(value: LocalTime) = _state.update { current ->
         // 开始时间钳到 23:29：保证默认 30 分钟事件以 ≤23:59 结束，
         // 否则滚到 23:30+ 后结束时间回卷、保存必报"结束早于开始"
@@ -403,10 +419,12 @@ class EventSheetViewModel(
         } else {
             current.endTime
         }
-        current.copy(startTime = clamped, endTime = end, errorResId = null)
+        current.copy(startTime = clamped, endTime = end, errorResId = null, hoursCheckOverride = false)
     }
 
-    fun onEndChange(value: LocalTime) = _state.update { it.copy(endTime = value, errorResId = null) }
+    fun onEndChange(value: LocalTime) = _state.update {
+        it.copy(endTime = value, errorResId = null, hoursCheckOverride = false)
+    }
 
     /** 用户选择"仍要保存"：绕过校验继续 */
     fun onHoursCheckOverride() = _state.update {
@@ -489,7 +507,7 @@ class EventSheetViewModel(
         )
 
         _state.update { it.copy(saving = true) }
-        viewModelScope.launch {
+        vmScope.launch {
             if (s.isEditing) {
                 eventRepository.updateEvent(event, scope)
             } else {

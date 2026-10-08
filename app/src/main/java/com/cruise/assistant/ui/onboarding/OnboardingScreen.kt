@@ -4,6 +4,7 @@ package com.cruise.assistant.ui.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,9 +89,19 @@ fun OnboardingScreen(
     onDisembarkDateChange: (LocalDate) -> Unit,
     onMaxDeckChange: (Int) -> Unit,
     onDinnerTimeChange: (java.time.LocalTime) -> Unit,
+    onConciergeToggle: (Boolean) -> Unit,
+    onAddLeg: (Int) -> Unit,
+    onRemoveLeg: (Int) -> Unit,
+    onClearLegs: () -> Unit,
+    onToggleAshore: (Int) -> Unit,
     onSubmit: () -> Unit,
+    /** 已有存档数：>0 时 hero 区角落显示"查看航次存档"入口 */
+    archiveCount: Int = 0,
+    onViewArchives: () -> Unit = {},
 ) {
     var pickerTarget by remember { mutableStateOf<PickerTarget?>(null) }
+    // 联程编排底部弹层：入口 chip / 摘要行点击打开
+    var showLegEditor by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(16.dp)
 
     Column(
@@ -138,6 +149,20 @@ fun OnboardingScreen(
                             color = Slate700,
                         )
                     }
+                }
+            }
+            // 重建航次后回来：hero 区角落的存档入口（有存档才显示）
+            if (archiveCount > 0) {
+                TextButton(
+                    onClick = onViewArchives,
+                    modifier = Modifier.align(Alignment.TopEnd),
+                ) {
+                    Text(
+                        stringResource(R.string.onboarding_view_archives),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = CruiseMarine,
+                    )
                 }
             }
         }
@@ -253,6 +278,63 @@ fun OnboardingScreen(
                 }
 
                 if (state.isBuiltInShip && state.selectedScheduleIndex >= 0) {
+                    // 联程航次（back-to-back）入口：仅内置船 + 已选船期时可用，
+                    // 点击打开编排弹层强制 3/4 交替拼接（仅可从末尾追加/缩短）
+                    Spacer(Modifier.height(16.dp))
+                    FilterChip(
+                        selected = state.isMultiLeg,
+                        onClick = { showLegEditor = true },
+                        label = { Text(stringResource(R.string.multileg_toggle_label)) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = CruiseAzureContainer,
+                            selectedLabelColor = CruiseMarine,
+                        ),
+                    )
+                    // 摘要文本行：联程时显示，点击也可打开编排弹层
+                    state.multiLegSummary?.let { summary ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(
+                                R.string.multileg_summary_format,
+                                summary.legsLabel,
+                                summary.totalNights,
+                                summary.boardDow,
+                                summary.disembarkDow,
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = CruiseMarine,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(CruiseAzureContainer)
+                                .clickable { showLegEditor = true }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                        )
+                    }
+                    // 兰卡威登岸开关：首程是 4夜（新加坡-兰卡威-新加坡航线）时显示，
+                    // 勾选后在该程第三天生成 09:00–17:00「兰卡威登岸」上岸游玩日程
+                    if (state.scheduleNights == 4) {
+                        Spacer(Modifier.height(8.dp))
+                        FilterChip(
+                            selected = 0 in state.ashoreLegs,
+                            onClick = { onToggleAshore(0) },
+                            label = { Text(stringResource(R.string.ashore_toggle_label)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = CruiseAzureContainer,
+                                selectedLabelColor = CruiseMarine,
+                            ),
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.ashore_card_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Slate500,
+                        )
+                    }
+                }
+
+                if (state.isBuiltInShip && state.selectedScheduleIndex >= 0) {
                     Spacer(Modifier.height(16.dp))
                     Text(stringResource(R.string.dinner_time_label), style = MaterialTheme.typography.titleSmall, color = Slate700)
                     Spacer(Modifier.height(8.dp))
@@ -327,6 +409,17 @@ fun OnboardingScreen(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
+                // 礼宾优先登船开关：礼宾客户不受批次限制，11:00 即可登船（风格对齐晚餐时段 chips）
+                FilterChip(
+                    selected = state.isConcierge,
+                    onClick = { onConciergeToggle(!state.isConcierge) },
+                    label = { Text(stringResource(R.string.concierge_toggle_label)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = CruiseAzureContainer,
+                        selectedLabelColor = CruiseMarine,
+                    ),
+                )
+                Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -336,44 +429,51 @@ fun OnboardingScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "登船批次：%02d:%02d – %02d:%02d".format(
-                            state.boardTime.hour, state.boardTime.minute,
-                            (state.boardTime.plusMinutes(15).hour + 24) % 24,
-                            state.boardTime.plusMinutes(15).minute,
-                        ),
+                        // 礼宾开启：显示优先登船横幅并隐藏批次网格；关闭：恢复批次区间横幅
+                        text = if (state.isConcierge) {
+                            stringResource(R.string.concierge_board_banner)
+                        } else {
+                            "登船批次：%02d:%02d – %02d:%02d".format(
+                                state.boardTime.hour, state.boardTime.minute,
+                                (state.boardTime.plusMinutes(15).hour + 24) % 24,
+                                state.boardTime.plusMinutes(15).minute,
+                            )
+                        },
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = CruiseMarine,
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                boardingSlots().chunked(3).forEach { rowSlots ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        rowSlots.forEach { slot ->
-                            FilterChip(
-                                selected = state.boardTime == slot,
-                                onClick = { onBoardTimeChange(slot) },
-                                label = {
-                                    Text(
-                                        text = "%02d:%02d".format(slot.hour, slot.minute),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = if (state.boardTime == slot) FontWeight.Bold else FontWeight.Medium,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = CruiseAzureContainer,
-                                    selectedLabelColor = CruiseMarine,
-                                ),
-                                modifier = Modifier.weight(1f),
-                            )
+                if (!state.isConcierge) {
+                    Spacer(Modifier.height(8.dp))
+                    boardingSlots().chunked(3).forEach { rowSlots ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            rowSlots.forEach { slot ->
+                                FilterChip(
+                                    selected = state.boardTime == slot,
+                                    onClick = { onBoardTimeChange(slot) },
+                                    label = {
+                                        Text(
+                                            text = "%02d:%02d".format(slot.hour, slot.minute),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (state.boardTime == slot) FontWeight.Bold else FontWeight.Medium,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = CruiseAzureContainer,
+                                        selectedLabelColor = CruiseMarine,
+                                    ),
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
                         }
+                        Spacer(Modifier.height(4.dp))
                     }
-                    Spacer(Modifier.height(4.dp))
                 }
 
                 Spacer(Modifier.height(14.dp))
@@ -392,21 +492,41 @@ fun OnboardingScreen(
                     )
                 }
                 Spacer(Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = { pickerTarget = PickerTarget.DISEMBARK },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(state.disembarkDate.format(DATE_FMT), fontWeight = FontWeight.SemiBold)
+                if (state.isMultiLeg) {
+                    // 联程：下船日自动计算，不可点击（避免手动改动破坏联程链）
+                    OutlinedButton(
+                        onClick = { },
+                        enabled = false,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(state.disembarkDate.format(DATE_FMT), fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.multileg_disembark_auto_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Slate500,
+                    )
+                } else {
+                    OutlinedButton(
+                        onClick = { pickerTarget = PickerTarget.DISEMBARK },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Outlined.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(state.disembarkDate.format(DATE_FMT), fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.disembark_time_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Slate500,
+                    )
                 }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.disembark_time_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Slate500,
-                )
             }
         }
 
@@ -518,6 +638,18 @@ fun OnboardingScreen(
             )
         }
         Spacer(Modifier.height(24.dp))
+    }
+
+    // 联程编排底部弹层：强制 3/4 交替拼接，仅可从末尾追加/缩短；4夜程可勾选登岸兰卡威
+    if (showLegEditor) {
+        MultiLegEditorSheet(
+            state = state,
+            onAddLeg = onAddLeg,
+            onRemoveLeg = onRemoveLeg,
+            onClearLegs = onClearLegs,
+            onToggleAshore = onToggleAshore,
+            onDismiss = { showLegEditor = false },
+        )
     }
 
     pickerTarget?.let { target ->

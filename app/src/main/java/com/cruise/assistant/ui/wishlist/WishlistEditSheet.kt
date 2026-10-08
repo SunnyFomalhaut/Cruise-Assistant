@@ -78,8 +78,10 @@ fun WishlistEditSheet(
     val defaultCategory = categories.firstOrNull { it.name == "娱乐" || it.iconKey == "fun" }
         ?: categories.firstOrNull()
 
+    // 类别列表异步加载，可能尚未落地；此时不能赌某个固定 id（如 1L）一定存在，
+    // 保持为 null 让保存按钮禁用，避免写出悬空的 categoryId。
     var selectedCategoryId by remember {
-        mutableStateOf(initialItem?.categoryId ?: defaultCategory?.id ?: 1L)
+        mutableStateOf(initialItem?.categoryId ?: defaultCategory?.id)
     }
     var title by remember { mutableStateOf(initialItem?.title ?: "") }
     var deck by remember { mutableStateOf(initialItem?.deck) }
@@ -362,11 +364,13 @@ fun WishlistEditSheet(
 
                 Button(
                     onClick = {
+                        // enabled 已保证类别已就绪，这里判空只为通过类型检查（selectedCategoryId 是 Long?）
+                        val saveCategoryId = selectedCategoryId ?: return@Button
                         val finalTitle = title.trim().ifEmpty { selectedCategory?.name ?: "随心项目" }
                         onSave(
                             initialItem?.id ?: 0L,
                             finalTitle,
-                            selectedCategoryId,
+                            saveCategoryId,
                             if (noLocation) null else deck,
                             if (noLocation) null else zone,
                             if (noLocation) null else placeName,
@@ -375,6 +379,8 @@ fun WishlistEditSheet(
                         onDismiss()
                     },
                     modifier = Modifier.weight(1.5f),
+                    // 类别尚未就绪（异步加载未落地）时不允许保存，避免持久化悬空的 categoryId
+                    enabled = selectedCategoryId != null,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = CruiseAzure,
                         contentColor = Color.White,

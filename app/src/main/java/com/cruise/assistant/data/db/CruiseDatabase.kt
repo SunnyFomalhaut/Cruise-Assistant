@@ -13,8 +13,10 @@ import com.cruise.assistant.data.db.dao.EventDao
 import com.cruise.assistant.data.db.dao.LocationPresetDao
 import com.cruise.assistant.data.db.dao.PixieDustDao
 import com.cruise.assistant.data.db.dao.PixieLevelDao
+import com.cruise.assistant.data.db.dao.VoyageArchiveDao
 import com.cruise.assistant.data.db.dao.VoyageDao
 import com.cruise.assistant.data.db.dao.WishlistDao
+import com.cruise.assistant.data.db.entity.VoyageArchiveEntity
 import com.cruise.assistant.data.db.entity.CategoryEntity
 import com.cruise.assistant.data.db.entity.DayPlanEntity
 import com.cruise.assistant.data.db.entity.EventEntity
@@ -33,9 +35,10 @@ import com.cruise.assistant.data.db.entity.WishlistItemEntity
         LocationPresetEntity::class,
         PixieDustEntity::class,
         PixieLevelEntity::class,
+        VoyageArchiveEntity::class,
         WishlistItemEntity::class,
     ],
-    version = 8,
+    version = 12,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 4, to = 5),
@@ -53,6 +56,7 @@ abstract class CruiseDatabase : RoomDatabase() {
     abstract fun pixieDustDao(): PixieDustDao
     abstract fun pixieLevelDao(): PixieLevelDao
     abstract fun wishlistDao(): WishlistDao
+    abstract fun voyageArchiveDao(): VoyageArchiveDao
 
     companion object {
         @Volatile private var instance: CruiseDatabase? = null
@@ -75,13 +79,58 @@ abstract class CruiseDatabase : RoomDatabase() {
             }
         }
 
+        // v9：礼宾优先登船标记（礼宾客户不受登船批次限制，11:00 即可登船）
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE voyage ADD COLUMN isConcierge INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        // v10：联程航次各程晚数（JSON 数组文本如 "[3,4]"，null = 单程）
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE voyage ADD COLUMN legNights TEXT")
+            }
+        }
+
+        // v11：航次存档表（航次结束时全部业务表的精确快照，payloadJson 存 ArchiveSnapshot 序列化；
+        // SQL 列定义必须与 VoyageArchiveEntity 生成的 schema 完全一致）
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `voyage_archive` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`shipName` TEXT, " +
+                        "`boardDate` TEXT NOT NULL, " +
+                        "`disembarkDate` TEXT NOT NULL, " +
+                        "`nightsSummary` TEXT NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL, " +
+                        "`payloadJson` TEXT NOT NULL)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_voyage_archive_createdAt` " +
+                        "ON `voyage_archive` (`createdAt`)",
+                )
+            }
+        }
+
+        // v12：登岸兰卡威的程下标集合（JSON int 数组文本如 "[0,2]"，null = 无登岸程）
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE voyage ADD COLUMN ashoreLegs TEXT")
+            }
+        }
+
         fun get(context: Context): CruiseDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     CruiseDatabase::class.java,
                     "cruise.db",
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+                ).addMigrations(
+                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_8_9, MIGRATION_9_10,
+                    MIGRATION_10_11, MIGRATION_11_12,
+                ).build().also { instance = it }
             }
     }
 }

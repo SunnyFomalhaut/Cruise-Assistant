@@ -94,12 +94,19 @@ class WishlistViewModel(
     ) {
         val eventRepo = eventRepository ?: return
         scope.launch {
-            val waitMinutes = resolveDefaultWaitMinutes(
-                placeName = item.placeName,
-                deck = item.deck,
-                title = item.title,
-                presetKey = null,
-            )
+            // 与 EventSheetViewModel.save 保持同一约定：只有"演出"类别才保留默认等候时间，其他类别写 null。
+            // 类别被删除后 item.category 为 null，此时按非演出处理。
+            val isShow = item.category?.iconKey == "show"
+            val waitMinutes = if (isShow) {
+                resolveDefaultWaitMinutes(
+                    placeName = item.placeName,
+                    deck = item.deck,
+                    title = item.title,
+                    presetKey = null,
+                )
+            } else {
+                null
+            }
             val event = CruiseEvent(
                 date = date,
                 startTime = startTime,

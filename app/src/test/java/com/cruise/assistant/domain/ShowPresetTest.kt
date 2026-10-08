@@ -356,6 +356,20 @@ class ShowPresetTest {
     }
 
     @Test
+    fun showEffectiveRange_zeroWait_equalsOriginalRange() {
+        // 不候场（waitMinutes=0）的演出：扩展区间退化为原时段，不向前占位
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(20, 30),
+            durationMinutes = 60,
+            categoryId = 1,
+            title = "演出",
+            waitMinutes = 0,
+        )
+        assertEquals((20 * 60 + 30) to (20 * 60 + 30 + 60), showEffectiveRange(event, isShow = true))
+    }
+
+    @Test
     fun showEffectiveRange_nonShowEvent_keepsOriginalRange() {
         val event = CruiseEvent(
             date = LocalDate.of(2026, 8, 10),
@@ -481,5 +495,19 @@ class ShowPresetTest {
             title = "午夜派对",
         )
         assertEquals("23:45", formatWaitStart(event))
+    }
+
+    @Test
+    fun formatWaitStart_zeroWait_returnsShowStartTimeItself() {
+        // 不候场（waitMinutes=0）：入场时间就是开场时间本身
+        val event = CruiseEvent(
+            date = LocalDate.of(2026, 8, 10),
+            startTime = LocalTime.of(20, 30),
+            durationMinutes = 60,
+            categoryId = 1,
+            title = "晚间大秀",
+            waitMinutes = 0,
+        )
+        assertEquals("20:30", formatWaitStart(event))
     }
 }
