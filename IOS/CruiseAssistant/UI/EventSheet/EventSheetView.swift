@@ -52,7 +52,12 @@ public struct EventSheetView: View {
                     // Card 5: Time Selection
                     timeSelectionCard
 
-                    // Card 6: Repeat Daily (if creating new event)
+                    // Card 6: Note
+                    if !viewModel.isSystemEvent {
+                        noteCard
+                    }
+
+                    // Card 7: Repeat Daily (if creating new event)
                     if !viewModel.isEditing {
                         repeatDailyCard
                     }
@@ -146,8 +151,15 @@ public struct EventSheetView: View {
                     }
                 )
             } else {
+                let placeholder: String = {
+                    if viewModel.categoryIconKey == "meal", let period = viewModel.selectedMealPeriod {
+                        return "不填则使用：\(period.label)"
+                    }
+                    return "活动名称（如：午餐、看日落等）"
+                }()
+
                 HStack {
-                    TextField("活动名称（如：午餐、看日落等）", text: Binding(
+                    TextField(placeholder, text: Binding(
                         get: { viewModel.title },
                         set: { viewModel.onTitleChange($0) }
                     ))
@@ -417,7 +429,7 @@ public struct EventSheetView: View {
                             ForEach([15, 30, 45, 60, 90, 120], id: \.self) { duration in
                                 let isCurrentDuration = viewModel.durationMinutes == duration
                                 Button(action: {
-                                    let endMin = min(1440, viewModel.startTime.totalMinutes + duration)
+                                    let endMin = min(1439, viewModel.startTime.totalMinutes + duration)
                                     viewModel.onEndTimeChange(SimpleTime(totalMinutes: endMin))
                                 }) {
                                     Text("+\(duration)分钟")
@@ -450,7 +462,44 @@ public struct EventSheetView: View {
         .overlay(cardShape.stroke(Slate200, lineWidth: 1))
     }
 
-    // MARK: - Card 6: Repeat Daily
+    // MARK: - Card 6: Note
+
+    private var noteCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "活动备注（选填）", systemImage: "note.text", palette: palette)
+
+            HStack(alignment: .top) {
+                TextField("添加注意事项、同行人、携带物品等…", text: Binding(
+                    get: { viewModel.note },
+                    set: { viewModel.onNoteChange($0) }
+                ), axis: .vertical)
+                .font(.system(size: 14))
+                .lineLimit(2...4)
+
+                if !viewModel.note.isEmpty {
+                    Button(action: { viewModel.onNoteChange("") }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(Slate400)
+                            .font(.system(size: 15))
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Slate200, lineWidth: 1)
+            )
+        }
+        .padding(16)
+        .background(SurfaceCard)
+        .clipShape(cardShape)
+        .overlay(cardShape.stroke(Slate200, lineWidth: 1))
+    }
+
+    // MARK: - Card 7: Repeat Daily
 
     private var repeatDailyCard: some View {
         VStack(alignment: .leading, spacing: 10) {

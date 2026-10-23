@@ -77,8 +77,44 @@ public enum WallpaperPreset: String, CaseIterable, Identifiable, Codable, Sendab
     }
 }
 
-/// Universal wallpaper image resolver searching all bundle locations and directories.
+/// Returns the local Documents URL where user-selected custom wallpaper is stored.
+public func customWallpaperFileURL() -> URL? {
+    FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?
+        .appendingPathComponent("custom_wallpaper.jpg")
+}
+
+/// Saves user-selected image data as the custom wallpaper in Documents directory.
+@discardableResult
+public func saveCustomWallpaperData(_ data: Data) -> Bool {
+    guard let url = customWallpaperFileURL() else { return false }
+    do {
+        #if canImport(UIKit)
+        if let uiImg = UIImage(data: data), let jpeg = uiImg.jpegData(compressionQuality: 0.88) {
+            try jpeg.write(to: url, options: .atomic)
+            return true
+        }
+        #endif
+        try data.write(to: url, options: .atomic)
+        return true
+    } catch {
+        return false
+    }
+}
+
+/// Universal wallpaper image resolver searching user Documents (for `.custom`) and all bundle locations.
 public func loadWallpaperImage(for preset: WallpaperPreset, bundle: Bundle? = nil) -> PlatformWallpaperImage? {
+    if preset == .custom, let customURL = customWallpaperFileURL(), FileManager.default.fileExists(atPath: customURL.path) {
+        #if canImport(UIKit)
+        if let img = UIImage(contentsOfFile: customURL.path) {
+            return img
+        }
+        #elseif canImport(AppKit)
+        if let img = NSImage(contentsOf: customURL) {
+            return img
+        }
+        #endif
+    }
+
     guard let filename = preset.assetFilename else { return nil }
     let clean = (filename as NSString).lastPathComponent
     let name = (clean as NSString).deletingPathExtension

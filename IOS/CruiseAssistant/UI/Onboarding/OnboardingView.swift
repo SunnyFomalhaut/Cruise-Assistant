@@ -230,6 +230,11 @@ public struct OnboardingView: View {
                 }
             }
 
+            // Multi-Leg & Langkawi Ashore Section
+            if viewModel.scheduleNights != nil {
+                multiLegAndAshoreSection
+            }
+
             // Dinner Time Selection
             if viewModel.isBuiltInShip && viewModel.selectedScheduleIndex >= 0 {
                 VStack(alignment: .leading, spacing: 8) {
@@ -257,6 +262,99 @@ public struct OnboardingView: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Slate200, lineWidth: 1)
         )
+    }
+
+    @ViewBuilder
+    private var multiLegAndAshoreSection: some View {
+        let currentLegs = viewModel.displayLegs
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("航程编排与靠港登岸")
+                    .font(.subheadline)
+                    .foregroundColor(Slate700)
+
+                Spacer()
+
+                if let summary = viewModel.multiLegSummary {
+                    Text("\(summary.legsLabel)夜 · 共\(summary.totalNights)晚")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(CruiseMarine)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(CruiseAzureContainer)
+                        .clipShape(Capsule())
+                }
+            }
+
+            ForEach(Array(currentLegs.enumerated()), id: \.offset) { idx, nights in
+                HStack(spacing: 8) {
+                    Text("第 \(idx + 1) 程 · \(nights) 夜")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Slate800)
+
+                    if nights == 4 {
+                        let isAshore = viewModel.ashoreLegs.contains(idx)
+                        Button {
+                            viewModel.onToggleAshore(idx)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: isAshore ? "checkmark.square.fill" : "square")
+                                    .font(.system(size: 13))
+                                Text("兰卡威登岸")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundColor(isAshore ? CruiseMarine : Slate600)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(isAshore ? CruiseAzureContainer : Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isAshore ? CruiseAzure : Slate200, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    Spacer()
+
+                    if idx > 0 && idx == currentLegs.count - 1 {
+                        Button {
+                            viewModel.onRemoveLeg(idx - 1)
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(NowRed.opacity(0.8))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Slate50)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+
+            if let nextNights = viewModel.nextLegNights {
+                Button {
+                    viewModel.onAddLeg(nextNights)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 13))
+                        Text("续订下一程 (\(nextNights)夜联程)")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(CruiseMarine)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(CruiseAzureContainer.opacity(0.6))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     private func dinnerButton(time: SimpleTime, label: String) -> some View {
@@ -326,6 +424,25 @@ public struct OnboardingView: View {
                 .buttonStyle(PlainButtonStyle())
             }
 
+            // Concierge Priority Boarding Toggle
+            Toggle(
+                isOn: Binding(
+                    get: { viewModel.isConcierge },
+                    set: { viewModel.onConciergeToggle($0) }
+                )
+            ) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("礼宾 (Concierge) 优先登船")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Slate900)
+                    Text("开启后不受批次限制，11:00 优先登船")
+                        .font(.caption)
+                        .foregroundColor(Slate500)
+                }
+            }
+            .tint(CruiseAzure)
+
             // Board Time Slot Selection
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -334,35 +451,37 @@ public struct OnboardingView: View {
                         .foregroundColor(Slate700)
                     Spacer()
                     let endSlot = viewModel.boardTime.plusMinutes(15)
-                    Text("登船批次：\(viewModel.boardTime.description) – \(endSlot.description)")
+                    Text(viewModel.isConcierge ? "礼宾优先登船：11:00 – 11:15" : "登船批次：\(viewModel.boardTime.description) – \(endSlot.description)")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(CruiseMarine)
                 }
 
-                let slots = boardingSlots()
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                    ForEach(slots, id: \.self) { slot in
-                        let isSelected = viewModel.boardTime == slot
-                        Button(action: {
-                            viewModel.onBoardTimeChange(slot)
-                        }) {
-                            Text(slot.description)
-                                .font(.subheadline)
-                                .fontWeight(isSelected ? .bold : .medium)
-                                .foregroundColor(isSelected ? CruiseMarine : Slate700)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(isSelected ? CruiseAzureContainer : Slate100)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(isSelected ? CruiseAzure : Color.clear, lineWidth: 1)
-                                )
+                if !viewModel.isConcierge {
+                    let slots = boardingSlots()
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                        ForEach(slots, id: \.self) { slot in
+                            let isSelected = viewModel.boardTime == slot
+                            Button(action: {
+                                viewModel.onBoardTimeChange(slot)
+                            }) {
+                                Text(slot.description)
+                                    .font(.subheadline)
+                                    .fontWeight(isSelected ? .bold : .medium)
+                                    .foregroundColor(isSelected ? CruiseMarine : Slate700)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(isSelected ? CruiseAzureContainer : Slate100)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(isSelected ? CruiseAzure : Color.clear, lineWidth: 1)
+                                    )
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
                 }
             }
@@ -374,7 +493,9 @@ public struct OnboardingView: View {
                     .foregroundColor(Slate700)
 
                 Button(action: {
-                    activeDateSheet = .disembark
+                    if !viewModel.isMultiLeg {
+                        activeDateSheet = .disembark
+                    }
                 }) {
                     HStack {
                         Image(systemName: "calendar")
@@ -383,9 +504,15 @@ public struct OnboardingView: View {
                             .foregroundColor(Slate900)
                             .fontWeight(.medium)
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(Slate400)
+                        if viewModel.isMultiLeg {
+                            Text("按联程自动推算")
+                                .font(.caption)
+                                .foregroundColor(Slate400)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(Slate400)
+                        }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
@@ -396,6 +523,7 @@ public struct OnboardingView: View {
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
+                .disabled(viewModel.isMultiLeg)
 
                 Text("预计 07:00 开始离船")
                     .font(.caption)

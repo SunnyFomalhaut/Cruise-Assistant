@@ -20,6 +20,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var wallpaperEnabled: Bool = false
     public var wallpaperKey: String = WallpaperPreset.none.rawValue
     public var wallpaperAlpha: Double = 0.10
+    public var cardDollsEnabled: Bool = true
 
     public init(
         lastViewedDate: SimpleDate? = nil,
@@ -38,7 +39,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         colorTheme: AppColorTheme = .judy_blue,
         wallpaperEnabled: Bool = false,
         wallpaperKey: String = WallpaperPreset.none.rawValue,
-        wallpaperAlpha: Double = 0.10
+        wallpaperAlpha: Double = 0.10,
+        cardDollsEnabled: Bool = true
     ) {
         self.lastViewedDate = lastViewedDate
         self.displayStartMinute = displayStartMinute
@@ -57,6 +59,36 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.wallpaperEnabled = wallpaperEnabled
         self.wallpaperKey = wallpaperKey
         self.wallpaperAlpha = wallpaperAlpha
+        self.cardDollsEnabled = cardDollsEnabled
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case lastViewedDate, displayStartMinute, displayEndMinute, hourHeightPt, collapseEmptyGaps
+        case remindBefore15, remindBefore5, remindAtStart, dinnerTime, notificationsEnabled
+        case onboardingCompleted, lastPixieDeck, armedEventIds, colorTheme
+        case wallpaperEnabled, wallpaperKey, wallpaperAlpha, cardDollsEnabled
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.lastViewedDate = try container.decodeIfPresent(SimpleDate.self, forKey: .lastViewedDate)
+        self.displayStartMinute = try container.decodeIfPresent(Int.self, forKey: .displayStartMinute) ?? 420
+        self.displayEndMinute = try container.decodeIfPresent(Int.self, forKey: .displayEndMinute) ?? 1440
+        self.hourHeightPt = try container.decodeIfPresent(Double.self, forKey: .hourHeightPt) ?? 120.0
+        self.collapseEmptyGaps = try container.decodeIfPresent(Bool.self, forKey: .collapseEmptyGaps) ?? false
+        self.remindBefore15 = try container.decodeIfPresent(Bool.self, forKey: .remindBefore15) ?? true
+        self.remindBefore5 = try container.decodeIfPresent(Bool.self, forKey: .remindBefore5) ?? true
+        self.remindAtStart = try container.decodeIfPresent(Bool.self, forKey: .remindAtStart) ?? true
+        self.dinnerTime = try container.decodeIfPresent(SimpleTime.self, forKey: .dinnerTime) ?? SimpleTime(hour: 17, minute: 45)
+        self.notificationsEnabled = try container.decodeIfPresent(Bool.self, forKey: .notificationsEnabled) ?? true
+        self.onboardingCompleted = try container.decodeIfPresent(Bool.self, forKey: .onboardingCompleted) ?? false
+        self.lastPixieDeck = try container.decodeIfPresent(Int.self, forKey: .lastPixieDeck)
+        self.armedEventIds = try container.decodeIfPresent(Set<Int64>.self, forKey: .armedEventIds) ?? []
+        self.colorTheme = try container.decodeIfPresent(AppColorTheme.self, forKey: .colorTheme) ?? .judy_blue
+        self.wallpaperEnabled = try container.decodeIfPresent(Bool.self, forKey: .wallpaperEnabled) ?? false
+        self.wallpaperKey = try container.decodeIfPresent(String.self, forKey: .wallpaperKey) ?? WallpaperPreset.none.rawValue
+        self.wallpaperAlpha = try container.decodeIfPresent(Double.self, forKey: .wallpaperAlpha) ?? 0.10
+        self.cardDollsEnabled = try container.decodeIfPresent(Bool.self, forKey: .cardDollsEnabled) ?? true
     }
 }
 
@@ -181,6 +213,10 @@ public final class SettingsStore: ObservableObject, @unchecked Sendable {
 
     public func setWallpaperAlpha(_ alpha: Double) {
         updateSettings { $0.wallpaperAlpha = alpha }
+    }
+
+    public func setCardDollsEnabled(_ enabled: Bool) {
+        updateSettings { $0.cardDollsEnabled = enabled }
     }
 
     public func getArmedEventIds() -> Set<Int64> {

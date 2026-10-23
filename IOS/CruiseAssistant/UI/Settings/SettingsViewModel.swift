@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-/// View model managing application preferences, theme/wallpaper styling, voyage configuration, and data backups.
+/// View model managing application preferences, theme/wallpaper styling, voyage configuration, and data archives/backups.
 @MainActor
 public final class SettingsViewModel: ObservableObject {
     private let settingsStore: SettingsStore
@@ -18,8 +18,10 @@ public final class SettingsViewModel: ObservableObject {
 
     @Published public var settings: AppSettings
     @Published public var voyage: Voyage?
+    @Published public var archives: [VoyageArchiveEntry] = []
     @Published public var backupJSON: String?
     @Published public var errorMessage: String?
+    @Published public var toastMessage: String?
     @Published public var showResetConfirmation: Bool = false
     @Published public var showBackupSheet: Bool = false
 
@@ -40,6 +42,7 @@ public final class SettingsViewModel: ObservableObject {
 
         self.settings = settingsStore.getSettings()
         self.voyage = voyageRepository.getVoyage()
+        self.archives = voyageRepository.getArchives()
 
         // Bind reactive updates from SettingsStore
         settingsStore.$settings
@@ -52,6 +55,7 @@ public final class SettingsViewModel: ObservableObject {
     public func loadData() {
         self.settings = settingsStore.getSettings()
         self.voyage = voyageRepository.getVoyage()
+        self.archives = voyageRepository.getArchives()
     }
 
     // MARK: - Theme & Wallpaper Settings
@@ -76,6 +80,11 @@ public final class SettingsViewModel: ObservableObject {
 
     public func setWallpaperEnabled(_ enabled: Bool) {
         settingsStore.setWallpaperEnabled(enabled)
+        self.settings = settingsStore.getSettings()
+    }
+
+    public func setCardDollsEnabled(_ enabled: Bool) {
+        settingsStore.setCardDollsEnabled(enabled)
         self.settings = settingsStore.getSettings()
     }
 
@@ -142,36 +151,105 @@ public final class SettingsViewModel: ObservableObject {
         boardTime: SimpleTime,
         disembarkDate: SimpleDate,
         disembarkTime: SimpleTime,
-        dinnerTime: SimpleTime
+        dinnerTime: SimpleTime,
+        isConcierge: Bool? = nil,
+        legs: [Int]? = nil,
+        ashoreLegs: Set<Int>? = nil
     ) {
         guard var current = voyage ?? voyageRepository.getVoyage() else { return }
         current.shipName = shipName?.trimmingCharacters(in: .whitespacesAndNewlines)
         current.boardDate = boardDate
-        current.boardTime = boardTime
+        if let concierge = isConcierge {
+            current.isConcierge = concierge
+            current.boardTime = concierge ? CONCIERGE_BOARD_TIME : boardTime
+        } else {
+            current.boardTime = boardTime
+        }
         current.disembarkDate = disembarkDate
         current.disembarkTime = disembarkTime
+        if let updatedLegs = legs {
+            current.legs = updatedLegs
+        }
+        if let updatedAshore = ashoreLegs {
+            current.ashoreLegs = updatedAshore
+        }
 
         voyageRepository.updateVoyage(current)
         settingsStore.setDinnerTime(dinnerTime)
         eventRepository.updateDinnerEventsTime(newTime: dinnerTime)
 
-        self.voyage = current
+        self.voyage = voyageRepository.getVoyage() ?? current
         triggerRescheduleNotifications()
     }
+
     // MARK: - Preset Shows
 
     public func addPresetShows() {
         voyageRepository.addPresetShows(dinnerTime: settings.dinnerTime)
         triggerRescheduleNotifications()
+        toastMessage = "已添加官方演出日程"
     }
 
+    // MARK: - Voyage Archives
+
+    @discardableResult
+    public func archiveCurrentVoyage(customName: String? = nil) -> VoyageArchiveEntry? {
+        let entry = voyageRepository.archiveCurrentVoyage(customName: customName)
+        self.archives = voyageRepository.getArchives()
+        if entry != nil {
+            toastMessage = "已保存当前航程存档"
+        }
+        return entry
+    }
+
+    public func deleteArchive(id: Int64) {
+        voyageRepository.deleteArchive(id: id)
+        self.archives = voyageRepository.getArchives()
+        toastMessage = "已删除存档"
+    }
+
+    @discardableResult
+    public func restoreArchive(id: Int64, archiveCurrentFirst: Bool = false) -> Bool {
+        if archiveCurrentFirst, voyage != nil {
+            _ = voyageRepository.archiveCurrentVoyage(customName: nil)
+        }
+        let ok = voyageRepository.restoreArchive(id: id)
+        if ok {
+            self.voyage = voyageRepository.getVoyage()
+            self.archives = voyageRepository.getArchives()
+            if let v = self.voyage {
+                settingsStore.setLastViewedDate(v.boardDate)
+                settingsStore.setOnboardingCompleted(true)
+            }
+            triggerRescheduleNotifications()
+            toastMessage = "已恢复历史航程存档"
+        }
+        return ok
+    }
+
+    @discardableResult
+    public func importArchiveJSON(_ jsonString: String, customName: String? = nil) -> Bool {
+        guard let _ = voyageRepository.importArchive(jsonString: jsonString, customName: customName) else {
+            errorMessage = "存档 JSON 格式无效，无法导入"
+            return false
+        }
+        self.archives = voyageRepository.getArchives()
+        toastMessage = "已成功导入航程存档"
+        return true
+    }
 
     // MARK: - Data Management & Backup
+
+    public func archiveAndResetVoyage(onDone: (() -> Void)? = nil) {
+        _ = voyageRepository.archiveCurrentVoyage(customName: nil)
+        resetVoyage(onDone: onDone)
+    }
 
     public func resetVoyage(onDone: (() -> Void)? = nil) {
         voyageRepository.resetVoyage()
         settingsStore.setOnboardingCompleted(false)
         self.voyage = nil
+        self.archives = voyageRepository.getArchives()
         triggerRescheduleNotifications()
         onDone?()
     }

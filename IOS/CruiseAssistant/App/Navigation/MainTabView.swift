@@ -134,11 +134,16 @@ public struct MainTabView: View {
             .tag(AppTab.facilities)
 
             // Tab 4: 仙尘 (Pixie Dust)
-            PixieDustView(viewModel: pixieDustViewModel)
-                .tabItem {
-                    Label(AppTab.pixieDust.title, systemImage: AppTab.pixieDust.iconName)
+            PixieDustView(
+                viewModel: pixieDustViewModel,
+                onNavigateToDeckMap: { deck, markers in
+                    coordinator.navigateToDeckMapWithPixie(deck: deck, markers: markers)
                 }
-                .tag(AppTab.pixieDust)
+            )
+            .tabItem {
+                Label(AppTab.pixieDust.title, systemImage: AppTab.pixieDust.iconName)
+            }
+            .tag(AppTab.pixieDust)
 
             // Tab 5: 愿望单 (Wishlist)
             NavigationStack {
@@ -195,9 +200,20 @@ public struct MainTabView: View {
         .onChange(of: coordinator.targetHighlight) { _, _ in
             handleDeckMapNavigation()
         }
+        .onChange(of: coordinator.targetPixieMarkers) { _, _ in
+            handleDeckMapNavigation()
+        }
         .onChange(of: coordinator.activeTab) { _, newTab in
             if newTab == .deckMap {
                 handleDeckMapNavigation()
+            } else if newTab == .timeline {
+                timelineViewModel.loadData()
+            } else if newTab == .pixieDust {
+                pixieDustViewModel.loadData()
+            } else if newTab == .wishlist {
+                wishlistViewModel.loadData()
+            } else if newTab == .settings {
+                settingsViewModel.loadData()
             }
         }
         .onChange(of: coordinator.targetDate) { _, newDate in
@@ -209,10 +225,14 @@ public struct MainTabView: View {
 
     private func handleDeckMapNavigation() {
         if let deck = coordinator.targetDeck {
-            deckMapViewModel.selectDeck(deck)
-            if let highlight = coordinator.targetHighlight, !highlight.isEmpty {
-                deckMapViewModel.highlightTarget = highlight
-                deckMapViewModel.search(query: highlight)
+            if !coordinator.targetPixieMarkers.isEmpty {
+                deckMapViewModel.enterPixieMode(deck: deck, markers: coordinator.targetPixieMarkers)
+            } else {
+                deckMapViewModel.selectDeck(deck)
+                if let highlight = coordinator.targetHighlight, !highlight.isEmpty {
+                    deckMapViewModel.highlightTarget = highlight
+                    deckMapViewModel.search(query: highlight)
+                }
             }
         }
     }

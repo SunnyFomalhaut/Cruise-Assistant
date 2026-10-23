@@ -11,28 +11,28 @@ public enum PixieTab: String, CaseIterable, Identifiable, Codable, Sendable {
     public var id: String { rawValue }
 }
 
-/// 房间历史小字数据（如"上次：豪华 ×2"）
-public struct RoomHistory: Equatable, Sendable {
-    public let levelName: String
-    public let count: Int
+/// 收到/联动列表筛选器
+public enum PixieFilter: String, CaseIterable, Identifiable, Codable, Sendable {
+    case all = "全部"
+    case pendingOnly = "仅待回礼"
 
-    public init(levelName: String, count: Int) {
-        self.levelName = levelName
-        self.count = count
-    }
+    public var id: String { rawValue }
 }
 
 /// 仙尘魔法礼物追踪视图模型
 @MainActor
 public final class PixieDustViewModel: ObservableObject {
     @Published public var tab: PixieTab = .given
+    @Published public var filter: PixieFilter = .all
     @Published public var deck: Int = 10
     @Published public var roomInput: String = ""
     @Published public var selectedLevelId: Int64? = nil
     @Published public var givenRecords: [PixieDustRecord] = []
     @Published public var receivedRecords: [PixieDustRecord] = []
+    @Published public var allReceivedRecords: [PixieDustRecord] = []
     @Published public var groupedGiven: [RoomGroup] = []
     @Published public var roomPairs: [RoomPair] = []
+    @Published public var allRoomPairs: [RoomPair] = []
     @Published public var isKeypadCollapsed: Bool = false
     @Published public var viewMode: GivenViewMode = .grouped
     @Published public var levels: [PixieLevel] = []
@@ -46,6 +46,7 @@ public final class PixieDustViewModel: ObservableObject {
     private let dustRepository: PixieDustRepositoryProtocol
     private let voyageRepository: VoyageRepositoryProtocol
     private let settingsStore: SettingsStore
+    private var saveInFlight: Bool = false
 
     public init(
         dustRepository: PixieDustRepositoryProtocol = PixieDustRepository(),
@@ -77,29 +78,60 @@ public final class PixieDustViewModel: ObservableObject {
 
     // MARK: - Computed Helpers
 
-    /// 键盘下方上次历史小字提示
+    /// 房号实时校验结果（支持 4~5 位完整房号，如 8502 / 10200）
+    public var validation: StateroomValidationResult {
+        validateStateroomInput(roomInput)
+    }
+
+    /// 键盘下方房间历史统计与回礼提示
     public var roomHistory: RoomHistory? {
-        guard isValidRoomInput(roomInput) else { return nil }
-        guard let last = lastLevelForRoom(records: givenRecords, deck: deck, room: roomInput) else {
-            return nil
+        let v = validation
+        guard v.status == .valid, let d = v.deck, let r = v.room else { return nil }
+        let roomGiven = givenRecords.filter { $0.deck == d && $0.room == r }
+        let roomReceived = allReceivedRecords.filter { $0.deck == d && $0.room == r }
+        guard !roomGiven.isEmpty || !roomReceived.isEmpty else { return nil }
+
+        let lastGiven = roomGiven.max(by: { $0.timestamp < $1.timestamp })
+        let lastReceived = roomReceived.max(by: { $0.timestamp < $1.timestamp })
+        let unreplied = roomReceived.filter { !$0.replied }.count
+
+        let lastGivenName = lastGiven.map { rec in
+            levels.first(where: { $0.id == rec.levelId })?.name ?? rec.levelNameSnapshot
         }
-        let name = levels.first(where: { $0.id == last.levelId })?.name ?? last.levelNameSnapshot
-        let count = givenRecords.filter { $0.deck == deck && $0.room == roomInput }.count
-        return RoomHistory(levelName: name, count: count)
+        let lastReceivedName = lastReceived.map { rec in
+            levels.first(where: { $0.id == rec.levelId })?.name ?? rec.levelNameSnapshot
+        }
+
+        return RoomHistory(
+            levelName: lastGivenName ?? lastReceivedName ?? "",
+            count: roomGiven.count,
+            givenCount: roomGiven.count,
+            lastGivenLevelName: lastGivenName,
+            lastGivenLevelId: lastGiven?.levelId,
+            receivedCount: roomReceived.count,
+            unrepliedCount: unreplied,
+            lastReceivedLevelName: lastReceivedName,
+            lastReceivedLevelId: lastReceived?.levelId
+        )
     }
 
     // MARK: - Keypad Interactions
 
-    /// 数字按键点击
+    /// 数字按键点击（支持 4~5 位完整船舱号直输）
     public func onDigit(_ digit: String) {
-        guard digit.allSatisfy(\.isNumber), roomInput.count < 3 else { return }
+        guard digit.allSatisfy(\.isNumber), roomInput.count < 5 else { return }
         roomInput.append(digit)
 
-        // 输满三位数字后，若该房间曾有发出历史，自动预选上次送出的等级
-        if roomInput.count == 3 {
-            if let last = lastLevelForRoom(records: givenRecords, deck: deck, room: roomInput),
-               levels.contains(where: { $0.id == last.levelId }) {
-                selectedLevelId = last.levelId
+        if roomInput.count >= 4 {
+            let v = validateStateroomInput(roomInput)
+            if v.status == .valid, let d = v.deck, let r = v.room {
+                deck = d
+                let lastGiven = lastLevelForRoom(records: givenRecords, deck: d, room: r)
+                let targetLevelId = lastGiven?.levelId
+                    ?? allReceivedRecords.first(where: { $0.deck == d && $0.room == r && !$0.replied })?.levelId
+                if let targetId = targetLevelId, levels.contains(where: { $0.id == targetId }) {
+                    selectedLevelId = targetId
+                }
             }
         }
     }
@@ -113,6 +145,12 @@ public final class PixieDustViewModel: ObservableObject {
     public func onBackspace() {
         if !roomInput.isEmpty {
             roomInput.removeLast()
+            if roomInput.count >= 4 {
+                let v = validateStateroomInput(roomInput)
+                if v.status == .valid, let d = v.deck {
+                    deck = d
+                }
+            }
         }
     }
 
@@ -154,6 +192,14 @@ public final class PixieDustViewModel: ObservableObject {
         HapticFeedbackService.shared.triggerSelection()
     }
 
+    /// 切换筛选器（全部 / 仅待回礼）
+    public func selectFilter(_ newFilter: PixieFilter) {
+        guard filter != newFilter else { return }
+        filter = newFilter
+        applyFilters()
+        HapticFeedbackService.shared.triggerSelection()
+    }
+
     /// 切换键盘折叠
     public func toggleKeypad() {
         isKeypadCollapsed.toggle()
@@ -170,16 +216,26 @@ public final class PixieDustViewModel: ObservableObject {
 
     /// 快捷录入：保存一条记录（含双向自动回礼联动）
     public func submitRecord() {
-        guard isValidRoomInput(roomInput), let levelId = selectedLevelId else { return }
+        guard !saveInFlight else { return }
+        let v = validation
+        guard v.status == .valid, let targetDeck = v.deck, let targetRoom = v.room, let levelId = selectedLevelId else {
+            return
+        }
         guard let level = levels.first(where: { $0.id == levelId }) else { return }
+
+        saveInFlight = true
+        defer { saveInFlight = false }
+
+        deck = targetDeck
+        settingsStore.setLastPixieDeck(targetDeck)
 
         let direction: PixieDustDirection = (tab == .received) ? .received : .given
         if direction == .given {
             // 保存发出记录
             _ = dustRepository.addRecord(
                 direction: .given,
-                deck: deck,
-                room: roomInput,
+                deck: targetDeck,
+                room: targetRoom,
                 levelId: level.id,
                 levelNameSnapshot: level.name,
                 note: "",
@@ -187,28 +243,36 @@ public final class PixieDustViewModel: ObservableObject {
             )
 
             // 联动方向一：若收到列表中有同房间未回礼的记录，自动将最早一条标记为已回礼
-            if let target = autoReplyTarget(received: receivedRecords, deck: deck, room: roomInput) {
+            if let target = autoReplyTarget(received: allReceivedRecords, deck: targetDeck, room: targetRoom) {
                 var updated = target
                 updated.replied = true
                 dustRepository.updateRecord(updated)
-                autoRepliedRoom = "\(deck)\(roomInput)"
-                toastMessage = "已自动联动标记 \(deck)\(roomInput) 收到礼物为已回礼"
+                autoRepliedRoom = "\(targetDeck)\(targetRoom)"
+                toastMessage = "已自动联动标记 \(targetDeck)\(targetRoom) 收到礼物为已回礼"
             }
         } else {
-            // 联动方向一镜像：若此前已向该房间送出过礼物，刚登记的收到记录直接置为已回礼
-            let hasGiven = hasGivenForRoom(given: givenRecords, deck: deck, room: roomInput)
+            // 联动方向一镜像：若此前向该房间送出的次数多于已消费回礼数，刚登记的收到记录直接置为已回礼
+            let existingRepliedCount = allReceivedRecords.filter {
+                $0.deck == targetDeck && $0.room == targetRoom && $0.replied
+            }.count
+            let hasGiven = hasGivenForRoom(
+                given: givenRecords,
+                deck: targetDeck,
+                room: targetRoom,
+                existingRepliedCount: existingRepliedCount
+            )
             _ = dustRepository.addRecord(
                 direction: .received,
-                deck: deck,
-                room: roomInput,
+                deck: targetDeck,
+                room: targetRoom,
                 levelId: level.id,
                 levelNameSnapshot: level.name,
                 note: "",
                 replied: hasGiven
             )
             if hasGiven {
-                autoRepliedRoom = "\(deck)\(roomInput)"
-                toastMessage = "检测到此前已向 \(deck)\(roomInput) 送过礼物，已自动标记为已回礼"
+                autoRepliedRoom = "\(targetDeck)\(targetRoom)"
+                toastMessage = "检测到此前已向 \(targetDeck)\(targetRoom) 送过礼物，已自动标记为已回礼"
             }
         }
 
@@ -309,14 +373,40 @@ public final class PixieDustViewModel: ObservableObject {
         let allRecords = dustRepository.getRecords(direction: nil)
         let given = allRecords
             .filter { $0.direction == .given }
-            .sorted(by: { $0.timestamp > $1.timestamp })
+            .sorted { a, b in
+                if a.deck != b.deck { return a.deck < b.deck }
+                let ra = Int(a.room) ?? 0
+                let rb = Int(b.room) ?? 0
+                if ra != rb { return ra < rb }
+                return a.timestamp > b.timestamp
+            }
         self.givenRecords = given
 
         let received = allRecords.filter { $0.direction == .received }
-        self.receivedRecords = sortReceived(records: received, levels: levels)
+        self.allReceivedRecords = sortForSweepDelivery(records: received, levels: levels)
 
         self.groupedGiven = groupGivenByRoom(records: given, levels: levels)
-        self.roomPairs = buildRoomPairs(given: given, received: received, levels: levels)
+        self.allRoomPairs = pairByRoomForSweep(given: given, received: received, levels: levels)
+        applyFilters()
+    }
+
+    private func applyFilters() {
+        let supplementRoomKeys = Set(
+            allRoomPairs
+                .filter { $0.received.count > $0.given.count }
+                .map { "\($0.deck)-\($0.room)" }
+        )
+        if filter == .pendingOnly {
+            self.receivedRecords = allReceivedRecords.filter {
+                !$0.replied || supplementRoomKeys.contains("\($0.deck)-\($0.room)")
+            }
+            self.roomPairs = allRoomPairs.filter {
+                !$0.unrepliedReceived.isEmpty || $0.given.count != $0.received.count
+            }
+        } else {
+            self.receivedRecords = allReceivedRecords
+            self.roomPairs = allRoomPairs
+        }
     }
 
     /// 刷新数据

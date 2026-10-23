@@ -44,6 +44,7 @@ public final class NavigationCoordinator: ObservableObject {
     // Cross-tab navigation target parameters
     @Published public var targetDeck: Int?
     @Published public var targetHighlight: String?
+    @Published public var targetPixieMarkers: [PixieRoomMarker] = []
     @Published public var targetDate: SimpleDate?
     @Published public var targetEventId: Int64?
 
@@ -51,14 +52,24 @@ public final class NavigationCoordinator: ObservableObject {
         self.activeTab = activeTab
         self.targetDeck = nil
         self.targetHighlight = nil
+        self.targetPixieMarkers = []
         self.targetDate = nil
         self.targetEventId = nil
     }
 
     /// Navigates to the Deck Map tab and focuses on a specific deck with optional highlight text.
     public func navigateToDeckMap(deck: Int = 10, highlight: String? = nil) {
+        self.targetPixieMarkers = []
         self.targetDeck = deck
         self.targetHighlight = highlight
+        self.activeTab = .deckMap
+    }
+
+    /// Navigates to the Deck Map tab in Pixie Mode with 4-status room markers on the given deck.
+    public func navigateToDeckMapWithPixie(deck: Int, markers: [PixieRoomMarker]) {
+        self.targetHighlight = nil
+        self.targetDeck = deck
+        self.targetPixieMarkers = markers
         self.activeTab = .deckMap
     }
 
@@ -95,6 +106,7 @@ public final class NavigationCoordinator: ObservableObject {
     public func clearNavigationTargets() {
         self.targetDeck = nil
         self.targetHighlight = nil
+        self.targetPixieMarkers = []
         self.targetDate = nil
         self.targetEventId = nil
     }

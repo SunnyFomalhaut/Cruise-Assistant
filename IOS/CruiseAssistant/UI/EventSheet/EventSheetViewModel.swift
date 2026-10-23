@@ -45,6 +45,8 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
     @Published public var hoursCheckMessage: String?
     @Published public var hoursCheckOverride: Bool = false
     @Published public var waitMinutes: Int = 30
+    @Published public var presetKey: String? = nil
+    @Published public var note: String = ""
 
     // MARK: - Computed Properties
 
@@ -129,6 +131,8 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
                 self.isRecurrenceMember = (event.recurrenceGroupId != nil)
                 self.recurrenceGroupId = event.recurrenceGroupId
                 self.waitMinutes = event.waitMinutes ?? event.effectiveWaitMinutes
+                self.presetKey = event.presetKey
+                self.note = event.note ?? ""
             }
         } else {
             if selectedCategoryId == nil, let first = categories.first {
@@ -142,6 +146,25 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
         self.showMealPeriodRow = builtInShip && iconKey == "meal"
         self.locationPresetMode = resolveLocationPresetMode(iconKey: iconKey)
         self.showPresetMode = resolveShowPresetMode(iconKey: iconKey, title: title)
+
+        if isEditing && iconKey == "meal" {
+            self.selectedMealPeriod = Self.inferMealPeriod(title: title, startTime: startTime)
+        }
+    }
+
+    private static func inferMealPeriod(title: String, startTime: SimpleTime) -> MealPeriod {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let matched = MealPeriod.allCases.first(where: { $0.label == trimmed }) {
+            return matched
+        }
+        let hour = startTime.hour
+        switch hour {
+        case 5..<11: return .breakfast
+        case 11..<15: return .lunch
+        case 15..<17: return .snack
+        case 17..<22: return .dinner
+        default: return .lateNight
+        }
     }
 
     private func resolveLocationPresetMode(iconKey: String?) -> Bool {
@@ -168,13 +191,21 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
         self.locationPresetMode = resolveLocationPresetMode(iconKey: iconKey)
         self.showPresetMode = resolveShowPresetMode(iconKey: iconKey, title: title)
         self.selectedMealPeriod = nil
-        if iconKey == "show" {
+        if iconKey != "show" {
+            self.presetKey = nil
+        } else {
             self.waitMinutes = resolveDefaultWaitMinutes(placeName: placeName, deck: deck, title: title)
         }
         self.errorMessage = nil
     }
 
     public func onMealPeriodSelect(_ period: MealPeriod?) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let wasPreviousMealLabel = MealPeriod.allCases.contains { $0.label == trimmedTitle }
+        if wasPreviousMealLabel, let period = period {
+            self.title = period.label
+        }
+
         selectedMealPeriod = period
         let entries = LocationCatalog.venuesByCategory()["meal"] ?? []
         let currentVenueOpen = period == nil || entries.first { e in
@@ -204,13 +235,17 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
             }?.start
             let s = venueSlotStart ?? defaultStart
             self.startTime = s
-            self.endTime = SimpleTime(totalMinutes: s.totalMinutes + 30)
+            self.endTime = SimpleTime(totalMinutes: min(1439, s.totalMinutes + 30))
         }
     }
 
     public func onTitleChange(_ value: String) {
         self.title = value
         self.errorMessage = nil
+    }
+
+    public func onNoteChange(_ value: String) {
+        self.note = value
     }
 
     public func onDeckChange(_ value: Int) {
@@ -279,11 +314,16 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
         self.startTime = start
         self.endTime = end
         self.waitMinutes = preset.defaultWaitMinutes
+        self.presetKey = preset.key
+        if let presetNote = preset.note, !presetNote.isEmpty {
+            self.note = presetNote
+        }
         self.errorMessage = nil
     }
 
     public func onCustomShowSelected() {
         self.showPresetMode = false
+        self.presetKey = nil
     }
 
     public func onWaitMinutesChange(_ value: Int) {
@@ -379,6 +419,9 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
             finalPlaceName = trimmedPlace.isEmpty ? nil : trimmedPlace
         }
 
+        let trimmedNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalNote = trimmedNote.isEmpty ? nil : trimmedNote
+
         let event = CruiseEvent(
             id: editingId,
             date: date,
@@ -393,7 +436,9 @@ public final class EventSheetViewModel: ObservableObject, @unchecked Sendable {
             recurrenceGroupId: recurrenceGroupId,
             isSystemGenerated: isSystemEvent,
             isActive: true,
-            waitMinutes: (categoryIconKey == "show") ? waitMinutes : nil
+            presetKey: presetKey,
+            waitMinutes: (categoryIconKey == "show") ? waitMinutes : nil,
+            note: finalNote
         )
 
         self.saving = true

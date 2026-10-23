@@ -17,7 +17,7 @@ def create_xcodeproj():
             continue
         for f in files:
             if f.endswith(".swift"):
-                rel_path = os.path.relpath(os.path.join(root, f), ca_dir)
+                rel_path = os.path.relpath(os.path.join(root, f), ca_dir).replace("\\", "/")
                 source_files.append(rel_path)
                 
     source_files.sort()
@@ -45,7 +45,7 @@ def create_xcodeproj():
         f_uuid = generate_uuid()
         b_uuid = generate_uuid()
         file_refs[sf] = (f_uuid, b_uuid)
-    resource_folders = ["Resources/Raw", "Resources/Posters", "Resources/Wallpapers", "Assets.xcassets"]
+    resource_folders = ["Resources/Raw", "Resources/Posters", "Resources/Wallpapers", "Resources/Dolls", "Assets.xcassets"]
     for rf in resource_folders:
         f_uuid = generate_uuid()
         b_uuid = generate_uuid()
@@ -75,6 +75,8 @@ def create_xcodeproj():
             pbxproj.append(f"\t\t{f_uuid} /* {os.path.basename(sf)} */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = \"{sf}\"; sourceTree = \"<group>\"; }};")
         else:
             pbxproj.append(f"\t\t{f_uuid} /* {os.path.basename(sf)} */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"{sf}\"; sourceTree = \"<group>\"; }};")
+    pbxproj.append("/* End PBXFileReference section */")
+
     # PBXFrameworksBuildPhase
     pbxproj.append("/* Begin PBXFrameworksBuildPhase section */")
     pbxproj.append(f"\t\t{frameworks_phase_uuid} /* Frameworks */ = {{")
@@ -261,6 +263,7 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t\t\"CODE_SIGN_IDENTITY[sdk=iphoneos*]\" = \"Apple Development\";")
     pbxproj.append("\t\t\t\tCODE_SIGNING_ALLOWED = YES;")
     pbxproj.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+    pbxproj.append("\t\t\t\tCURRENT_PROJECT_VERSION = 53;")
     pbxproj.append("\t\t\t\tDEVELOPMENT_TEAM = AMLWQR59H4;")
     pbxproj.append("\t\t\t\tENABLE_PREVIEWS = NO;")
     pbxproj.append("\t\t\t\tENABLE_DEBUG_DYLIB = NO;")
@@ -273,7 +276,7 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t\t\t\"$(inherited)\",")
     pbxproj.append("\t\t\t\t\t\"@executable_path/Frameworks\",")
     pbxproj.append("\t\t\t\t);")
-    pbxproj.append("\t\t\t\tMARKETING_VERSION = 1.0;")
+    pbxproj.append("\t\t\t\tMARKETING_VERSION = 1.12.1;")
     pbxproj.append("\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = com.cruise.assistant.ios;")
     pbxproj.append("\t\t\t\tPRODUCT_NAME = \"$(TARGET_NAME)\";")
     pbxproj.append("\t\t\t\tSDKROOT = iphoneos;")
@@ -291,7 +294,7 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t\t\"CODE_SIGN_IDENTITY[sdk=iphoneos*]\" = \"Apple Development\";")
     pbxproj.append("\t\t\t\tCODE_SIGNING_ALLOWED = YES;")
     pbxproj.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
-    pbxproj.append("\t\t\t\tCURRENT_PROJECT_VERSION = 1;")
+    pbxproj.append("\t\t\t\tCURRENT_PROJECT_VERSION = 53;")
     pbxproj.append("\t\t\t\tDEVELOPMENT_TEAM = AMLWQR59H4;")
     pbxproj.append("\t\t\t\tGENERATE_INFOPLIST_FILE = YES;")
     pbxproj.append("\t\t\t\tINFOPLIST_FILE = CruiseAssistant/Info.plist;")
@@ -302,6 +305,7 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t\t\t\"$(inherited)\",")
     pbxproj.append("\t\t\t\t\t\"@executable_path/Frameworks\",")
     pbxproj.append("\t\t\t\t);")
+    pbxproj.append("\t\t\t\tMARKETING_VERSION = 1.12.1;")
     pbxproj.append("\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = com.cruise.assistant.ios;")
     pbxproj.append("\t\t\t\tPRODUCT_NAME = \"$(TARGET_NAME)\";")
     pbxproj.append("\t\t\t\tSDKROOT = iphoneos;")

@@ -10,6 +10,7 @@ public struct CruiseDatabaseState: Codable, Sendable {
     public var pixieDustRecords: [PixieDustRecord] = []
     public var pixieLevels: [PixieLevel] = []
     public var wishlistItems: [WishlistItem] = []
+    public var voyageArchives: [VoyageArchiveEntry] = []
 
     // Auto-incrementing sequence counters
     public var nextEventId: Int64 = 1
@@ -18,8 +19,36 @@ public struct CruiseDatabaseState: Codable, Sendable {
     public var nextPixieDustId: Int64 = 1
     public var nextPixieLevelId: Int64 = 10
     public var nextWishlistId: Int64 = 1
+    public var nextVoyageArchiveId: Int64 = 1
 
     public init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case voyage, dayPlans, categories, events, locationPresets
+        case pixieDustRecords, pixieLevels, wishlistItems, voyageArchives
+        case nextEventId, nextCategoryId, nextLocationPresetId
+        case nextPixieDustId, nextPixieLevelId, nextWishlistId, nextVoyageArchiveId
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.voyage = try container.decodeIfPresent(Voyage.self, forKey: .voyage)
+        self.dayPlans = try container.decodeIfPresent([DayPlan].self, forKey: .dayPlans) ?? []
+        self.categories = try container.decodeIfPresent([Category].self, forKey: .categories) ?? []
+        self.events = try container.decodeIfPresent([CruiseEvent].self, forKey: .events) ?? []
+        self.locationPresets = try container.decodeIfPresent([LocationPreset].self, forKey: .locationPresets) ?? []
+        self.pixieDustRecords = try container.decodeIfPresent([PixieDustRecord].self, forKey: .pixieDustRecords) ?? []
+        self.pixieLevels = try container.decodeIfPresent([PixieLevel].self, forKey: .pixieLevels) ?? []
+        self.wishlistItems = try container.decodeIfPresent([WishlistItem].self, forKey: .wishlistItems) ?? []
+        self.voyageArchives = try container.decodeIfPresent([VoyageArchiveEntry].self, forKey: .voyageArchives) ?? []
+        self.nextEventId = try container.decodeIfPresent(Int64.self, forKey: .nextEventId) ?? 1
+        self.nextCategoryId = try container.decodeIfPresent(Int64.self, forKey: .nextCategoryId) ?? 100
+        self.nextLocationPresetId = try container.decodeIfPresent(Int64.self, forKey: .nextLocationPresetId) ?? 1
+        self.nextPixieDustId = try container.decodeIfPresent(Int64.self, forKey: .nextPixieDustId) ?? 1
+        self.nextPixieLevelId = try container.decodeIfPresent(Int64.self, forKey: .nextPixieLevelId) ?? 10
+        self.nextWishlistId = try container.decodeIfPresent(Int64.self, forKey: .nextWishlistId) ?? 1
+        self.nextVoyageArchiveId = try container.decodeIfPresent(Int64.self, forKey: .nextVoyageArchiveId) ?? 1
+    }
 }
 
 /// Thread-safe offline persistent database for Cruise Assistant.
@@ -127,13 +156,13 @@ public final class CruiseDatabase: @unchecked Sendable {
         }
         saveToDisk()
     }
+
     public func deleteDayPlan(for date: SimpleDate) {
         lock.lock()
         defer { lock.unlock() }
         state.dayPlans.removeAll { $0.date == date }
         saveToDisk()
     }
-
 
     public func saveDayPlans(_ plans: [DayPlan]) {
         lock.lock()
@@ -147,6 +176,7 @@ public final class CruiseDatabase: @unchecked Sendable {
         }
         saveToDisk()
     }
+
     public func clearDayPlans() {
         lock.lock()
         defer { lock.unlock() }
@@ -463,7 +493,6 @@ public final class CruiseDatabase: @unchecked Sendable {
         saveToDisk()
     }
 
-
     // MARK: - PixieLevel Operations
 
     public func getPixieLevels() -> [PixieLevel] {
@@ -570,6 +599,100 @@ public final class CruiseDatabase: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         state.wishlistItems.removeAll()
+        saveToDisk()
+    }
+
+    // MARK: - VoyageArchive Operations
+
+    public func getVoyageArchives() -> [VoyageArchiveEntry] {
+        lock.lock()
+        defer { lock.unlock() }
+        return state.voyageArchives.sorted {
+            if $0.archivedAt != $1.archivedAt { return $0.archivedAt > $1.archivedAt }
+            return $0.id > $1.id
+        }
+    }
+
+    public func getVoyageArchive(byId id: Int64) -> VoyageArchiveEntry? {
+        lock.lock()
+        defer { lock.unlock() }
+        return state.voyageArchives.first { $0.id == id }
+    }
+
+    @discardableResult
+    public func saveVoyageArchive(_ archive: VoyageArchiveEntry) -> VoyageArchiveEntry {
+        lock.lock()
+        defer { lock.unlock() }
+        var entry = archive
+        if entry.id == 0 {
+            entry.id = state.nextVoyageArchiveId
+            state.nextVoyageArchiveId += 1
+            state.voyageArchives.append(entry)
+        } else {
+            if let idx = state.voyageArchives.firstIndex(where: { $0.id == entry.id }) {
+                state.voyageArchives[idx] = entry
+            } else {
+                state.voyageArchives.append(entry)
+                state.nextVoyageArchiveId = max(state.nextVoyageArchiveId, entry.id + 1)
+            }
+        }
+        saveToDisk()
+        return entry
+    }
+
+    public func deleteVoyageArchive(id: Int64) {
+        lock.lock()
+        defer { lock.unlock() }
+        state.voyageArchives.removeAll { $0.id == id }
+        saveToDisk()
+    }
+
+    @discardableResult
+    public func createArchiveFromCurrentState() -> VoyageArchiveEntry? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let voyage = state.voyage else { return nil }
+        let snapshot = ArchiveSnapshot(
+            voyage: voyage,
+            categories: state.categories,
+            events: state.events,
+            dayPlans: state.dayPlans,
+            pixieLevels: state.pixieLevels,
+            pixieDust: state.pixieDustRecords,
+            wishlist: state.wishlistItems
+        )
+        let givenCount = state.pixieDustRecords.filter { $0.direction == .given }.count
+        let receivedCount = state.pixieDustRecords.filter { $0.direction == .received }.count
+        let entry = VoyageArchiveEntry(
+            id: 0,
+            shipName: voyage.shipName ?? "未命名邮轮",
+            boardDate: voyage.boardDate,
+            disembarkDate: voyage.disembarkDate,
+            archivedAt: Int64(Date().timeIntervalSince1970 * 1000),
+            eventCount: state.events.count,
+            pixieGivenCount: givenCount,
+            pixieReceivedCount: receivedCount,
+            snapshot: snapshot
+        )
+        return saveVoyageArchive(entry)
+    }
+
+    public func restoreArchive(_ snapshot: ArchiveSnapshot) {
+        lock.lock()
+        defer { lock.unlock() }
+        state.voyage = snapshot.voyage
+        state.categories = snapshot.categories
+        state.events = snapshot.events
+        state.dayPlans = snapshot.dayPlans
+        state.pixieLevels = snapshot.pixieLevels.isEmpty ? PixieLevel.BUILT_IN_PIXIE_LEVELS : snapshot.pixieLevels
+        state.pixieDustRecords = snapshot.pixieDust
+        state.wishlistItems = snapshot.wishlist
+
+        state.nextEventId = (state.events.map(\.id).max() ?? 0) + 1
+        state.nextCategoryId = max(100, (state.categories.map(\.id).max() ?? 99) + 1)
+        state.nextPixieDustId = (state.pixieDustRecords.map(\.id).max() ?? 0) + 1
+        state.nextPixieLevelId = max(10, (state.pixieLevels.map(\.id).max() ?? 9) + 1)
+        state.nextWishlistId = (state.wishlistItems.map(\.id).max() ?? 0) + 1
         saveToDisk()
     }
 

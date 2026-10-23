@@ -559,7 +559,7 @@
           "meal": "lunch"
         },
         {
-          "start": "18:00",
+          "start": "17:45",
           "end": "22:15",
           "meal": "dinner",
           "lateNight": true
@@ -584,7 +584,7 @@
           "meal": "lunch"
         },
         {
-          "start": "18:00",
+          "start": "17:45",
           "end": "22:15",
           "meal": "dinner",
           "lateNight": true
@@ -604,7 +604,7 @@
           "meal": "lunch"
         },
         {
-          "start": "18:00",
+          "start": "17:45",
           "end": "20:30",
           "meal": "dinner"
         },
@@ -634,7 +634,7 @@
           "meal": "lunch"
         },
         {
-          "start": "18:00",
+          "start": "17:45",
           "end": "20:00",
           "meal": "dinner"
         },
@@ -959,7 +959,18 @@
         {
           "start": "00:00",
           "end": "23:59",
-          "meal": "snack"
+          "meal": "lunch"
+        },
+        {
+          "start": "00:00",
+          "end": "23:59",
+          "meal": "dinner"
+        },
+        {
+          "start": "00:00",
+          "end": "23:59",
+          "meal": "snack",
+          "lateNight": true
         }
       ]
     },
@@ -1036,7 +1047,7 @@
       "slots": []
     },
     {
-      "name": "露天泳池",
+      "name": "阳光泳池 Sunnyside Pool",
       "deck": 17,
       "zone": "mid",
       "category": "show",

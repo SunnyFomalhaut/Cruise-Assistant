@@ -44,6 +44,7 @@ public struct DeckMapView: View {
                         SVGInteractiveView(
                             deckNumber: viewModel.selectedDeck,
                             highlightTarget: viewModel.highlightTarget,
+                            pixieMarkers: viewModel.pixieMode ? viewModel.pixieMarkers : [],
                             onSelectDeck: { deck in
                                 viewModel.selectDeck(deck)
                             }
@@ -58,8 +59,18 @@ public struct DeckMapView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
 
-                // 悬浮高亮提示条 (如果有选中的设施/房间)
-                if let highlight = viewModel.highlightTarget, !highlight.isEmpty {
+                // 仙尘模式悬浮统计条 (如果有激活的仙尘房间标记)
+                if viewModel.pixieMode && !viewModel.pixieMarkers.isEmpty {
+                    VStack {
+                        Spacer()
+                        pixieBanner
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 80)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                    .zIndex(20)
+                } else if let highlight = viewModel.highlightTarget, !highlight.isEmpty {
+                    // 悬浮高亮提示条 (如果有选中的设施/房间)
                     VStack {
                         Spacer()
                         highlightBanner(target: highlight)
@@ -213,6 +224,71 @@ public struct DeckMapView: View {
         .background(Color.white.opacity(0.92))
         .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+    }
+
+    // MARK: - Pixie Mode Banner
+
+    private var pixieBanner: some View {
+        let unreplied = viewModel.pixieMarkers.filter { $0.status == .unreplied }.count
+        let supplement = viewModel.pixieMarkers.filter { $0.status == .needSupplement }.count
+        let completed = viewModel.pixieMarkers.filter { $0.status == .completed }.count
+        let givenPending = viewModel.pixieMarkers.filter { $0.status == .givenPending }.count
+
+        return HStack(spacing: 10) {
+            Image(systemName: "sparkles")
+                .foregroundColor(palette.primary)
+                .font(.system(size: 18, weight: .bold))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Deck \(viewModel.selectedDeck) 仙尘互赠 (\(viewModel.pixieMarkers.count) 间)")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(Slate900)
+
+                HStack(spacing: 8) {
+                    if unreplied > 0 {
+                        Text("🔴 待回 \(unreplied)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Color(hex: "#DC2626"))
+                    }
+                    if supplement > 0 {
+                        Text("🟡 需补 \(supplement)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Color(hex: "#D97706"))
+                    }
+                    if completed > 0 {
+                        Text("🟢 持平 \(completed)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Color(hex: "#16A34A"))
+                    }
+                    if givenPending > 0 {
+                        Text("🔵 已发 \(givenPending)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Color(hex: "#0284C7"))
+                    }
+                }
+            }
+
+            Spacer()
+
+            Button(action: {
+                withAnimation {
+                    viewModel.clearPixieMode()
+                }
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(Slate400)
+                    .font(.system(size: 20))
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.white)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(palette.primary.opacity(0.35), lineWidth: 1.5)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
     }
 
     // MARK: - Highlight Banner

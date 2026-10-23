@@ -81,15 +81,18 @@ public struct SVGWebView: NSViewRepresentable {
 public struct SVGInteractiveView: View {
     public let deckNumber: Int
     public let highlightTarget: String?
+    public let pixieMarkers: [PixieRoomMarker]
     public let onSelectDeck: ((Int) -> Void)?
 
     public init(
         deckNumber: Int,
         highlightTarget: String? = nil,
+        pixieMarkers: [PixieRoomMarker] = [],
         onSelectDeck: ((Int) -> Void)? = nil
     ) {
         self.deckNumber = deckNumber
         self.highlightTarget = highlightTarget
+        self.pixieMarkers = pixieMarkers
         self.onSelectDeck = onSelectDeck
     }
 
@@ -97,7 +100,8 @@ public struct SVGInteractiveView: View {
         if let svgContent = DeckMapRepository.loadDeckSvgContent(deckNumber: deckNumber) {
             let html = DeckMapRepository.inlineHtmlWrapperFor(
                 svgContent: svgContent,
-                highlightTarget: highlightTarget
+                highlightTarget: highlightTarget,
+                pixieMarkers: pixieMarkers
             )
             SVGWebView(htmlContent: html)
                 .edgesIgnoringSafeArea(.bottom)

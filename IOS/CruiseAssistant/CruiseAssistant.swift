@@ -18,7 +18,7 @@ extension Bundle {
 }
 
 public struct CruiseAssistant {
-    public static let version = "1.0.0"
+    public static let version = "1.12.1"
     public static var bundle: Bundle {
         Bundle.cruiseAssistantModule
     }

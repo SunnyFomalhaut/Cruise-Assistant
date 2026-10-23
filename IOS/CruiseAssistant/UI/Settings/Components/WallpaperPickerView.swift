@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 /// A component allowing the user to select from Duffy wallpapers or custom uploads, toggle wallpaper on/off, and adjust alpha transparency.
 public struct WallpaperPickerView: View {
@@ -10,6 +11,8 @@ public struct WallpaperPickerView: View {
     public let onToggleEnabled: (Bool) -> Void
 
     @Environment(\.cruisePalette) private var palette
+    @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var customPreviewToken: Int = 0
 
     private let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -54,11 +57,36 @@ public struct WallpaperPickerView: View {
             // Wallpaper Presets Grid
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(WallpaperPreset.allCases) { preset in
-                    wallpaperCard(preset: preset)
+                    if preset == .custom {
+                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                            wallpaperCardContent(preset: preset)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button {
+                            onSelectWallpaper(preset.rawValue)
+                        } label: {
+                            wallpaperCardContent(preset: preset)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
             .opacity(wallpaperEnabled ? 1.0 : 0.45)
             .disabled(!wallpaperEnabled)
+            .onChange(of: selectedPhotoItem) { _, newItem in
+                guard let newItem = newItem else { return }
+                Task {
+                    if let data = try? await newItem.loadTransferable(type: Data.self) {
+                        await MainActor.run {
+                            if saveCustomWallpaperData(data) {
+                                customPreviewToken += 1
+                                onSelectWallpaper(WallpaperPreset.custom.rawValue)
+                            }
+                        }
+                    }
+                }
+            }
 
             // Alpha Opacity Slider
             if wallpaperEnabled {
@@ -99,73 +127,74 @@ public struct WallpaperPickerView: View {
     }
 
     @ViewBuilder
-    private func wallpaperCard(preset: WallpaperPreset) -> some View {
+    private func wallpaperCardContent(preset: WallpaperPreset) -> some View {
         let isSelected = selectedKey == preset.rawValue
+        let _ = customPreviewToken
 
-        Button {
-            onSelectWallpaper(preset.rawValue)
-        } label: {
-            VStack(spacing: 6) {
-                // Thumbnail Preview Container with Strict Bounded Clipping
-                ZStack {
-                    if preset == .none {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Slate100)
-                        Image(systemName: "slash.circle")
-                            .font(.system(size: 22))
-                            .foregroundColor(Slate400)
-                    } else if preset == .custom {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Slate100)
-                        Image(systemName: "photo.badge.plus")
-                            .font(.system(size: 22))
-                            .foregroundColor(palette.primary)
-                    } else if let img = loadWallpaperImage(for: preset) {
-                        #if canImport(UIKit)
-                        Image(uiImage: img)
-                            .resizable()
-                            .scaledToFill()
-                        #elseif canImport(AppKit)
-                        Image(nsImage: img)
-                            .resizable()
-                            .scaledToFill()
-                        #endif
-                    } else {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Slate100)
-                    }
-
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(palette.primary, lineWidth: 2.5)
-
-                        VStack {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(palette.primary)
-                                    .background(Circle().fill(Color.white).padding(2))
-                            }
-                            Spacer()
-                        }
-                        .padding(4)
-                    }
-                }
-                .frame(height: 72)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay(
+        VStack(spacing: 6) {
+            ZStack {
+                if preset == .none {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(isSelected ? palette.primary : Slate200, lineWidth: isSelected ? 2 : 1)
-                )
+                        .fill(Slate100)
+                    Image(systemName: "slash.circle")
+                        .font(.system(size: 22))
+                        .foregroundColor(Slate400)
+                } else if let img = loadWallpaperImage(for: preset) {
+                    #if canImport(UIKit)
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                    #elseif canImport(AppKit)
+                    Image(nsImage: img)
+                        .resizable()
+                        .scaledToFill()
+                    #endif
+                    if preset == .custom {
+                        Color.black.opacity(0.2)
+                        Image(systemName: "photo.badge.plus")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                } else if preset == .custom {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Slate100)
+                    Image(systemName: "photo.badge.plus")
+                        .font(.system(size: 22))
+                        .foregroundColor(palette.primary)
+                } else {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Slate100)
+                }
 
-                Text(preset.displayName)
-                    .font(.system(size: 12, weight: isSelected ? .bold : .medium))
-                    .foregroundColor(isSelected ? palette.primary : Slate700)
-                    .lineLimit(1)
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(palette.primary, lineWidth: 2.5)
+
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(palette.primary)
+                                .background(Circle().fill(Color.white).padding(2))
+                        }
+                        Spacer()
+                    }
+                    .padding(4)
+                }
             }
-            .padding(2)
+            .frame(height: 72)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isSelected ? palette.primary : Slate200, lineWidth: isSelected ? 2 : 1)
+            )
+
+            Text(preset.displayName)
+                .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                .foregroundColor(isSelected ? palette.primary : Slate700)
+                .lineLimit(1)
         }
-        .buttonStyle(.plain)
+        .padding(2)
     }
 }

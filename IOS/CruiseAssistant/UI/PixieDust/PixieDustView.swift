@@ -3,13 +3,18 @@ import SwiftUI
 /// 仙尘（Pixie Dust）礼物互赠追踪主界面
 public struct PixieDustView: View {
     @StateObject private var viewModel: PixieDustViewModel
+    public let onNavigateToDeckMap: ((Int, [PixieRoomMarker]) -> Void)?
 
-    public init(viewModel: PixieDustViewModel? = nil) {
+    public init(
+        viewModel: PixieDustViewModel? = nil,
+        onNavigateToDeckMap: ((Int, [PixieRoomMarker]) -> Void)? = nil
+    ) {
         if let vm = viewModel {
             _viewModel = StateObject(wrappedValue: vm)
         } else {
             _viewModel = StateObject(wrappedValue: PixieDustViewModel())
         }
+        self.onNavigateToDeckMap = onNavigateToDeckMap
     }
 
     @Environment(\.cruisePalette) private var palette
@@ -25,8 +30,12 @@ public struct PixieDustView: View {
                     // Full-screen Linkage View
                     LinkageViewDialog(
                         roomPairs: viewModel.roomPairs,
+                        allRoomPairs: viewModel.allRoomPairs,
                         levels: viewModel.levels,
+                        filter: viewModel.filter,
+                        onSelectFilter: { viewModel.selectFilter($0) },
                         selectedPair: nil,
+                        onNavigateToDeckMap: onNavigateToDeckMap,
                         onDismiss: { viewModel.selectTab(.given) }
                     )
                 } else {
@@ -46,12 +55,12 @@ public struct PixieDustView: View {
                                 viewMode: viewModel.viewMode,
                                 onToggleViewMode: { viewModel.toggleViewMode() },
                                 onSelectRecord: { record in
-                                    if let pair = viewModel.roomPairs.first(where: { $0.deck == record.deck && $0.room == record.room }) {
+                                    if let pair = viewModel.allRoomPairs.first(where: { $0.deck == record.deck && $0.room == record.room }) {
                                         viewModel.viewingPair = pair
                                     }
                                 },
                                 onSelectRoomGroup: { group in
-                                    if let pair = viewModel.roomPairs.first(where: { $0.deck == group.deck && $0.room == group.room }) {
+                                    if let pair = viewModel.allRoomPairs.first(where: { $0.deck == group.deck && $0.room == group.room }) {
                                         viewModel.viewingPair = pair
                                     }
                                 },
@@ -61,9 +70,12 @@ public struct PixieDustView: View {
                         } else {
                             ReceivedListView(
                                 records: viewModel.receivedRecords,
+                                allRecords: viewModel.allReceivedRecords,
                                 levels: viewModel.levels,
+                                filter: viewModel.filter,
+                                onSelectFilter: { viewModel.selectFilter($0) },
                                 onSelectRecord: { record in
-                                    if let pair = viewModel.roomPairs.first(where: { $0.deck == record.deck && $0.room == record.room }) {
+                                    if let pair = viewModel.allRoomPairs.first(where: { $0.deck == record.deck && $0.room == record.room }) {
                                         viewModel.viewingPair = pair
                                     }
                                 },
@@ -88,7 +100,7 @@ public struct PixieDustView: View {
                         } label: {
                             Image(systemName: "arrow.triangle.swap")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(CruiseAzure)
+                                .foregroundColor(palette.primary)
                         }
                         .accessibilityLabel("查看互赠明细")
                     }
@@ -117,8 +129,12 @@ public struct PixieDustView: View {
             .sheet(item: $viewModel.viewingPair) { pair in
                 LinkageViewDialog(
                     roomPairs: viewModel.roomPairs,
+                    allRoomPairs: viewModel.allRoomPairs,
                     levels: viewModel.levels,
+                    filter: viewModel.filter,
+                    onSelectFilter: { viewModel.selectFilter($0) },
                     selectedPair: pair,
+                    onNavigateToDeckMap: onNavigateToDeckMap,
                     onDismiss: { viewModel.viewingPair = nil }
                 )
             }
@@ -164,71 +180,69 @@ public struct PixieDustView: View {
     // MARK: - Quick Entry Area
 
     private var quickEntryArea: some View {
-        VStack(spacing: 10) {
-            // Deck & Room input display
-            HStack(spacing: 12) {
-                // Deck Menu Picker
-                Menu {
-                    ForEach(viewModel.availableDecks, id: \.self) { d in
-                        Button {
-                            viewModel.selectDeck(d)
-                        } label: {
-                            HStack {
-                                Text("Deck \(d)")
-                                if viewModel.deck == d {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("D\(viewModel.deck)")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(palette.secondary)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(palette.secondary)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(palette.primaryContainer.opacity(0.6))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                }
+        let v = viewModel.validation
+        return VStack(spacing: 10) {
+            // Direct 4~5 Digit Stateroom Input & Real-Time Validation Badge
+            HStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "door.left.hand.closed")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(palette.primary)
 
-                // Room Display Slots
-                HStack(spacing: 6) {
-                    Text("\(viewModel.deck)")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(Slate400)
-
-                    let digits = Array(viewModel.roomInput)
-                    ForEach(0..<3, id: \.self) { idx in
-                        Text(idx < digits.count ? String(digits[idx]) : "•")
+                    if viewModel.roomInput.isEmpty {
+                        Text("直输 4~5 位房号 (如 8502 / 10200)")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Slate400)
+                    } else {
+                        Text(viewModel.roomInput)
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(idx < digits.count ? Slate900 : Slate300)
-                            .frame(minWidth: 20)
+                            .foregroundColor(v.status == .invalid ? NowRed : Slate900)
+                    }
+
+                    Spacer()
+
+                    // Validation Status Pill
+                    switch v.status {
+                    case .valid:
+                        if let validDeck = v.deck {
+                            Text("✓ Deck \(validDeck)")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(Color(hex: "#16A34A"))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color(hex: "#DCFCE7"))
+                                .clipShape(Capsule())
+                        }
+                    case .invalid:
+                        Text(v.message ?? "地图上无此房间，请核对")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(Color(hex: "#DC2626"))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color(hex: "#FEE2E2"))
+                            .clipShape(Capsule())
+                    case .incomplete:
+                        if !viewModel.roomInput.isEmpty {
+                            Text("继续输入...")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(Slate400)
+                        }
                     }
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
                 .background(Slate100)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-                // Room History Hint (if available)
-                if let history = viewModel.roomHistory {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("上次: \(history.levelName)")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(palette.secondary)
-                        Text("已送 \(history.count) 次")
-                            .font(.system(size: 10))
-                            .foregroundColor(Slate500)
-                    }
-                    .padding(.horizontal, 6)
-                }
-
-                Spacer()
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(
+                            v.status == .invalid
+                                ? Color(hex: "#DC2626").opacity(0.5)
+                                : (v.status == .valid ? Color(hex: "#16A34A").opacity(0.4) : Color.clear),
+                            lineWidth: 1.2
+                        )
+                )
 
                 // Collapse/Expand Keypad Button
                 Button {
@@ -237,12 +251,53 @@ public struct PixieDustView: View {
                     }
                 } label: {
                     Image(systemName: viewModel.isKeypadCollapsed ? "keyboard" : "chevron.up.circle.fill")
-                        .font(.system(size: 20))
+                        .font(.system(size: 22))
                         .foregroundColor(Slate400)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.top, 10)
+
+            // Room History Hint Banner (if available)
+            if let history = viewModel.roomHistory {
+                HStack(spacing: 8) {
+                    if history.givenCount > 0 {
+                        let givenLabel = history.lastGivenLevelName != nil
+                            ? "已送 \(history.givenCount) 次 (上次: \(history.lastGivenLevelName!))"
+                            : "已送 \(history.givenCount) 次"
+                        Text(givenLabel)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(palette.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(palette.primaryContainer.opacity(0.7))
+                            .clipShape(Capsule())
+                    }
+                    if history.receivedCount > 0 {
+                        let recLabel = history.lastReceivedLevelName != nil
+                            ? "收到 \(history.receivedCount) 次 (上次: \(history.lastReceivedLevelName!))"
+                            : "收到 \(history.receivedCount) 次"
+                        Text(recLabel)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Slate700)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Slate100)
+                            .clipShape(Capsule())
+                    }
+                    if history.unrepliedCount > 0 {
+                        Text("待回礼 \(history.unrepliedCount)")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(Color(hex: "#DC2626"))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color(hex: "#FEE2E2"))
+                            .clipShape(Capsule())
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+            }
 
             // Gift Level Chips Selector
             ScrollView(.horizontal, showsIndicators: false) {
@@ -284,14 +339,15 @@ public struct PixieDustView: View {
             }
 
             // Submit Button
-            let canSubmit = isValidRoomInput(viewModel.roomInput) && viewModel.selectedLevelId != nil
+            let canSubmit = (v.status == .valid) && viewModel.selectedLevelId != nil
+            let roomLabel = v.fullRoom ?? (viewModel.roomInput.isEmpty ? "____" : viewModel.roomInput)
             Button {
                 viewModel.submitRecord()
             } label: {
                 HStack {
                     Image(systemName: viewModel.tab == .given ? "paperplane.fill" : "tray.and.arrow.down.fill")
                         .font(.system(size: 14))
-                    Text(viewModel.tab == .given ? "记一笔发出 (\(viewModel.deck)\(viewModel.roomInput.isEmpty ? "___" : viewModel.roomInput))" : "记一笔收到 (\(viewModel.deck)\(viewModel.roomInput.isEmpty ? "___" : viewModel.roomInput))")
+                    Text(viewModel.tab == .given ? "记一笔发出 (\(roomLabel))" : "记一笔收到 (\(roomLabel))")
                         .font(.system(size: 15, weight: .bold))
                 }
                 .foregroundColor(.white)

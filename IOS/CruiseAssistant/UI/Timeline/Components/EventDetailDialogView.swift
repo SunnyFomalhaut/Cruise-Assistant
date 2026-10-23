@@ -192,27 +192,31 @@ public struct EventDetailDialogView: View {
                         }
                     }
 
-                    // Notes Section
+                    // Notes Section (Theme-Adaptive)
                     if let note = event.note?.trimmingCharacters(in: .whitespacesAndNewlines), !note.isEmpty {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: "note.text")
-                                .font(.system(size: 15))
+                                .font(.system(size: 15, weight: .semibold))
                                 .foregroundColor(palette.primary)
                                 .frame(width: 24)
 
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: 3) {
                                 Text("备注")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(Slate500)
+                                    .foregroundColor(palette.secondary)
                                 Text(note)
                                     .font(.system(size: 13))
-                                    .foregroundColor(Slate700)
+                                    .foregroundColor(Slate800)
                             }
                         }
-                        .padding(10)
+                        .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Slate50)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .background(palette.primaryContainer.opacity(0.65))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(palette.primary.opacity(0.35), lineWidth: 1)
+                        )
                     }
 
                     // Action Buttons

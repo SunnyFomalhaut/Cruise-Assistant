@@ -210,6 +210,9 @@ public struct Voyage: Identifiable, Codable, Hashable, Sendable {
     public var disembarkTime: SimpleTime
     public var maxDeck: Int
     public var minDeck: Int
+    public var isConcierge: Bool
+    public var legs: [Int]
+    public var ashoreLegs: Set<Int>
 
     public init(
         id: Int = 1,
@@ -219,7 +222,10 @@ public struct Voyage: Identifiable, Codable, Hashable, Sendable {
         disembarkDate: SimpleDate,
         disembarkTime: SimpleTime = SimpleTime(hour: 7, minute: 0),
         maxDeck: Int = 20,
-        minDeck: Int = 1
+        minDeck: Int = 1,
+        isConcierge: Bool = false,
+        legs: [Int] = [],
+        ashoreLegs: Set<Int> = []
     ) {
         self.id = id
         self.shipName = shipName
@@ -229,6 +235,28 @@ public struct Voyage: Identifiable, Codable, Hashable, Sendable {
         self.disembarkTime = disembarkTime
         self.maxDeck = maxDeck
         self.minDeck = minDeck
+        self.isConcierge = isConcierge
+        self.legs = legs
+        self.ashoreLegs = ashoreLegs
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, shipName, boardDate, boardTime, disembarkDate, disembarkTime, maxDeck, minDeck, isConcierge, legs, ashoreLegs
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(Int.self, forKey: .id) ?? 1
+        self.shipName = try container.decodeIfPresent(String.self, forKey: .shipName)
+        self.boardDate = try container.decode(SimpleDate.self, forKey: .boardDate)
+        self.boardTime = try container.decode(SimpleTime.self, forKey: .boardTime)
+        self.disembarkDate = try container.decode(SimpleDate.self, forKey: .disembarkDate)
+        self.disembarkTime = try container.decodeIfPresent(SimpleTime.self, forKey: .disembarkTime) ?? SimpleTime(hour: 7, minute: 0)
+        self.maxDeck = try container.decodeIfPresent(Int.self, forKey: .maxDeck) ?? 20
+        self.minDeck = try container.decodeIfPresent(Int.self, forKey: .minDeck) ?? 1
+        self.isConcierge = try container.decodeIfPresent(Bool.self, forKey: .isConcierge) ?? false
+        self.legs = try container.decodeIfPresent([Int].self, forKey: .legs) ?? []
+        self.ashoreLegs = try container.decodeIfPresent(Set<Int>.self, forKey: .ashoreLegs) ?? []
     }
 
     /// Total number of days in the voyage, inclusive of embarkation and disembarkation days.
@@ -239,6 +267,30 @@ public struct Voyage: Identifiable, Codable, Hashable, Sendable {
     /// All dates belonging to this voyage in order.
     public func datesInVoyage() -> [SimpleDate] {
         (0..<dayCount).map { boardDate.plusDays($0) }
+    }
+
+    /// Boarding date of each leg in a multi-leg voyage. Single-leg returns `[boardDate]`.
+    public func legBoardDates() -> [SimpleDate] {
+        if legs.isEmpty { return [boardDate] }
+        var result: [SimpleDate] = []
+        var cursor = boardDate
+        for nights in legs {
+            result.append(cursor)
+            cursor = cursor.plusDays(nights)
+        }
+        return result
+    }
+
+    /// Turnaround/junction dates between consecutive legs (empty for single-leg voyages).
+    public func junctionDates() -> [SimpleDate] {
+        if legs.count <= 1 { return [] }
+        var result: [SimpleDate] = []
+        var cursor = boardDate
+        for nights in legs.dropLast() {
+            cursor = cursor.plusDays(nights)
+            result.append(cursor)
+        }
+        return result
     }
 
     /// Checks if a date falls within the voyage range.
@@ -497,6 +549,104 @@ public struct WishlistItem: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
+/// Snapshot of a full voyage archive (matches Android `ArchiveSnapshot`).
+public struct ArchiveSnapshot: Codable, Hashable, Sendable {
+    public var version: Int
+    public var voyage: Voyage
+    public var categories: [Category]
+    public var events: [CruiseEvent]
+    public var dayPlans: [DayPlan]
+    public var pixieLevels: [PixieLevel]
+    public var pixieDust: [PixieDustRecord]
+    public var wishlist: [WishlistItem]
+
+    public init(
+        version: Int = 1,
+        voyage: Voyage,
+        categories: [Category] = [],
+        events: [CruiseEvent] = [],
+        dayPlans: [DayPlan] = [],
+        pixieLevels: [PixieLevel] = [],
+        pixieDust: [PixieDustRecord] = [],
+        wishlist: [WishlistItem] = []
+    ) {
+        self.version = version
+        self.voyage = voyage
+        self.categories = categories
+        self.events = events
+        self.dayPlans = dayPlans
+        self.pixieLevels = pixieLevels
+        self.pixieDust = pixieDust
+        self.wishlist = wishlist
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case version, voyage, categories, events, dayPlans, pixieLevels, pixieDust, wishlist
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
+        self.voyage = try container.decode(Voyage.self, forKey: .voyage)
+        self.categories = try container.decodeIfPresent([Category].self, forKey: .categories) ?? []
+        self.events = try container.decodeIfPresent([CruiseEvent].self, forKey: .events) ?? []
+        self.dayPlans = try container.decodeIfPresent([DayPlan].self, forKey: .dayPlans) ?? []
+        self.pixieLevels = try container.decodeIfPresent([PixieLevel].self, forKey: .pixieLevels) ?? []
+        self.pixieDust = try container.decodeIfPresent([PixieDustRecord].self, forKey: .pixieDust) ?? []
+        self.wishlist = try container.decodeIfPresent([WishlistItem].self, forKey: .wishlist) ?? []
+    }
+}
+
+/// A saved historical voyage archive entry.
+public struct VoyageArchiveEntry: Identifiable, Codable, Hashable, Sendable {
+    public var id: Int64
+    public var shipName: String
+    public var boardDate: SimpleDate
+    public var disembarkDate: SimpleDate
+    public var archivedAt: Int64
+    public var eventCount: Int
+    public var pixieGivenCount: Int
+    public var pixieReceivedCount: Int
+    public var snapshot: ArchiveSnapshot
+
+    public init(
+        id: Int64 = 0,
+        shipName: String,
+        boardDate: SimpleDate,
+        disembarkDate: SimpleDate,
+        archivedAt: Int64 = Int64(Date().timeIntervalSince1970 * 1000),
+        eventCount: Int,
+        pixieGivenCount: Int,
+        pixieReceivedCount: Int,
+        snapshot: ArchiveSnapshot
+    ) {
+        self.id = id
+        self.shipName = shipName
+        self.boardDate = boardDate
+        self.disembarkDate = disembarkDate
+        self.archivedAt = archivedAt
+        self.eventCount = eventCount
+        self.pixieGivenCount = pixieGivenCount
+        self.pixieReceivedCount = pixieReceivedCount
+        self.snapshot = snapshot
+    }
+}
+
+public func serializeArchiveSnapshot(_ snapshot: ArchiveSnapshot) -> String {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    guard let data = try? encoder.encode(snapshot),
+          let str = String(data: data, encoding: .utf8) else {
+        return "{}"
+    }
+    return str
+}
+
+public func parseArchiveSnapshot(_ json: String) -> ArchiveSnapshot? {
+    guard let data = json.data(using: .utf8) else { return nil }
+    return try? JSONDecoder().decode(ArchiveSnapshot.self, from: data)
+}
+
 // MARK: - Pixie Dust Domain Utilities
 
 public struct LevelCount: Hashable, Codable, Sendable {
@@ -562,7 +712,13 @@ public func groupGivenByRoom(records: [PixieDustRecord], levels: [PixieLevel]) -
             total: list.count,
             levelCounts: levelCountsOf(records: list, levels: levels)
         )
-    }.sorted { $0.lastTimestamp > $1.lastTimestamp }
+    }.sorted { a, b in
+        if a.deck != b.deck { return a.deck < b.deck }
+        let roomA = Int(a.room) ?? Int.max
+        let roomB = Int(b.room) ?? Int.max
+        if roomA != roomB { return roomA < roomB }
+        return a.room < b.room
+    }
 }
 
 public func sortReceived(records: [PixieDustRecord], levels: [PixieLevel]) -> [PixieDustRecord] {
@@ -581,6 +737,25 @@ public func sortReceived(records: [PixieDustRecord], levels: [PixieLevel]) -> [P
     return unreplied + replied
 }
 
+/// Sweep delivery sorting: Deck ascending -> Room ascending -> Unreplied first -> Rank descending -> Timestamp descending.
+public func sortForSweepDelivery(records: [PixieDustRecord], levels: [PixieLevel]) -> [PixieDustRecord] {
+    let rankById = Dictionary(uniqueKeysWithValues: levels.map { ($0.id, $0.rank) })
+    return records
+        .filter { $0.direction == .received }
+        .sorted { a, b in
+            if a.deck != b.deck { return a.deck < b.deck }
+            let roomA = Int(a.room) ?? Int.max
+            let roomB = Int(b.room) ?? Int.max
+            if roomA != roomB { return roomA < roomB }
+            if a.room != b.room { return a.room < b.room }
+            if a.replied != b.replied { return !a.replied && b.replied }
+            let rankA = rankById[a.levelId] ?? 0
+            let rankB = rankById[b.levelId] ?? 0
+            if rankA != rankB { return rankA > rankB }
+            return a.timestamp > b.timestamp
+        }
+}
+
 public func lastLevelForRoom(records: [PixieDustRecord], deck: Int, room: String) -> PixieDustRecord? {
     records
         .filter { $0.direction == .given && $0.deck == deck && $0.room == room }
@@ -588,6 +763,7 @@ public func lastLevelForRoom(records: [PixieDustRecord], deck: Int, room: String
 }
 
 /// Formats a cruise location (e.g. "Deck 7 船中 花园"). When `compact` is true, uses "D7" prefix.
+/// Avoids duplicating "Deck X" if `placeName` already starts with "Deck ".
 public func formatLocation(
     deck: Int?,
     zone: ShipZone?,
@@ -595,13 +771,20 @@ public func formatLocation(
     compact: Bool = false
 ) -> String? {
     guard let deck = deck else { return nil }
+    let cleanPlace = placeName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let placeAlreadyHasDeck = cleanPlace.lowercased().hasPrefix("deck ")
     var parts: [String] = []
-    parts.append(compact ? "D\(deck)" : "Deck \(deck)")
+    if !placeAlreadyHasDeck {
+        parts.append(compact ? "D\(deck)" : "Deck \(deck)")
+    }
     if let zone = zone {
         parts.append(zone.label)
     }
-    if let placeName = placeName?.trimmingCharacters(in: .whitespacesAndNewlines), !placeName.isEmpty {
-        parts.append(placeName)
+    if !cleanPlace.isEmpty {
+        parts.append(cleanPlace)
+    }
+    if parts.isEmpty {
+        parts.append(compact ? "D\(deck)" : "Deck \(deck)")
     }
     return parts.joined(separator: " ")
 }

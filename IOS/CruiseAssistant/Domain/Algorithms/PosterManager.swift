@@ -396,14 +396,14 @@ public final class PosterManager: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        // 3. 其他非演出事件自定义注册表
+        // 3. 其他非演出事件自定义注册表（按关键字长度降序，优先匹配更具体的名称）
         if let key = key, let path = eventPosterRegistry[key] {
             return path
         }
         if let path = eventPosterRegistry[title] {
             return path
         }
-        for (regKey, path) in eventPosterRegistry {
+        for (regKey, path) in eventPosterRegistry.sorted(by: { $0.key.count > $1.key.count }) {
             if title.contains(regKey) {
                 return path
             }
@@ -423,7 +423,7 @@ public final class PosterManager: @unchecked Sendable {
             return path
         }
 
-        for (regKey, path) in facilityPosterRegistry {
+        for (regKey, path) in facilityPosterRegistry.sorted(by: { $0.key.count > $1.key.count }) {
             if trimmed.contains(regKey) {
                 return path
             }

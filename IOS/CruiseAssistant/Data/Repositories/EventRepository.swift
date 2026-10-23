@@ -16,6 +16,7 @@ public protocol EventRepositoryProtocol: Sendable {
     func updateEvent(event: CruiseEvent, scope: RecurrenceScope) -> [CruiseEvent]
     func deleteEvent(id: Int64, scope: RecurrenceScope)
     func toggleEventActive(id: Int64) -> CruiseEvent?
+    func setEventActive(id: Int64, active: Bool) -> CruiseEvent?
     func setEventLane(id: Int64, lane: Int)
     func updateDinnerEventsTime(newTime: SimpleTime)
     func conflictsOn(date: SimpleDate) -> [(CruiseEvent, CruiseEvent)]
@@ -208,11 +209,19 @@ public final class EventRepository: EventRepositoryProtocol, @unchecked Sendable
         }
     }
 
-    // MARK: - Toggle Active
+    // MARK: - Toggle & Set Active
 
+    @discardableResult
     public func toggleEventActive(id: Int64) -> CruiseEvent? {
+        guard let event = database.getEvent(byId: id) else { return nil }
+        return setEventActive(id: id, active: !event.isActive)
+    }
+
+    @discardableResult
+    public func setEventActive(id: Int64, active: Bool) -> CruiseEvent? {
         guard var event = database.getEvent(byId: id) else { return nil }
-        event.isActive.toggle()
+        guard event.isActive != active else { return event }
+        event.isActive = active
 
         if event.isActive {
             let sameDay = database.getEvents(for: event.date)
@@ -238,26 +247,23 @@ public final class EventRepository: EventRepositoryProtocol, @unchecked Sendable
     // MARK: - Show & Dinner Utilities
 
     public func keepOnlyThisShow(target: CruiseEvent) {
-        let allEvents = database.getAllEvents()
-        for event in allEvents {
-            let isSameShow = (event.categoryId == target.categoryId &&
+        let sameDayEvents = database.getEvents(for: target.date)
+        for event in sameDayEvents {
+            let isSameShow: Bool
+            if let targetKey = target.presetKey, !targetKey.isEmpty {
+                isSameShow = (event.presetKey == targetKey)
+            } else {
+                isSameShow = (event.categoryId == target.categoryId &&
                               event.title == target.title &&
                               event.deck == target.deck &&
                               event.zone == target.zone &&
                               event.placeName == target.placeName)
-            if isSameShow {
-                if event.id != target.id && event.isActive {
-                    var deactivated = event
-                    deactivated.isActive = false
-                    database.updateEvent(deactivated)
-                }
+            }
+            if isSameShow && event.id != target.id && event.isActive {
+                _ = setEventActive(id: event.id, active: false)
             }
         }
-        _ = toggleEventActive(id: target.id)
-        if var activeTarget = database.getEvent(byId: target.id), !activeTarget.isActive {
-            activeTarget.isActive = true
-            database.updateEvent(activeTarget)
-        }
+        _ = setEventActive(id: target.id, active: true)
     }
 
     public func updateDinnerEventsTime(newTime: SimpleTime) {

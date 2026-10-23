@@ -45,6 +45,7 @@ public struct LaneCanvasView: View {
     public let categories: [Int64: Category]
     public let conflictIds: Set<Int64>
     public let singleLane: Bool
+    public let dollsEnabled: Bool
     public let onEventClick: ((CruiseEvent) -> Void)?
     public let onEventLongClick: ((CruiseEvent) -> Void)?
     public let onMoveToLane: ((CruiseEvent, Int) -> Void)?
@@ -59,6 +60,7 @@ public struct LaneCanvasView: View {
         categories: [Int64: Category],
         conflictIds: Set<Int64> = [],
         singleLane: Bool = false,
+        dollsEnabled: Bool = true,
         onEventClick: ((CruiseEvent) -> Void)? = nil,
         onEventLongClick: ((CruiseEvent) -> Void)? = nil,
         onMoveToLane: ((CruiseEvent, Int) -> Void)? = nil,
@@ -72,6 +74,7 @@ public struct LaneCanvasView: View {
         self.categories = categories
         self.conflictIds = conflictIds
         self.singleLane = singleLane
+        self.dollsEnabled = dollsEnabled
         self.onEventClick = onEventClick
         self.onEventLongClick = onEventLongClick
         self.onMoveToLane = onMoveToLane
@@ -129,7 +132,9 @@ public struct LaneCanvasView: View {
                             heightPt: heightPt,
                             waitSegmentHeightPt: waitHeightPt,
                             hasConflict: conflictIds.contains(event.id),
-                            narrow: false,
+                            narrow: !singleLane,
+                            dollsEnabled: dollsEnabled,
+                            isFinalized: singleLane,
                             onClick: {
                                 onEventClick?(event)
                             },

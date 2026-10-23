@@ -3,7 +3,7 @@ import XCTest
 
 final class CruiseAssistantTests: XCTestCase {
     func testVersion() {
-        XCTAssertEqual(CruiseAssistant.version, "1.0.0")
+        XCTAssertEqual(CruiseAssistant.version, "1.12.1")
     }
 
     func testBundleModuleExists() {

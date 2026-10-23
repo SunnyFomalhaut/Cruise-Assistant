@@ -107,8 +107,12 @@ public enum DeckMapRepository {
         return content
     }
 
-    /// 将 SVG 字符串内嵌到响应式 HTML 容器中，并注入高亮与地图钉定位脚本
-    public static func inlineHtmlWrapperFor(svgContent: String, highlightTarget: String? = nil) -> String {
+    /// 将 SVG 字符串内嵌到响应式 HTML 容器中，并注入高亮、地图钉定位以及仙尘送礼标记脚本
+    public static func inlineHtmlWrapperFor(
+        svgContent: String,
+        highlightTarget: String? = nil,
+        pixieMarkers: [PixieRoomMarker] = []
+    ) -> String {
         let sanitizedHighlight = highlightTarget?.trimmingCharacters(in: .whitespacesAndNewlines)
         let highlightScript: String
         if let target = sanitizedHighlight, !target.isEmpty {
@@ -185,6 +189,12 @@ public enum DeckMapRepository {
                 }
             </style>
             <script>
+                function normalizeText(str) {
+                    return (str || '').toLowerCase()
+                        .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+                        .replace(/['’‘`]/g, '');
+                }
+
                 function centerFacilityTarget() {
                     var target = '\(jsTarget)';
                     var svg = document.querySelector('svg');
@@ -192,33 +202,41 @@ public enum DeckMapRepository {
                     var textNodes = Array.from(svg.querySelectorAll('text, tspan'));
                     if (!textNodes || textNodes.length === 0) return;
 
-                    var words = target.toLowerCase().split(/[\\s·,]+/g).filter(function(w) {
-                        return w.length > 1 && !['deck', 'the', 'and', 'restaurant', 'club'].includes(w);
+                    var normTarget = normalizeText(target);
+                    var words = normTarget.split(/[^a-z0-9\\u4e00-\\u9fa5]+/g).filter(function(w) {
+                        return w.length > 1 && !['deck', 'the', 'and', 'restaurant', 'club', 'bar', 'cafe', 'lounge', 'spa', 'pool', 'studio'].includes(w);
                     });
                     if (target.indexOf('花园舞台') !== -1) { words.push('garden', 'stage'); }
                     if (target.indexOf('迪士尼剧院') !== -1) { words.push('walt', 'disney', 'theatre', 'theater'); }
                     if (target.indexOf('寻路者') !== -1) { words.push('wayfinder'); }
                     if (target.indexOf('大白剧院') !== -1) { words.push('baymax', 'cinemas', 'cinema'); }
-                    if (words.length === 0) words = [target.toLowerCase()];
+                    if (words.length === 0) {
+                        words = normTarget.split(/[^a-z0-9\\u4e00-\\u9fa5]+/g).filter(function(w) { return w.length > 0; });
+                    }
+                    if (words.length === 0) words = [normTarget];
 
                     var bestNode = null;
                     var bestScore = 0;
 
                     for (var i = 0; i < textNodes.length; i++) {
                         var node = textNodes[i];
-                        var content = (node.textContent || '').toLowerCase();
+                        var rawContent = node.textContent || '';
+                        if (node.tagName.toLowerCase() === 'tspan' && node.parentElement && node.parentElement.tagName.toLowerCase() === 'text') {
+                            rawContent = node.parentElement.textContent || rawContent;
+                        }
+                        var content = normalizeText(rawContent);
                         var score = 0;
                         for (var j = 0; j < words.length; j++) {
                             if (content.indexOf(words[j]) !== -1) {
-                                score += words[j].length * 2;
+                                score += words[j].length * 3;
                             }
                         }
-                        if (content.indexOf(target.toLowerCase()) !== -1) {
+                        if (content.indexOf(normTarget) !== -1) {
                             score += 50;
                         }
                         if (score > bestScore) {
                             bestScore = score;
-                            bestNode = node;
+                            bestNode = (node.tagName.toLowerCase() === 'tspan' && node.parentElement) ? node.parentElement : node;
                         }
                     }
 
@@ -274,6 +292,152 @@ public enum DeckMapRepository {
             highlightScript = ""
         }
 
+        let pixieScript: String
+        if !pixieMarkers.isEmpty {
+            let markersJson = pixieMarkers.map { m in
+                "{room:'\(m.roomNumber)',status:'\(m.status.rawValue)',unreplied:\(m.unrepliedCount),given:\(m.givenCount),received:\(m.receivedCount)}"
+            }.joined(separator: ",")
+            pixieScript = """
+            <style>
+                .pixie-room-marker {
+                    position: absolute;
+                    pointer-events: none;
+                    border-radius: 6px;
+                    z-index: 950;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    font-weight: 800;
+                    font-size: 9px;
+                    color: #FFFFFF;
+                }
+                .pixie-marker-unreplied {
+                    background: rgba(239, 68, 68, 0.36);
+                    border: 2px solid #DC2626;
+                    box-shadow: 0 0 12px rgba(220, 38, 38, 0.75);
+                    animation: pixiePulseRed 1.6s infinite ease-in-out;
+                }
+                .pixie-marker-supplement {
+                    background: rgba(245, 158, 11, 0.34);
+                    border: 2px solid #D97706;
+                    box-shadow: 0 0 10px rgba(217, 119, 6, 0.65);
+                }
+                .pixie-marker-completed {
+                    background: rgba(34, 197, 94, 0.28);
+                    border: 1.5px solid #16A34A;
+                }
+                .pixie-marker-given {
+                    background: rgba(59, 130, 246, 0.28);
+                    border: 1.5px solid #2563EB;
+                }
+                .pixie-badge-pill {
+                    position: absolute;
+                    top: -14px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    padding: 1px 5px;
+                    border-radius: 8px;
+                    font-size: 9px;
+                    font-weight: 800;
+                    white-space: nowrap;
+                    color: #FFFFFF;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                }
+                .pixie-pill-unreplied { background: #DC2626; }
+                .pixie-pill-supplement { background: #D97706; }
+                .pixie-pill-completed { background: #16A34A; }
+                .pixie-pill-given { background: #2563EB; }
+                @keyframes pixiePulseRed {
+                    0%, 100% { transform: scale(0.98); }
+                    50% { transform: scale(1.06); }
+                }
+            </style>
+            <script>
+                function renderPixieRoomMarkers() {
+                    var markers = [\(markersJson)];
+                    var svg = document.querySelector('svg');
+                    if (!svg) return;
+                    var existing = document.querySelectorAll('.pixie-room-marker');
+                    for (var e = 0; e < existing.length; e++) { existing[e].remove(); }
+
+                    var textNodes = Array.from(svg.querySelectorAll('text, tspan'));
+                    var firstTargetNode = null;
+
+                    for (var i = 0; i < markers.length; i++) {
+                        var m = markers[i];
+                        var matchedNode = svg.querySelector('#room-' + m.room) || svg.querySelector('#number-' + m.room);
+                        if (!matchedNode) {
+                            for (var j = 0; j < textNodes.length; j++) {
+                                var txt = (textNodes[j].textContent || '').trim();
+                                if (txt === m.room) {
+                                    matchedNode = textNodes[j];
+                                    break;
+                                }
+                            }
+                        }
+                        if (!matchedNode) continue;
+                        if (!firstTargetNode && (m.status === 'UNREPLIED' || m.status === 'NEED_SUPPLEMENT')) {
+                            firstTargetNode = matchedNode;
+                        } else if (!firstTargetNode) {
+                            firstTargetNode = matchedNode;
+                        }
+
+                        var rect = matchedNode.getBoundingClientRect();
+                        var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft || 0;
+                        var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+                        var div = document.createElement('div');
+                        var cls = 'pixie-marker-completed';
+                        var pillCls = 'pixie-pill-completed';
+                        var label = '✓';
+                        if (m.status === 'UNREPLIED') {
+                            cls = 'pixie-marker-unreplied';
+                            pillCls = 'pixie-pill-unreplied';
+                            label = '待回' + (m.unreplied > 1 ? '×' + m.unreplied : '');
+                        } else if (m.status === 'NEED_SUPPLEMENT') {
+                            cls = 'pixie-marker-supplement';
+                            pillCls = 'pixie-pill-supplement';
+                            label = '需补';
+                        } else if (m.status === 'GIVEN_PENDING') {
+                            cls = 'pixie-marker-given';
+                            pillCls = 'pixie-pill-given';
+                            label = '已发' + (m.given > 1 ? '×' + m.given : '');
+                        }
+
+                        div.className = 'pixie-room-marker ' + cls;
+                        div.style.left = (rect.left + scrollLeft - 5) + 'px';
+                        div.style.top = (rect.top + scrollTop - 4) + 'px';
+                        div.style.width = Math.max(24, rect.width + 10) + 'px';
+                        div.style.height = Math.max(18, rect.height + 8) + 'px';
+                        div.innerHTML = '<div class="pixie-badge-pill ' + pillCls + '">' + m.room + ' ' + label + '</div>';
+                        document.body.appendChild(div);
+                    }
+
+                    if (firstTargetNode && !'\(sanitizedHighlight ?? "")') {
+                        var r = firstTargetNode.getBoundingClientRect();
+                        var sl = window.pageXOffset || document.documentElement.scrollLeft || 0;
+                        var st = window.pageYOffset || document.documentElement.scrollTop || 0;
+                        window.scrollTo({
+                            top: Math.max(0, (r.top + st) - (window.innerHeight / 2)),
+                            left: Math.max(0, (r.left + sl) - (window.innerWidth / 2)),
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+                window.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(renderPixieRoomMarkers, 80);
+                    setTimeout(renderPixieRoomMarkers, 300);
+                });
+                window.addEventListener('load', function() {
+                    setTimeout(renderPixieRoomMarkers, 120);
+                });
+            </script>
+            """
+        } else {
+            pixieScript = ""
+        }
+
         return """
         <!DOCTYPE html>
         <html>
@@ -310,6 +474,7 @@ public enum DeckMapRepository {
                 }
             </style>
             \(highlightScript)
+            \(pixieScript)
         </head>
         <body>
             <div id="svg-wrapper">

@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// Main Settings view providing configuration for voyage schedule, timeline display, Duffy themes, wallpapers, notifications, and data backup.
+/// Main Settings view providing configuration for voyage schedule, timeline display, Duffy themes, wallpapers, notifications, and voyage archives.
 public struct SettingsView: View {
     @ObservedObject public var viewModel: SettingsViewModel
 
     @State private var showingEditVoyageSheet: Bool = false
     @State private var showingResetAlert: Bool = false
     @State private var showingBackupSheet: Bool = false
+    @State private var showingImportArchiveSheet: Bool = false
+    @State private var selectedArchiveEntry: VoyageArchiveEntry? = nil
     @State private var exportedJSONText: String = ""
 
     public init(viewModel: SettingsViewModel) {
@@ -31,10 +33,13 @@ public struct SettingsView: View {
             // Section 4: 本地提醒 (Notifications)
             notificationsSection
 
-            // Section 5: 数据与备份 (Data & Backup)
+            // Section 5: 历史航程存档 (Voyage Archives)
+            voyageArchivesSection
+
+            // Section 6: 数据与备份 (Data & Backup)
             dataManagementSection
 
-            // Section 6: 关于 (About & Version)
+            // Section 7: 关于 (About & Version)
             aboutSection
         }
         .navigationTitle("设置")
@@ -44,14 +49,17 @@ public struct SettingsView: View {
                 EditVoyageSheet(
                     voyage: voyage,
                     initialDinnerTime: viewModel.settings.dinnerTime,
-                    onSave: { shipName, boardDate, boardTime, disembarkDate, disembarkTime, dinnerTime in
+                    onSave: { shipName, boardDate, boardTime, disembarkDate, disembarkTime, dinnerTime, isConcierge, legs, ashoreLegs in
                         viewModel.updateVoyage(
                             shipName: shipName,
                             boardDate: boardDate,
                             boardTime: boardTime,
                             disembarkDate: disembarkDate,
                             disembarkTime: disembarkTime,
-                            dinnerTime: dinnerTime
+                            dinnerTime: dinnerTime,
+                            isConcierge: isConcierge,
+                            legs: legs,
+                            ashoreLegs: ashoreLegs
                         )
                         showingEditVoyageSheet = false
                     },
@@ -69,13 +77,69 @@ public struct SettingsView: View {
                 }
             )
         }
-        .alert("确定重置航次数据？", isPresented: $showingResetAlert) {
-            Button("取消", role: .cancel) {}
-            Button("确认重置", role: .destructive) {
+        .sheet(isPresented: $showingImportArchiveSheet) {
+            ArchiveImportSheet(
+                onImport: { json, name in
+                    _ = viewModel.importArchiveJSON(json, customName: name)
+                    showingImportArchiveSheet = false
+                },
+                onDismiss: {
+                    showingImportArchiveSheet = false
+                }
+            )
+        }
+        .sheet(item: $selectedArchiveEntry) { entry in
+            ArchiveDetailSheet(
+                entry: entry,
+                onRestore: { archiveCurrentFirst in
+                    _ = viewModel.restoreArchive(id: entry.id, archiveCurrentFirst: archiveCurrentFirst)
+                    selectedArchiveEntry = nil
+                },
+                onExportJSON: {
+                    exportedJSONText = entry.payloadJson
+                    selectedArchiveEntry = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showingBackupSheet = true
+                    }
+                },
+                onDelete: {
+                    viewModel.deleteArchive(id: entry.id)
+                    selectedArchiveEntry = nil
+                },
+                onDismiss: {
+                    selectedArchiveEntry = nil
+                }
+            )
+        }
+        .alert("重置当前航程？", isPresented: $showingResetAlert) {
+            Button("先存档再重置") {
+                viewModel.archiveAndResetVoyage()
+            }
+            Button("直接重置", role: .destructive) {
                 viewModel.resetVoyage()
             }
+            Button("取消", role: .cancel) {}
         } message: {
-            Text("所有日程事件、打卡心愿和仙尘互赠记录都将被清除，并将重新开始航次引导。")
+            Text("重置后将清空当前航程的日程、愿望单和仙尘记录，并重新进入航程设置向导。建议先存入历史存档。")
+        }
+        .overlay(alignment: .bottom) {
+            if let msg = viewModel.toastMessage {
+                Text(msg)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Slate800.opacity(0.92))
+                    .clipShape(Capsule())
+                    .padding(.bottom, 24)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+                            withAnimation {
+                                viewModel.toastMessage = nil
+                            }
+                        }
+                    }
+            }
         }
         .onAppear {
             viewModel.loadData()
@@ -106,11 +170,36 @@ public struct SettingsView: View {
                 }
 
                 HStack {
+                    Text("登船时间")
+                        .foregroundColor(Slate700)
+                    Spacer()
+                    if voyage.isConcierge {
+                        Text("11:00 (礼宾优先登船)")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(palette.primary)
+                    } else {
+                        Text(voyage.boardTime.description)
+                            .foregroundColor(Slate900)
+                    }
+                }
+
+                HStack {
                     Text("离船日期")
                         .foregroundColor(Slate700)
                     Spacer()
                     Text("\(voyage.disembarkDate.description) (\(voyage.disembarkDate.dayOfWeekShort))")
                         .foregroundColor(Slate900)
+                }
+
+                if !voyage.legs.isEmpty {
+                    HStack {
+                        Text("联程编排")
+                            .foregroundColor(Slate700)
+                        Spacer()
+                        Text("\(voyage.legs.map(String.init).joined(separator: "+"))夜联程 · 共\(voyage.legs.reduce(0, +))晚")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(palette.secondary)
+                    }
                 }
 
                 HStack {
@@ -127,7 +216,7 @@ public struct SettingsView: View {
                 } label: {
                     HStack {
                         Image(systemName: "pencil")
-                        Text("修改船期与晚餐时间")
+                        Text("修改船期、联程与晚餐时间")
                     }
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(palette.primary)
@@ -235,6 +324,22 @@ public struct SettingsView: View {
                 }
             }
             .tint(palette.primary)
+
+            // Card Dolls Watermark Toggle
+            Toggle(isOn: Binding(
+                get: { viewModel.settings.cardDollsEnabled },
+                set: { viewModel.setCardDollsEnabled($0) }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("卡片玩偶水印")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Slate800)
+                    Text("在日程卡片右下角展示达菲与朋友主题玩偶贴纸")
+                        .font(.system(size: 11))
+                        .foregroundColor(Slate500)
+                }
+            }
+            .tint(palette.primary)
         }
     }
 
@@ -317,7 +422,70 @@ public struct SettingsView: View {
         }
     }
 
-    // MARK: - Section 5: 数据与备份
+    // MARK: - Section 5: 历史航程存档
+
+    @ViewBuilder
+    private var voyageArchivesSection: some View {
+        Section(header: Label("历史航程存档", systemImage: "archivebox.fill")) {
+            if viewModel.voyage != nil {
+                Button {
+                    viewModel.archiveCurrentVoyage()
+                } label: {
+                    HStack {
+                        Image(systemName: "tray.and.arrow.down.fill")
+                            .foregroundColor(palette.primary)
+                        Text("将当前航程存入历史存档")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(palette.primary)
+                        Spacer()
+                    }
+                }
+            }
+
+            Button {
+                showingImportArchiveSheet = true
+            } label: {
+                HStack {
+                    Image(systemName: "square.and.arrow.down")
+                        .foregroundColor(palette.secondary)
+                    Text("导入航程存档 (JSON)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Slate800)
+                    Spacer()
+                }
+            }
+
+            if viewModel.archives.isEmpty {
+                Text("暂无已保存的历史航程存档")
+                    .font(.system(size: 13))
+                    .foregroundColor(Slate400)
+            } else {
+                ForEach(viewModel.archives) { entry in
+                    Button {
+                        selectedArchiveEntry = entry
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(entry.name)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Slate900)
+                                Text("\(entry.boardDate.description) ~ \(entry.disembarkDate.description) · 日程 \(entry.eventCount) · 仙尘 \(entry.pixieCount)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(Slate500)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12))
+                                .foregroundColor(Slate400)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Section 6: 数据与备份
 
     @ViewBuilder
     private var dataManagementSection: some View {
@@ -331,7 +499,7 @@ public struct SettingsView: View {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
                         .foregroundColor(palette.primary)
-                    Text("导出数据备份 (JSON)")
+                    Text("导出完整数据库备份 (JSON)")
                         .foregroundColor(Slate900)
                     Spacer()
                 }
@@ -342,13 +510,13 @@ public struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "trash.fill")
-                    Text("重置航次数据")
+                    Text("重置当前航程")
                 }
             }
         }
     }
 
-    // MARK: - Section 6: 关于
+    // MARK: - Section 7: 关于
 
     @ViewBuilder
     private var aboutSection: some View {
@@ -392,7 +560,7 @@ public struct SettingsView: View {
 
 private struct EditVoyageSheet: View {
     let voyage: Voyage
-    let onSave: (String?, SimpleDate, SimpleTime, SimpleDate, SimpleTime, SimpleTime) -> Void
+    let onSave: (String?, SimpleDate, SimpleTime, SimpleDate, SimpleTime, SimpleTime, Bool, [Int], Set<Int>) -> Void
     let onDismiss: () -> Void
 
     @State private var shipName: String
@@ -404,11 +572,14 @@ private struct EditVoyageSheet: View {
     @State private var disembarkMinute: Int
     @State private var dinnerHour: Int
     @State private var dinnerMinute: Int
+    @State private var isConcierge: Bool
+    @State private var legs: [Int]
+    @State private var ashoreLegs: Set<Int>
 
     init(
         voyage: Voyage,
         initialDinnerTime: SimpleTime,
-        onSave: @escaping (String?, SimpleDate, SimpleTime, SimpleDate, SimpleTime, SimpleTime) -> Void,
+        onSave: @escaping (String?, SimpleDate, SimpleTime, SimpleDate, SimpleTime, SimpleTime, Bool, [Int], Set<Int>) -> Void,
         onDismiss: @escaping () -> Void
     ) {
         self.voyage = voyage
@@ -424,6 +595,25 @@ private struct EditVoyageSheet: View {
         _disembarkMinute = State(initialValue: voyage.disembarkTime.minute)
         _dinnerHour = State(initialValue: initialDinnerTime.hour)
         _dinnerMinute = State(initialValue: initialDinnerTime.minute)
+        _isConcierge = State(initialValue: voyage.isConcierge)
+        _legs = State(initialValue: voyage.legs)
+        _ashoreLegs = State(initialValue: voyage.ashoreLegs)
+    }
+
+    private var effectiveSingleOrMultiLegs: [Int] {
+        if !legs.isEmpty {
+            return legs
+        }
+        let nights = boardDate.daysUntil(disembarkDate)
+        if nights == 3 || nights == 4 {
+            return [nights]
+        }
+        return []
+    }
+
+    private var nextLegToAppend: Int? {
+        guard let last = effectiveSingleOrMultiLegs.last else { return nil }
+        return last == 3 ? 4 : (last == 4 ? 3 : nil)
     }
 
     var body: some View {
@@ -433,32 +623,102 @@ private struct EditVoyageSheet: View {
                     TextField("邮轮名称", text: $shipName)
                 }
 
-                Section(header: Text("登船时间")) {
+                Section(header: Text("登船时间与礼宾服务")) {
                     DatePicker(
                         "登船日期",
                         selection: Binding(
                             get: { boardDate.toDate() },
-                            set: { boardDate = SimpleDate.fromDate($0) }
+                            set: { newDate in
+                                boardDate = SimpleDate.fromDate(newDate)
+                                if !legs.isEmpty {
+                                    disembarkDate = boardDate.plusDays(legs.reduce(0, +))
+                                }
+                            }
                         ),
                         displayedComponents: .date
                     )
 
-                    HStack {
-                        Text("登船时刻")
-                        Spacer()
-                        Picker("时", selection: $boardHour) {
-                            ForEach(8...18, id: \.self) { h in
-                                Text(String(format: "%02d:00", h)).tag(h)
-                            }
-                        }
-                        .labelsHidden()
+                    Toggle("礼宾 (Concierge) 11:00 优先登船", isOn: $isConcierge)
 
-                        Picker("分", selection: $boardMinute) {
-                            ForEach([0, 15, 30, 45], id: \.self) { m in
-                                Text(String(format: ":%02d", m)).tag(m)
+                    if !isConcierge {
+                        HStack {
+                            Text("登船时刻")
+                            Spacer()
+                            Picker("时", selection: $boardHour) {
+                                ForEach(8...18, id: \.self) { h in
+                                    Text(String(format: "%02d:00", h)).tag(h)
+                                }
+                            }
+                            .labelsHidden()
+
+                            Picker("分", selection: $boardMinute) {
+                                ForEach([0, 15, 30, 45], id: \.self) { m in
+                                    Text(String(format: ":%02d", m)).tag(m)
+                                }
+                            }
+                            .labelsHidden()
+                        }
+                    }
+                }
+
+                if !effectiveSingleOrMultiLegs.isEmpty {
+                    Section(header: Text("联程编排与兰卡威登岸")) {
+                        ForEach(Array(effectiveSingleOrMultiLegs.enumerated()), id: \.offset) { idx, nights in
+                            HStack {
+                                Text("第 \(idx + 1) 程 · \(nights) 夜")
+                                    .font(.system(size: 14, weight: .semibold))
+                                if nights == 4 {
+                                    let isAshore = ashoreLegs.contains(idx)
+                                    Button {
+                                        if isAshore {
+                                            ashoreLegs.remove(idx)
+                                        } else {
+                                            ashoreLegs.insert(idx)
+                                        }
+                                    } label: {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: isAshore ? "checkmark.square.fill" : "square")
+                                            Text("兰卡威登岸")
+                                        }
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(isAshore ? CruiseMarine : Slate600)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                Spacer()
+                                if idx > 0 && idx == effectiveSingleOrMultiLegs.count - 1 {
+                                    Button(role: .destructive) {
+                                        ashoreLegs.remove(idx)
+                                        if legs.count <= 2 {
+                                            let firstNights = legs.first ?? 3
+                                            legs = []
+                                            disembarkDate = boardDate.plusDays(firstNights)
+                                        } else {
+                                            legs.removeLast()
+                                            disembarkDate = boardDate.plusDays(legs.reduce(0, +))
+                                        }
+                                    } label: {
+                                        Image(systemName: "minus.circle.fill")
+                                            .foregroundColor(NowRed)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
                         }
-                        .labelsHidden()
+
+                        if let nextNights = nextLegToAppend {
+                            Button {
+                                if legs.isEmpty {
+                                    let first = boardDate.daysUntil(disembarkDate)
+                                    legs = [first, nextNights]
+                                } else {
+                                    legs.append(nextNights)
+                                }
+                                disembarkDate = boardDate.plusDays(legs.reduce(0, +))
+                            } label: {
+                                Label("续订下一程 (\(nextNights)夜)", systemImage: "plus.circle.fill")
+                            }
+                        }
                     }
                 }
 
@@ -471,6 +731,7 @@ private struct EditVoyageSheet: View {
                         ),
                         displayedComponents: .date
                     )
+                    .disabled(!legs.isEmpty)
 
                     HStack {
                         Text("离船时刻")
@@ -491,7 +752,7 @@ private struct EditVoyageSheet: View {
                     }
                 }
 
-                Section(header: Text("晚餐主席时间")) {
+                Section(header: Text("晚餐主餐时间")) {
                     HStack {
                         Text("固定晚餐时间")
                         Spacer()
@@ -522,11 +783,182 @@ private struct EditVoyageSheet: View {
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        let boardTime = SimpleTime(hour: boardHour, minute: boardMinute)
+                        let boardTime = isConcierge ? CONCIERGE_BOARD_TIME : SimpleTime(hour: boardHour, minute: boardMinute)
                         let disembarkTime = SimpleTime(hour: disembarkHour, minute: disembarkMinute)
                         let dinnerTime = SimpleTime(hour: dinnerHour, minute: dinnerMinute)
-                        onSave(shipName, boardDate, boardTime, disembarkDate, disembarkTime, dinnerTime)
+                        onSave(shipName, boardDate, boardTime, disembarkDate, disembarkTime, dinnerTime, isConcierge, legs, ashoreLegs)
                     }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Archive Detail Sheet
+
+private struct ArchiveDetailSheet: View {
+    let entry: VoyageArchiveEntry
+    let onRestore: (Bool) -> Void
+    let onExportJSON: () -> Void
+    let onDelete: () -> Void
+    let onDismiss: () -> Void
+
+    @State private var showingRestoreConfirm: Bool = false
+    @State private var showingDeleteConfirm: Bool = false
+
+    private var snapshot: ArchiveSnapshot? {
+        parseArchiveSnapshot(entry.payloadJson)
+    }
+
+    var body: some View {
+        NavigationView {
+            List {
+                Section(header: Text("存档概要")) {
+                    HStack {
+                        Text("存档名称")
+                        Spacer()
+                        Text(entry.name)
+                            .fontWeight(.semibold)
+                    }
+                    HStack {
+                        Text("邮轮名称")
+                        Spacer()
+                        Text(entry.shipName)
+                    }
+                    HStack {
+                        Text("航程日期")
+                        Spacer()
+                        Text("\(entry.boardDate.description) ~ \(entry.disembarkDate.description)")
+                    }
+                    HStack {
+                        Text("统计")
+                        Spacer()
+                        Text("日程 \(entry.eventCount) 项 · 仙尘 \(entry.pixieCount) 条")
+                    }
+                }
+
+                if let snap = snapshot {
+                    Section(header: Text("日程预览 (\(snap.events.count))")) {
+                        ForEach(snap.events.prefix(15)) { ev in
+                            HStack {
+                                Text("\(ev.date.monthDayFormatted) \(ev.startTime.description)")
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundColor(Slate500)
+                                Text(ev.title)
+                                    .font(.system(size: 14, weight: .medium))
+                                Spacer()
+                            }
+                        }
+                        if snap.events.count > 15 {
+                            Text("... 共 \(snap.events.count) 项日程")
+                                .font(.caption)
+                                .foregroundColor(Slate400)
+                        }
+                    }
+                }
+
+                Section {
+                    Button {
+                        showingRestoreConfirm = true
+                    } label: {
+                        Label("恢复此航程存档", systemImage: "arrow.counterclockwise.circle.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(CruiseAzure)
+                    }
+
+                    Button {
+                        onExportJSON()
+                    } label: {
+                        Label("导出此存档 (JSON)", systemImage: "square.and.arrow.up")
+                            .foregroundColor(Slate800)
+                    }
+
+                    Button(role: .destructive) {
+                        showingDeleteConfirm = true
+                    } label: {
+                        Label("删除此存档", systemImage: "trash")
+                    }
+                }
+            }
+            .navigationTitle("航程存档详情")
+            .inlineNavigationBarTitle()
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("关闭", action: onDismiss)
+                }
+            }
+            .alert("恢复历史航程存档？", isPresented: $showingRestoreConfirm) {
+                Button("先存档当前航程再恢复") {
+                    onRestore(true)
+                }
+                Button("直接覆盖恢复", role: .destructive) {
+                    onRestore(false)
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("恢复存档将替换当前正在进行的航程数据。建议先将当前航程存入历史存档。")
+            }
+            .alert("确定删除此存档？", isPresented: $showingDeleteConfirm) {
+                Button("删除", role: .destructive, action: onDelete)
+                Button("取消", role: .cancel) {}
+            }
+        }
+    }
+}
+
+// MARK: - Archive Import Sheet
+
+private struct ArchiveImportSheet: View {
+    let onImport: (String, String?) -> Void
+    let onDismiss: () -> Void
+
+    @State private var customName: String = ""
+    @State private var jsonInput: String = ""
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 12) {
+                TextField("存档名称 (选填)", text: $customName)
+                    .padding(10)
+                    .background(Slate100)
+                    .cornerRadius(8)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+
+                Text("请粘贴航程存档 JSON 内容：")
+                    .font(.system(size: 13))
+                    .foregroundColor(Slate600)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+
+                TextEditor(text: $jsonInput)
+                    .font(.system(size: 12, design: .monospaced))
+                    .padding(8)
+                    .background(Slate100)
+                    .cornerRadius(8)
+                    .padding(.horizontal, 16)
+
+                Button {
+                    let trimmedName = customName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    onImport(jsonInput, trimmedName.isEmpty ? nil : trimmedName)
+                } label: {
+                    Text("确认导入存档")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(jsonInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Slate300 : CruiseAzure)
+                        .cornerRadius(10)
+                }
+                .disabled(jsonInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+            }
+            .navigationTitle("导入航程存档")
+            .inlineNavigationBarTitle()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消", action: onDismiss)
                 }
             }
         }
@@ -544,7 +976,7 @@ private struct BackupExportSheet: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 12) {
-                Text("以下是您的完整离线数据备份 JSON，包含所有航次、日程、心愿与仙尘记录。您可以复制保存。")
+                Text("以下是您的离线数据 JSON，包含航次、日程、心愿与仙尘记录。您可以复制保存。")
                     .font(.system(size: 13))
                     .foregroundColor(Slate600)
                     .padding(.horizontal, 16)
@@ -571,7 +1003,7 @@ private struct BackupExportSheet: View {
                 } label: {
                     HStack {
                         Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                        Text(copied ? "已复制到剪贴板" : "复制全部备份内容")
+                        Text(copied ? "已复制到剪贴板" : "复制全部内容")
                     }
                     .font(.system(size: 15, weight: .bold))
                     .foregroundColor(.white)
@@ -583,7 +1015,7 @@ private struct BackupExportSheet: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
             }
-            .navigationTitle("数据备份")
+            .navigationTitle("导出数据")
             .inlineNavigationBarTitle()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

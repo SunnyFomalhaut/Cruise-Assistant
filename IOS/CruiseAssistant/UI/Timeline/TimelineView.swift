@@ -202,7 +202,7 @@ public struct TimelineView: View {
                             )
                         }
                     }
-)
+                )
                 .clipShape(Capsule())
                 .shadow(
                     color: viewModel.isFinalized ? Color.clear : palette.primary.opacity(0.35),
@@ -274,6 +274,7 @@ public struct TimelineView: View {
                                         categories: viewModel.categories,
                                         conflictIds: viewModel.conflictIds,
                                         singleLane: viewModel.isFinalized,
+                                        dollsEnabled: viewModel.settings.cardDollsEnabled,
                                         onEventClick: { event in
                                             if viewModel.isFinalized {
                                                 withAnimation(.easeInOut(duration: 0.2)) {

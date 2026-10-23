@@ -44,6 +44,25 @@ public struct ConflictBadge: View {
     }
 }
 
+/// Small note icon badge indicating the event has a non-empty note.
+public struct NoteIndicator: View {
+    public let colorArgb: Int64
+
+    public init(colorArgb: Int64) {
+        self.colorArgb = colorArgb
+    }
+
+    public var body: some View {
+        let base = Color(argb: colorArgb)
+        Image(systemName: "note.text")
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundColor(cardTextColorFor(colorArgb: colorArgb))
+            .frame(width: 14, height: 14)
+            .background(base.opacity(0.22))
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+    }
+}
+
 /// A timeline card representing an individual cruise event.
 public struct EventCardView: View {
     public let event: CruiseEvent
@@ -52,6 +71,8 @@ public struct EventCardView: View {
     public let waitSegmentHeightPt: CGFloat
     public let hasConflict: Bool
     public let narrow: Bool
+    public let dollsEnabled: Bool
+    public let isFinalized: Bool
     public let onClick: (() -> Void)?
     public let onLongClick: (() -> Void)?
     public let onMoveToLane: ((Int) -> Void)?
@@ -67,6 +88,8 @@ public struct EventCardView: View {
         waitSegmentHeightPt: CGFloat = 0.0,
         hasConflict: Bool = false,
         narrow: Bool = false,
+        dollsEnabled: Bool = true,
+        isFinalized: Bool = false,
         onClick: (() -> Void)? = nil,
         onLongClick: (() -> Void)? = nil,
         onMoveToLane: ((Int) -> Void)? = nil,
@@ -81,6 +104,8 @@ public struct EventCardView: View {
         self.waitSegmentHeightPt = waitSegmentHeightPt
         self.hasConflict = hasConflict
         self.narrow = narrow
+        self.dollsEnabled = dollsEnabled
+        self.isFinalized = isFinalized
         self.onClick = onClick
         self.onLongClick = onLongClick
         self.onMoveToLane = onMoveToLane
@@ -110,6 +135,16 @@ public struct EventCardView: View {
         waitSegmentHeightPt > 0
     }
 
+    private var hasNote: Bool {
+        guard let note = event.note else { return false }
+        return !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var showDollWatermark: Bool {
+        let isShow = category?.iconKey == "show"
+        return dollsEnabled && !event.isSystemGenerated && (!isShow || isFinalized)
+    }
+
     private var locationText: String? {
         formatLocation(deck: event.deck, zone: event.zone, placeName: event.placeName, compact: true)
     }
@@ -122,30 +157,37 @@ public struct EventCardView: View {
         Button(action: {
             onClick?()
         }) {
-            HStack(spacing: 0) {
-                // Left color stripe
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(Color(argb: colorArgb))
-                    .frame(width: 3.5)
-                    .opacity(active ? 1.0 : 0.45)
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 2)
-
-                // Card body content
-                VStack(alignment: .leading, spacing: 0) {
-                    if hasWaitSegment {
-                        waitSegmentView
-                        Spacer().frame(height: 2)
-                        waitAdaptiveBodyView
-                    } else if isCompact {
-                        compactBodyView
-                    } else {
-                        standardBodyView
-                    }
+            ZStack(alignment: .bottomTrailing) {
+                if showDollWatermark {
+                    dollWatermarkView
                 }
-                .padding(.horizontal, isCompact ? 3 : 5)
-                .padding(.vertical, 2)
-                .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack(spacing: 0) {
+                    // Left color stripe
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(Color(argb: colorArgb))
+                        .frame(width: 3.5)
+                        .opacity(active ? 1.0 : 0.45)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 2)
+
+                    // Card body content
+                    VStack(alignment: .leading, spacing: 0) {
+                        if hasWaitSegment {
+                            waitSegmentView
+                            Spacer().frame(height: 2)
+                            waitAdaptiveBodyView
+                        } else if isCompact {
+                            compactBodyView
+                        } else {
+                            standardBodyView
+                        }
+                    }
+                    .padding(.horizontal, isCompact ? 3 : 5)
+                    .padding(.vertical, 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(cardBackgroundFor(colorArgb: colorArgb))
@@ -163,6 +205,37 @@ public struct EventCardView: View {
         .buttonStyle(PlainButtonStyle())
         .contextMenu {
             contextMenuItems
+        }
+    }
+
+    // MARK: - Doll Watermark View
+    @ViewBuilder
+    private var dollWatermarkView: some View {
+        let laneCount = narrow ? 3 : 1
+        let assetPath = DollManager.selectDollForCard(
+            eventId: event.id,
+            durationMinutes: event.durationMinutes,
+            laneCount: laneCount
+        )
+        let dollHeight = min(max(heightPt * 0.85, 18.0), 130.0)
+        if let img = DollManager.loadDollImage(assetPath: assetPath) {
+            #if canImport(UIKit)
+            Image(uiImage: img)
+                .resizable()
+                .scaledToFit()
+                .frame(height: dollHeight)
+                .opacity(active ? 0.58 : 0.30)
+                .padding(.trailing, 2)
+                .allowsHitTesting(false)
+            #elseif canImport(AppKit)
+            Image(nsImage: img)
+                .resizable()
+                .scaledToFit()
+                .frame(height: dollHeight)
+                .opacity(active ? 0.58 : 0.30)
+                .padding(.trailing, 2)
+                .allowsHitTesting(false)
+            #endif
         }
     }
 
@@ -246,10 +319,13 @@ public struct EventCardView: View {
         let bodyLines = bodyHeight >= THREE_LINE_MIN_PT ? 3 : (bodyHeight >= TWO_LINE_MIN_PT ? 2 : 1)
 
         VStack(alignment: .leading, spacing: 1) {
-            // Line 1: Chip / Title / Conflict
+            // Line 1: Chip / Note / Title / Conflict
             HStack(spacing: 2) {
                 if let cat = category, bodyLines >= 2 {
                     CategoryChip(name: cat.name, colorArgb: colorArgb)
+                }
+                if hasNote && bodyLines >= 2 {
+                    NoteIndicator(colorArgb: colorArgb)
                 }
                 Text(event.title)
                     .font(.system(size: 12, weight: .bold))
@@ -283,6 +359,9 @@ public struct EventCardView: View {
     @ViewBuilder
     private var compactBodyView: some View {
         HStack(spacing: 2) {
+            if hasNote {
+                NoteIndicator(colorArgb: colorArgb)
+            }
             Text(event.title)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(active ? Slate900 : Slate500)
@@ -306,10 +385,13 @@ public struct EventCardView: View {
     @ViewBuilder
     private var standardBodyView: some View {
         VStack(alignment: .leading, spacing: 2) {
-            // Line 1: Category Chip + Title + Conflict Badge
+            // Line 1: Category Chip + Note Indicator + Title + Conflict Badge
             HStack(spacing: 4) {
                 if let cat = category {
                     CategoryChip(name: cat.name, colorArgb: colorArgb)
+                }
+                if hasNote {
+                    NoteIndicator(colorArgb: colorArgb)
                 }
                 Text(event.title)
                     .font(.system(size: 12, weight: .bold))

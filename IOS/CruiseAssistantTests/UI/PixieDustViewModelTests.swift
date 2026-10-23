@@ -40,22 +40,20 @@ final class PixieDustViewModelTests: XCTestCase {
     func testKeypadDigitsInputAndLimit() {
         XCTAssertEqual(viewModel.roomInput, "")
 
-        viewModel.onDigit("5")
-        XCTAssertEqual(viewModel.roomInput, "5")
-
-        viewModel.onDigit("5")
-        XCTAssertEqual(viewModel.roomInput, "55")
-
-        viewModel.onDigit("0")
-        XCTAssertEqual(viewModel.roomInput, "550")
-
-        // 4th digit should be ignored
         viewModel.onDigit("1")
-        XCTAssertEqual(viewModel.roomInput, "550")
+        viewModel.onDigit("0")
+        viewModel.onDigit("2")
+        viewModel.onDigit("0")
+        viewModel.onDigit("0")
+        XCTAssertEqual(viewModel.roomInput, "10200")
+
+        // 6th digit should be ignored (max 5 digits)
+        viewModel.onDigit("1")
+        XCTAssertEqual(viewModel.roomInput, "10200")
 
         // Non-digit should be ignored
         viewModel.onDigit("A")
-        XCTAssertEqual(viewModel.roomInput, "550")
+        XCTAssertEqual(viewModel.roomInput, "10200")
     }
 
     func testKeypadBackspaceAndClear() {
@@ -108,10 +106,9 @@ final class PixieDustViewModelTests: XCTestCase {
     // MARK: - Record Submission Tests
 
     func testSubmitGivenRecord() {
-        viewModel.selectDeck(10)
-        viewModel.onDigit("5")
-        viewModel.onDigit("5")
-        viewModel.onDigit("0")
+        for ch in "10200" {
+            viewModel.onDigit(String(ch))
+        }
 
         guard let levelId = viewModel.selectedLevelId else {
             XCTFail("Selected level id must not be nil")
@@ -126,8 +123,8 @@ final class PixieDustViewModelTests: XCTestCase {
 
         let saved = viewModel.givenRecords.first!
         XCTAssertEqual(saved.deck, 10)
-        XCTAssertEqual(saved.room, "550")
-        XCTAssertEqual(saved.fullRoom, "10550")
+        XCTAssertEqual(saved.room, "200")
+        XCTAssertEqual(saved.fullRoom, "10200")
         XCTAssertEqual(saved.direction, .given)
         XCTAssertEqual(saved.levelId, levelId)
         XCTAssertFalse(saved.replied)
@@ -139,10 +136,9 @@ final class PixieDustViewModelTests: XCTestCase {
 
     func testSubmitReceivedRecord() {
         viewModel.selectTab(.received)
-        viewModel.selectDeck(9)
-        viewModel.onDigit("1")
-        viewModel.onDigit("2")
-        viewModel.onDigit("0")
+        for ch in "9120" {
+            viewModel.onDigit(String(ch))
+        }
 
         viewModel.submitRecord()
 
@@ -167,7 +163,6 @@ final class PixieDustViewModelTests: XCTestCase {
             note: "Gift 1",
             replied: false
         )
-        // Ensure distinct timestamp
         let laterRecord = PixieDustRecord(
             id: 0,
             direction: .received,
@@ -186,10 +181,9 @@ final class PixieDustViewModelTests: XCTestCase {
 
         // Step 2: Submit GIVEN record for 11-550
         viewModel.selectTab(.given)
-        viewModel.selectDeck(11)
-        viewModel.onDigit("5")
-        viewModel.onDigit("5")
-        viewModel.onDigit("0")
+        for ch in "11550" {
+            viewModel.onDigit(String(ch))
+        }
         viewModel.submitRecord()
 
         // Step 3: Verify earliest received record was auto-replied
@@ -205,20 +199,18 @@ final class PixieDustViewModelTests: XCTestCase {
     func testAutoReplyLinkageDirection1Mirror_ReceivedAutoRepliedIfAlreadyGiven() {
         // Step 1: Send gift to 10-200
         viewModel.selectTab(.given)
-        viewModel.selectDeck(10)
-        viewModel.onDigit("2")
-        viewModel.onDigit("0")
-        viewModel.onDigit("0")
+        for ch in "10200" {
+            viewModel.onDigit(String(ch))
+        }
         viewModel.submitRecord()
 
         XCTAssertEqual(viewModel.givenRecords.count, 1)
 
         // Step 2: Receive gift from 10-200
         viewModel.selectTab(.received)
-        viewModel.selectDeck(10)
-        viewModel.onDigit("2")
-        viewModel.onDigit("0")
-        viewModel.onDigit("0")
+        for ch in "10200" {
+            viewModel.onDigit(String(ch))
+        }
         viewModel.submitRecord()
 
         // Step 3: Newly recorded received gift should be auto-marked as replied!
@@ -231,7 +223,6 @@ final class PixieDustViewModelTests: XCTestCase {
     // MARK: - Two-Step Reply Confirmation Flow Tests
 
     func testTwoStepReplyFlowWithLevelCreatesGivenRecord() {
-        // Add received record
         let received = pixieDustRepo.addRecord(
             direction: .received,
             deck: 8,
@@ -243,22 +234,18 @@ final class PixieDustViewModelTests: XCTestCase {
         )
         viewModel.loadData()
 
-        // Toggle replied -> triggers pending dialog
         viewModel.toggleReplied(record: received)
         XCTAssertNotNil(viewModel.pendingReplyRecord)
         XCTAssertEqual(viewModel.pendingReplyRecord?.id, received.id)
 
-        // Confirm reply with Level 3 (豪华)
         let luxuryLevel = viewModel.levels.first(where: { $0.rank == 3 })
         viewModel.confirmReply(record: received, replyLevel: luxuryLevel)
 
         XCTAssertNil(viewModel.pendingReplyRecord)
 
-        // Check received is replied
         let updatedReceived = viewModel.receivedRecords.first(where: { $0.id == received.id })
         XCTAssertTrue(updatedReceived?.replied ?? false)
 
-        // Check given record was created
         let newGiven = viewModel.givenRecords.first(where: { $0.deck == 8 && $0.room == "300" })
         XCTAssertNotNil(newGiven)
         XCTAssertEqual(newGiven?.levelId, luxuryLevel?.id)
@@ -279,7 +266,6 @@ final class PixieDustViewModelTests: XCTestCase {
         viewModel.toggleReplied(record: received)
         XCTAssertNotNil(viewModel.pendingReplyRecord)
 
-        // Confirm reply with nil level (only mark checked)
         viewModel.confirmReply(record: received, replyLevel: nil)
 
         XCTAssertNil(viewModel.pendingReplyRecord)
@@ -313,10 +299,9 @@ final class PixieDustViewModelTests: XCTestCase {
     // MARK: - Edit and Delete Tests
 
     func testEditRecord() {
-        viewModel.selectDeck(10)
-        viewModel.onDigit("5")
-        viewModel.onDigit("5")
-        viewModel.onDigit("0")
+        for ch in "10200" {
+            viewModel.onDigit(String(ch))
+        }
         viewModel.submitRecord()
 
         guard var record = viewModel.givenRecords.first else {
@@ -336,10 +321,9 @@ final class PixieDustViewModelTests: XCTestCase {
     }
 
     func testDeleteRecord() {
-        viewModel.selectDeck(10)
-        viewModel.onDigit("5")
-        viewModel.onDigit("5")
-        viewModel.onDigit("0")
+        for ch in "10200" {
+            viewModel.onDigit(String(ch))
+        }
         viewModel.submitRecord()
 
         XCTAssertEqual(viewModel.givenRecords.count, 1)
@@ -352,30 +336,28 @@ final class PixieDustViewModelTests: XCTestCase {
     // MARK: - Room History Preselection Tests
 
     func testRoomHistoryPreselection() {
-        // Send a luxury gift (rank 3) to 10-550
         guard let luxuryLevel = viewModel.levels.first(where: { $0.rank == 3 }) else {
             XCTFail("Luxury level should exist")
             return
         }
-        viewModel.selectDeck(10)
         viewModel.selectLevel(luxuryLevel.id)
-        viewModel.onDigit("5")
-        viewModel.onDigit("5")
-        viewModel.onDigit("0")
+        for ch in "10200" {
+            viewModel.onDigit(String(ch))
+        }
         viewModel.submitRecord()
 
-        // Reset level to normal (rank 1)
         if let normalLevel = viewModel.levels.first(where: { $0.rank == 1 }) {
             viewModel.selectLevel(normalLevel.id)
         }
 
-        // Now type 10-550 again
-        viewModel.onDigit("5")
-        viewModel.onDigit("5")
-        XCTAssertNil(viewModel.roomHistory, "History hint only visible on full 3 digits")
+        // Type first 3 digits -> incomplete
+        viewModel.onDigit("1")
+        viewModel.onDigit("0")
+        viewModel.onDigit("2")
+        XCTAssertNil(viewModel.roomHistory, "History hint only visible on valid 4-5 digit stateroom")
 
         viewModel.onDigit("0")
-        // Level should be auto-preselected to luxury level (rank 3)
+        viewModel.onDigit("0")
         XCTAssertEqual(viewModel.selectedLevelId, luxuryLevel.id)
         XCTAssertNotNil(viewModel.roomHistory)
         XCTAssertEqual(viewModel.roomHistory?.levelName, luxuryLevel.name)
@@ -401,20 +383,17 @@ final class PixieDustViewModelTests: XCTestCase {
         let g1 = PixieDustRecord(id: 1, direction: .given, deck: 11, room: "550", levelId: 1, levelNameSnapshot: "普通")
         let r1 = PixieDustRecord(id: 2, direction: .received, deck: 11, room: "550", levelId: 1, levelNameSnapshot: "普通")
 
-        XCTAssertTrue(hasGivenForRoom(given: [g1], deck: 11, room: "550"))
+        XCTAssertTrue(hasGivenForRoom(given: [g1], deck: 11, room: "550", existingRepliedCount: 0))
+        XCTAssertFalse(hasGivenForRoom(given: [g1], deck: 11, room: "550", existingRepliedCount: 1))
         XCTAssertFalse(hasGivenForRoom(given: [g1], deck: 12, room: "550"))
         XCTAssertFalse(hasGivenForRoom(given: [r1], deck: 11, room: "550"))
     }
 
     func testPairByRoomAlgorithmOrdering() {
-        // Room A (11-100): unreplied received rank 1
         let rA = PixieDustRecord(id: 1, direction: .received, deck: 11, room: "100", levelId: 1, levelNameSnapshot: "普通", replied: false, timestamp: 100)
-        // Room B (11-200): unreplied received rank 3
         let rB = PixieDustRecord(id: 2, direction: .received, deck: 11, room: "200", levelId: 3, levelNameSnapshot: "豪华", replied: false, timestamp: 200)
-        // Room C (11-300): balanced (1 given, 1 replied received)
         let gC = PixieDustRecord(id: 3, direction: .given, deck: 11, room: "300", levelId: 1, levelNameSnapshot: "普通", replied: false, timestamp: 300)
         let rC = PixieDustRecord(id: 4, direction: .received, deck: 11, room: "300", levelId: 1, levelNameSnapshot: "普通", replied: true, timestamp: 400)
-        // Room D (11-400): unbalanced (2 given, 0 received)
         let gD1 = PixieDustRecord(id: 5, direction: .given, deck: 11, room: "400", levelId: 1, levelNameSnapshot: "普通", timestamp: 500)
         let gD2 = PixieDustRecord(id: 6, direction: .given, deck: 11, room: "400", levelId: 2, levelNameSnapshot: "精致", timestamp: 600)
 
@@ -425,13 +404,9 @@ final class PixieDustViewModelTests: XCTestCase {
         )
 
         XCTAssertEqual(pairs.count, 4)
-        // Unreplied received with highest rank (Room B, rank 3) comes first
         XCTAssertEqual(pairs[0].room, "200")
-        // Unreplied received with lower rank (Room A, rank 1) comes second
         XCTAssertEqual(pairs[1].room, "100")
-        // Unbalanced (Room D, 2 given vs 0 received) comes third
         XCTAssertEqual(pairs[2].room, "400")
-        // Balanced (Room C) comes last
         XCTAssertEqual(pairs[3].room, "300")
     }
 
