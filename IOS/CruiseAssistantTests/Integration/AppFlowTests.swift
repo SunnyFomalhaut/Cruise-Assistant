@@ -138,6 +138,8 @@ final class AppFlowTests: XCTestCase {
         }) ?? facilityVM.allFacilities.first(where: { $0.placeName.contains("剧院") || $0.placeName.contains("Theatre") }) ?? facilityVM.allFacilities[0]
 
         let showCatId = container.categoryRepository.getCategories().first(where: { $0.iconKey == "show" })?.id ?? 1
+        // createVoyage seeds floating shows into the wishlist, so compare against that baseline.
+        let wishlistCountBeforeAdd = container.wishlistRepository.getItems().count
         let addedWishlistItem = container.wishlistRepository.addItem(
             title: targetFacility.placeName,
             categoryId: showCatId,
@@ -149,7 +151,8 @@ final class AppFlowTests: XCTestCase {
 
         XCTAssertEqual(addedWishlistItem.title, targetFacility.placeName)
         let currentWishlist = container.wishlistRepository.getItems()
-        XCTAssertEqual(currentWishlist.count, 1, "Wishlist repository should contain the added item")
+        XCTAssertEqual(currentWishlist.count, wishlistCountBeforeAdd + 1, "Wishlist repository should contain the added item")
+        XCTAssertTrue(currentWishlist.contains(where: { $0.id == addedWishlistItem.id }))
 
         // =========================================================================
         // Step 5: Wishlist converts item into a scheduled timeline event
@@ -160,7 +163,7 @@ final class AppFlowTests: XCTestCase {
             eventRepository: container.eventRepository,
             voyageRepository: container.voyageRepository
         )
-        XCTAssertEqual(wishlistVM.items.count, 1)
+        XCTAssertEqual(wishlistVM.items.count, wishlistCountBeforeAdd + 1)
 
         let convertedEvent = wishlistVM.convertToEvent(
             item: addedWishlistItem,

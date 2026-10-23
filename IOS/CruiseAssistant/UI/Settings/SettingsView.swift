@@ -808,6 +808,16 @@ private struct ArchiveDetailSheet: View {
         "\(ev.date.monthDayFormatted) \(ev.startTime.description)"
     }
 
+    /// First 15 events in chronological order (same ordering as `CruiseDatabase.getAllEvents()`).
+    private var previewEvents: [CruiseEvent] {
+        let sorted = entry.snapshot.events.sorted {
+            if $0.date != $1.date { return $0.date < $1.date }
+            if $0.startTime != $1.startTime { return $0.startTime < $1.startTime }
+            return $0.id < $1.id
+        }
+        return Array(sorted.prefix(15))
+    }
+
     var body: some View {
         NavigationView {
             List {
@@ -836,7 +846,7 @@ private struct ArchiveDetailSheet: View {
                 }
 
                 Section(header: Text("日程预览 (\(entry.snapshot.events.count))")) {
-                    ForEach(entry.snapshot.events.prefix(15)) { ev in
+                    ForEach(previewEvents) { ev in
                         HStack {
                             Text(previewTimeLabel(ev))
                                 .font(.system(size: 12, design: .monospaced))
