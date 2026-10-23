@@ -669,13 +669,13 @@ fun OnboardingScreen(
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
                     val dow = lockedBoardDay ?: return true
                     val date = Instant.ofEpochMilli(utcTimeMillis)
-                        .atZone(ZoneId.systemDefault()).toLocalDate()
+                        .atZone(java.time.ZoneOffset.UTC).toLocalDate()
                     return date.dayOfWeek == dow
                 }
             }
         }
         val pickerState = rememberDatePickerState(
-            initialSelectedDateMillis = initial.atStartOfDay(ZoneId.systemDefault())
+            initialSelectedDateMillis = initial.atStartOfDay(java.time.ZoneOffset.UTC)
                 .toInstant().toEpochMilli(),
             selectableDates = selectableDates,
         )
@@ -685,7 +685,7 @@ fun OnboardingScreen(
                 TextButton(onClick = {
                     pickerState.selectedDateMillis?.let { millis ->
                         val picked = Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.systemDefault()).toLocalDate()
+                            .atZone(java.time.ZoneOffset.UTC).toLocalDate()
                         when (target) {
                             PickerTarget.BOARD -> onBoardDateChange(picked)
                             PickerTarget.DISEMBARK -> onDisembarkDateChange(picked)

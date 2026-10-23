@@ -11,6 +11,7 @@ import com.cruise.assistant.domain.CruiseEvent
 import com.cruise.assistant.domain.ShipZone
 import com.cruise.assistant.domain.WishlistItem
 import com.cruise.assistant.domain.resolveDefaultWaitMinutes
+import com.cruise.assistant.reminder.ReminderRescheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -36,6 +38,7 @@ class WishlistViewModel(
     private val categoryRepository: CategoryRepository,
     private val eventRepository: EventRepository? = null,
     private val voyageRepository: VoyageRepository? = null,
+    private val reminderScheduler: ReminderRescheduler = ReminderRescheduler {},
     coroutineScope: CoroutineScope? = null,
 ) : ViewModel() {
 
@@ -43,8 +46,16 @@ class WishlistViewModel(
 
     private val _selectedCategoryFilter = MutableStateFlow<Long?>(null)
 
-    val activeVoyageDates: StateFlow<List<LocalDate>> = (voyageRepository?.observeVoyage() ?: emptyFlow())
-        .map { it?.datesInVoyage() ?: emptyList() }
+    val activeVoyageDates: StateFlow<List<LocalDate>> = if (voyageRepository == null) {
+        emptyFlow<List<LocalDate>>()
+    } else {
+        combine(
+            voyageRepository.observeVoyage(),
+            voyageRepository.observeDayPlans().onStart { emit(emptyMap()) },
+        ) { voyage, plans ->
+            (voyage?.datesInVoyage() ?: emptyList()).filter { plans[it]?.finalized != true }
+        }
+    }
         .stateIn(
             scope = scope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -122,6 +133,7 @@ class WishlistViewModel(
                 waitMinutes = waitMinutes,
             )
             eventRepo.addEvent(event, recurring = false)
+            reminderScheduler.rescheduleAll()
             wishlistRepository.toggleCompleted(item.id, true)
             onSuccess()
         }

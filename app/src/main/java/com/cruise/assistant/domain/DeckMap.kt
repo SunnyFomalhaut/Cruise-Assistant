@@ -85,7 +85,11 @@ object DeckMapRepository {
                 ?: target
         }
         val highlightScript = if (expandedTarget != null) {
-            val jsTarget = expandedTarget.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ")
+            val jsTarget = expandedTarget
+                .replace("\\", "\\\\")
+                .replace("'", "\\'")
+                .replace("\r", " ")
+                .replace("\n", " ")
             """
             <style>
                 .facility-highlight-box {
@@ -238,7 +242,8 @@ object DeckMapRepository {
                     pin.className = 'facility-pin-badge';
                     pin.style.left = (rect.left + scrollLeft + rect.width / 2) + 'px';
                     pin.style.top = (rect.top + scrollTop - 8) + 'px';
-                    pin.innerHTML = '<div class="pin-content"><span>📍</span><span>' + target + '</span></div><div class="pin-arrow"></div>';
+                    var safeHtmlTarget = target.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    pin.innerHTML = '<div class="pin-content"><span>📍</span><span>' + safeHtmlTarget + '</span></div><div class="pin-arrow"></div>';
                     document.body.appendChild(pin);
 
                     if (typeof bestNode.scrollIntoView === 'function') {

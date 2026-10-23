@@ -274,4 +274,33 @@ class EventSheetViewModelTest {
         val vm = buildViewModel(eventDao = eventDao, editingEventId = 7L)
         assertEquals(0, vm.state.value.waitMinutes)
     }
+
+    @Test
+    fun `edit late event crossing midnight clamps endTime to 23_59 instead of wrapping to 23_30`() {
+        val eventDao = FakeEventDao()
+        eventDao.seed(
+            EventEntity(
+                id = 8L,
+                date = LocalDate.of(2026, 9, 12),
+                startTime = LocalTime.of(23, 30),
+                durationMinutes = 60,
+                categoryId = 2L,
+                title = "夜宵",
+                deck = null,
+                zone = null,
+                placeName = "客房送餐 Room Service",
+                lane = 0,
+                recurrenceGroupId = null,
+                reminderMinutesBefore = null,
+                isSystemGenerated = false,
+                waitMinutes = null,
+            ),
+        )
+
+        val vm = buildViewModel(eventDao = eventDao, editingEventId = 8L)
+        assertEquals(LocalTime.of(23, 30), vm.state.value.startTime)
+        assertEquals(LocalTime.of(23, 59), vm.state.value.endTime)
+        assertEquals(false, vm.state.value.noLocation)
+        assertNull(vm.state.value.zone)
+    }
 }

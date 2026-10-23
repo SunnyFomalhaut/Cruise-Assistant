@@ -180,16 +180,17 @@ private fun PixieStatBar(state: PixieDustUiState, onOpenLinkage: () -> Unit) {
                 )
                 LevelCountChips(levelCountsOf(state.given, state.levels))
             } else {
-                val unreplied = state.received.count { !it.replied }
+                val allReceived = state.allReceived.ifEmpty { state.received }
+                val unreplied = allReceived.count { !it.replied }
                 Text(
-                    stringResource(R.string.pixie_received_count_format, state.received.size) +
+                    stringResource(R.string.pixie_received_count_format, allReceived.size) +
                         " · " +
                         stringResource(R.string.pixie_unreplied_count_format, unreplied),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = Slate900,
                 )
-                LevelCountChips(levelCountsOf(state.received.filter { !it.replied }, state.levels))
+                LevelCountChips(levelCountsOf(allReceived.filter { !it.replied }, state.levels))
             }
             Spacer(Modifier.weight(1f))
             IconButton(

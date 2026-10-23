@@ -95,7 +95,7 @@ object WallpaperManager {
         if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
             val halfHeight = options.outHeight / 2
             val halfWidth = options.outWidth / 2
-            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+            while (halfHeight / inSampleSize >= reqHeight || halfWidth / inSampleSize >= reqWidth) {
                 inSampleSize *= 2
             }
         }
@@ -124,7 +124,7 @@ object WallpaperManager {
         if (bounds.outHeight > MAX_DIMENSION || bounds.outWidth > MAX_DIMENSION) {
             val halfHeight = bounds.outHeight / 2
             val halfWidth = bounds.outWidth / 2
-            while (halfHeight / inSampleSize >= MAX_DIMENSION && halfWidth / inSampleSize >= MAX_DIMENSION) {
+            while (halfHeight / inSampleSize >= MAX_DIMENSION || halfWidth / inSampleSize >= MAX_DIMENSION) {
                 inSampleSize *= 2
             }
         }

@@ -49,8 +49,18 @@ fun TimeWheel(
     onValueChange: (LocalTime) -> Unit,
     modifier: Modifier = Modifier,
     minuteStep: Int = 5,
+    isEndOfDay24: Boolean = false,
+    onEndOfDay24Select: (() -> Unit)? = null,
 ) {
     val minuteValues = remember(minuteStep) { (0 until 60 step minuteStep).toList() }
+    val snappedMinute = remember(value.minute, minuteValues) {
+        minuteValues.minByOrNull { kotlin.math.abs(it - value.minute) } ?: 0
+    }
+    val hourItems = remember(onEndOfDay24Select != null) {
+        if (onEndOfDay24Select != null) (0..24).toList() else (0..23).toList()
+    }
+    val selectedHour = if (isEndOfDay24 && onEndOfDay24Select != null) 24 else value.hour
+    val selectedMinute = if (isEndOfDay24 && onEndOfDay24Select != null) 0 else snappedMinute
     val shape = RoundedCornerShape(14.dp)
 
     Box(
@@ -75,9 +85,15 @@ fun TimeWheel(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             WheelColumn(
-                items = (0..23).toList(),
-                selected = value.hour,
-                onSelect = { onValueChange(value.withHour(it)) },
+                items = hourItems,
+                selected = selectedHour,
+                onSelect = { h ->
+                    if (h == 24 && onEndOfDay24Select != null) {
+                        onEndOfDay24Select()
+                    } else {
+                        onValueChange(LocalTime.of(h.coerceIn(0, 23), snappedMinute))
+                    }
+                },
                 format = { "%02d".format(it) },
                 modifier = Modifier.width(64.dp),
             )
@@ -90,9 +106,18 @@ fun TimeWheel(
             )
             WheelColumn(
                 items = minuteValues,
-                selected = minuteValues.minByOrNull { kotlin.math.abs(it - value.minute) }
-                    ?: 0,
-                onSelect = { onValueChange(value.withMinute(it)) },
+                selected = selectedMinute,
+                onSelect = { m ->
+                    if (isEndOfDay24 && onEndOfDay24Select != null) {
+                        if (m == 0) {
+                            onEndOfDay24Select()
+                        } else {
+                            onValueChange(LocalTime.of(23, m))
+                        }
+                    } else {
+                        onValueChange(LocalTime.of(value.hour, m))
+                    }
+                },
                 format = { "%02d".format(it) },
                 modifier = Modifier.width(64.dp),
             )

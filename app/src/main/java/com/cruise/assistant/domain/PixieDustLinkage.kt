@@ -89,8 +89,13 @@ fun pairByRoomForSweep(
 }
 
 /**
- * 方向一镜像：该房间是否已有发出记录。
+ * 方向一镜像：该房间是否有尚未被其他已回礼记录消费的发出记录。
  * 登记收到时判断要不要自动把刚登记的这条勾成已回礼（回礼动作在登记前已发生）。
  */
-fun hasGivenForRoom(given: List<PixieDustRecord>, deck: Int, room: String): Boolean =
-    given.any { it.direction == PixieDustDirection.GIVEN && it.deck == deck && it.room == room }
+fun hasGivenForRoom(
+    given: List<PixieDustRecord>,
+    deck: Int,
+    room: String,
+    existingRepliedCount: Int = 0,
+): Boolean =
+    given.count { it.direction == PixieDustDirection.GIVEN && it.deck == deck && it.room == room } > existingRepliedCount

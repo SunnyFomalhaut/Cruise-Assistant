@@ -64,8 +64,10 @@ data class PixieDustUiState(
     val selectedLevelId: Long? = null,
     /** 发出记录，时间倒序原始流 */
     val given: List<PixieDustRecord> = emptyList(),
-    /** 收到记录，sortReceived 排好 */
+    /** 收到记录，sortReceived 排好（受筛选影响） */
     val received: List<PixieDustRecord> = emptyList(),
+    /** 全部收到记录（不受筛选影响，供顶部统计条与联动使用） */
+    val allReceived: List<PixieDustRecord> = emptyList(),
     /** 发出归组视图数据 */
     val grouped: List<RoomGroup> = emptyList(),
     val viewMode: GivenViewMode = GivenViewMode.GROUPED,
@@ -79,6 +81,8 @@ data class PixieDustUiState(
     val autoRepliedRoom: String? = null,
     /** 联动检视图数据 */
     val roomPairs: List<RoomPair> = emptyList(),
+    /** 全船完整房间配对（不受筛选影响，供联动检视顶栏全船汇总统计） */
+    val allRoomPairs: List<RoomPair> = emptyList(),
 )
 
 class PixieDustViewModel(
@@ -195,16 +199,19 @@ class PixieDustViewModel(
             dust.filter { it.direction == PixieDustDirection.RECEIVED },
             levels,
         )
-        val received = if (input.filter == PixieFilter.PENDING_ONLY) {
-            sortedReceived.filter { !it.replied }
-        } else {
-            sortedReceived
-        }
         val sweepPairs = pairByRoomForSweep(
             given = given,
             received = dust.filter { it.direction == PixieDustDirection.RECEIVED },
         ) { rec ->
             levels.firstOrNull { it.id == rec.levelId }?.rank ?: 0
+        }
+        val supplementRoomKeys = sweepPairs
+            .filter { it.received.size > it.given.size }
+            .mapTo(mutableSetOf()) { it.deck to it.room }
+        val received = if (input.filter == PixieFilter.PENDING_ONLY) {
+            sortedReceived.filter { !it.replied || (it.deck to it.room) in supplementRoomKeys }
+        } else {
+            sortedReceived
         }
         val roomPairs = if (input.filter == PixieFilter.PENDING_ONLY) {
             sweepPairs.filter { it.unrepliedReceived.isNotEmpty() || it.given.size != it.received.size }
@@ -224,6 +231,7 @@ class PixieDustViewModel(
             selectedLevelId = input.selectedLevelId,
             given = given,
             received = received,
+            allReceived = sortedReceived,
             grouped = groupGivenByRoom(dust, levels),
             viewMode = input.viewMode,
             keypadCollapsed = input.keypadCollapsed,
@@ -232,6 +240,7 @@ class PixieDustViewModel(
             pendingReply = input.pendingReply,
             autoRepliedRoom = input.autoRepliedRoom,
             roomPairs = roomPairs,
+            allRoomPairs = sweepPairs,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -315,12 +324,20 @@ class PixieDustViewModel(
                         autoRepliedRoom.value = record.fullRoom
                     }
                 }
-                // 联动方向一镜像：登记收到时该房间已有发出 → 刚登记的这条直接已回礼
+                // 联动方向一镜像：登记收到时该房间有尚未消费的发出 → 刚登记的这条直接已回礼
                 if (record.direction == PixieDustDirection.RECEIVED) {
                     val all = dustRepository.observeAll().first()
+                    val existingRepliedCount = all.count {
+                        it.direction == PixieDustDirection.RECEIVED &&
+                            it.deck == record.deck &&
+                            it.room == record.room &&
+                            it.replied
+                    }
                     val hasGiven = hasGivenForRoom(
                         all.filter { it.direction == PixieDustDirection.GIVEN },
-                        record.deck, record.room,
+                        record.deck,
+                        record.room,
+                        existingRepliedCount = existingRepliedCount,
                     )
                     if (hasGiven) {
                         dustRepository.save(record.copy(id = newId, replied = true))
@@ -409,15 +426,21 @@ class PixieDustViewModel(
         viewModelScope.launch { levelRepository.delete(level) }
     }
 
-    /** 上移/下移等级显示顺序：与相邻项交换 sortOrder */
+    /** 上移/下移等级显示顺序：交换相邻项并归一化全量 sortOrder，防删除后索引空洞导致排序冲突 */
     fun onMoveLevel(level: PixieLevel, up: Boolean) {
         viewModelScope.launch {
-            val list = state.value?.levels ?: return@launch
+            val list = state.value?.levels?.toMutableList() ?: return@launch
             val idx = list.indexOfFirst { it.id == level.id }
             val swapWith = if (up) idx - 1 else idx + 1
             if (idx < 0 || swapWith !in list.indices) return@launch
-            levelRepository.save(list[idx].copy(sortOrder = swapWith))
-            levelRepository.save(list[swapWith].copy(sortOrder = idx))
+            val temp = list[idx]
+            list[idx] = list[swapWith]
+            list[swapWith] = temp
+            list.forEachIndexed { index, item ->
+                if (item.sortOrder != index) {
+                    levelRepository.save(item.copy(sortOrder = index))
+                }
+            }
         }
     }
 

@@ -103,17 +103,18 @@ class EventSheetViewModel(
     private val vmScope: CoroutineScope = coroutineScope ?: viewModelScope
 
     private val _state = MutableStateFlow(
-        EventSheetState(
-            // 提前用 editingEventId 占位，让 isEditing 从第一次 composition 起就正确
-            // （标题/字段仍在 init 里异步加载），避免编辑已有事件时先闪一下"添加事件"UI。
-            editingId = editingEventId,
-            date = date,
-            startTime = LocalTime.of(defaultStartMinute / 60, defaultStartMinute % 60),
-            endTime = LocalTime.of(
-                ((defaultStartMinute + 30) / 60).coerceAtMost(23),
-                (defaultStartMinute + 30) % 60,
-            ),
-        ),
+        run {
+            val clampedStart = defaultStartMinute.coerceIn(0, 23 * 60 + 29)
+            val clampedEnd = (clampedStart + 30).coerceAtMost(23 * 60 + 59)
+            EventSheetState(
+                // 提前用 editingEventId 占位，让 isEditing 从第一次 composition 起就正确
+                // （标题/字段仍在 init 里异步加载），避免编辑已有事件时先闪一下"添加事件"UI。
+                editingId = editingEventId,
+                date = date,
+                startTime = LocalTime.of(clampedStart / 60, clampedStart % 60),
+                endTime = LocalTime.of(clampedEnd / 60, clampedEnd % 60),
+            )
+        },
     )
     val state: StateFlow<EventSheetState> = _state.asStateFlow()
 
@@ -203,10 +204,11 @@ class EventSheetViewModel(
         if (editingEventId != 0L) {
             vmScope.launch {
                 eventRepository.getById(editingEventId)?.let { event ->
-                    val endMinutes = event.startTime.hour * 60 + event.startTime.minute +
-                        event.durationMinutes
+                    val endMinutes = (event.startTime.hour * 60 + event.startTime.minute +
+                        event.durationMinutes).coerceAtMost(23 * 60 + 59)
                     val resolvedMeal = resolveMealPeriod(event.title, event.startTime)
                     val catIconKey = categoryRepository.getById(event.categoryId)?.iconKey
+                    val isDecklessNamedVenue = event.deck == null && !event.placeName.isNullOrBlank()
                     _state.update {
                         it.copy(
                             editingId = event.id,
@@ -214,12 +216,12 @@ class EventSheetViewModel(
                             selectedCategoryId = event.categoryId,
                             title = event.title,
                             deck = event.deck,
-                            zone = event.zone ?: ShipZone.MID,
+                            zone = if (isDecklessNamedVenue) event.zone else (event.zone ?: ShipZone.MID),
                             placeName = event.placeName.orEmpty(),
-                            noLocation = event.deck == null && event.zone == null && event.placeName == null,
+                            noLocation = event.deck == null && event.zone == null && event.placeName.isNullOrBlank(),
                             startTime = event.startTime,
                             endTime = LocalTime.of(
-                                (endMinutes / 60).coerceAtMost(23),
+                                endMinutes / 60,
                                 endMinutes % 60,
                             ),
                             isSystemEvent = event.isSystemGenerated,
@@ -304,9 +306,17 @@ class EventSheetViewModel(
         }
         val (newStart, newEnd) = if (defaultStart != null && period != null) {
             // isOpenFor(period) 确保 slot 匹配该餐次；venue 已被保留说明营业。
+            // 24小时全天营业（00:00-23:59）的地点不强行覆盖餐次默认时间（否则切餐次跳去 00:00）。
             val venueSlotStart = entries
                 .firstOrNull { e -> e.deck == it.deck && e.zone == it.zone && e.placeName == it.placeName }
-                ?.let { e -> e.hours?.slots?.firstOrNull { s -> e.isOpenFor(period) && s.meal == period }?.start }
+                ?.let { e ->
+                    e.hours?.slots?.firstOrNull { s ->
+                        val matchesPeriod = if (period == MealPeriod.LATE_NIGHT) s.lateNight else s.meal == period
+                        val isAllDay = s.start == LocalTime.MIDNIGHT &&
+                            (s.end == LocalTime.of(23, 59) || s.end == LocalTime.MIDNIGHT)
+                        e.isOpenFor(period) && matchesPeriod && !isAllDay
+                    }?.start
+                }
             val s = venueSlotStart ?: defaultStart
             s to s.plusMinutes(30)
         } else {
@@ -358,8 +368,8 @@ class EventSheetViewModel(
 
     fun onShowPresetSelect(preset: ShowPreset) = _state.update {
         val start = preset.startTimes.first()
-        val endMinutes = start.hour * 60 + start.minute + preset.durationMinutes
-        val end = LocalTime.of((endMinutes / 60).coerceAtMost(23), endMinutes % 60)
+        val endMinutes = (start.hour * 60 + start.minute + preset.durationMinutes).coerceAtMost(23 * 60 + 59)
+        val end = LocalTime.of(endMinutes / 60, endMinutes % 60)
         it.copy(
             title = preset.title,
             deck = preset.deck,
@@ -392,14 +402,14 @@ class EventSheetViewModel(
      */
     fun onNoLocationToggle(value: Boolean) = _state.update {
         if (it.isSystemEvent) {
-            it.copy(noLocation = true, deck = null, hoursCheckOverride = false)
+            it.copy(noLocation = true, deck = null, zone = null, placeName = "", hoursCheckOverride = false)
         } else if (value) {
-            it.copy(noLocation = true, deck = null, hoursCheckOverride = false)
+            it.copy(noLocation = true, deck = null, zone = null, placeName = "", hoursCheckOverride = false)
         } else {
-            // 重新启用地点：deck 已被清空且没有备份，zone/placeName 一并清掉，
+            // 重新启用地点：deck 已被清空且没有无楼层地点，zone/placeName 一并清掉，
             // 否则保存时 deck=null + zone/placeName 残留会写出"幽灵地点"
             // （卡片不显示地点、再编辑时"不设地点"又被勾上）。
-            if (it.deck == null) {
+            if (it.deck == null && it.placeName.isBlank()) {
                 it.copy(noLocation = false, zone = null, placeName = "", hoursCheckOverride = false)
             } else {
                 it.copy(noLocation = false, hoursCheckOverride = false)

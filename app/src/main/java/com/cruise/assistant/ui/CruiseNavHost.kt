@@ -510,7 +510,9 @@ fun CruiseNavHost(container: AppContainer) {
                     deckRange = pixieState?.deckRange ?: 1..20,
                     levels = pixieState?.levels ?: emptyList(),
                     onRequestReply = { edited ->
-                        editTarget = null    // 先关编辑弹窗
+                        // 先持久化编辑弹窗中已修改的字段（备注/房号/等级），避免取消回礼等级弹窗时丢失改动
+                        vm.saveEdited(edited.copy(replied = target.replied))
+                        editTarget = null
                         vm.onRequestReply(edited)
                     },
                     onSave = {
@@ -677,6 +679,7 @@ fun CruiseNavHost(container: AppContainer) {
                         categoryRepository = container.categoryRepository,
                         eventRepository = container.eventRepository,
                         voyageRepository = container.voyageRepository,
+                        reminderScheduler = container.reminderScheduler,
                     )
                 },
             )

@@ -61,18 +61,19 @@ fun LinkageViewSheet(
         mutableStateOf(emptySet<Int>())
     }
 
-    val totalRooms = state.roomPairs.size
-    val unrepliedRooms = remember(state.roomPairs) {
-        state.roomPairs.count { it.unrepliedReceived.isNotEmpty() }
+    val summaryPairs = state.allRoomPairs.ifEmpty { state.roomPairs }
+    val totalRooms = summaryPairs.size
+    val unrepliedRooms = remember(summaryPairs) {
+        summaryPairs.count { it.unrepliedReceived.isNotEmpty() }
     }
-    val supplementRooms = remember(state.roomPairs) {
-        state.roomPairs.count { it.unrepliedReceived.isEmpty() && it.received.size > it.given.size }
+    val supplementRooms = remember(summaryPairs) {
+        summaryPairs.count { it.unrepliedReceived.isEmpty() && it.received.size > it.given.size }
     }
-    val completedRooms = remember(state.roomPairs) {
-        state.roomPairs.count { it.unrepliedReceived.isEmpty() && it.given.size == it.received.size && it.given.isNotEmpty() }
+    val completedRooms = remember(summaryPairs) {
+        summaryPairs.count { it.unrepliedReceived.isEmpty() && it.given.size == it.received.size && it.given.isNotEmpty() }
     }
-    val givenPendingRooms = remember(state.roomPairs) {
-        state.roomPairs.count { it.unrepliedReceived.isEmpty() && it.given.size > it.received.size }
+    val givenPendingRooms = remember(summaryPairs) {
+        summaryPairs.count { it.unrepliedReceived.isEmpty() && it.given.size > it.received.size }
     }
     val groupedByDeck = remember(state.roomPairs) {
         state.roomPairs.groupBy { it.deck }

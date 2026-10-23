@@ -445,7 +445,10 @@ private fun SvgMapView(
             }
         },
         update = { webView ->
-            webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+            if (webView.tag != htmlContent) {
+                webView.tag = htmlContent
+                webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+            }
         },
         onRelease = { webView ->
             webView.destroy()

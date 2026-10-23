@@ -139,4 +139,12 @@ class PosterManagerTest {
         assertEquals("posters/dining/wayfinder_bar.jpg", PosterManager.getFacilityPosterPath("寻路人酒吧 Wayfinder Bar"))
         assertEquals("posters/dining/garden_bar.jpg", PosterManager.getFacilityPosterPath("花园酒吧 Garden Bar"))
     }
+
+    @Test
+    fun getEventPosterPath_duffyShopAndWorldOfDisneyToo_doNotCollideWithShowOrShortName() {
+        assertEquals("posters/shops/duffy_and_friends_shop.jpg", PosterManager.getEventPosterPath("达菲与朋友商店购物", null))
+        assertEquals("posters/shops/duffy_and_friends_shop.jpg", PosterManager.getEventPosterPath("去达菲商店买玩偶", null))
+        assertEquals("posters/shops/world_of_disney_too.jpg", PosterManager.getEventPosterPath("迪士尼世界二号店购物", null))
+        assertEquals("posters/shops/world_of_disney.jpg", PosterManager.getEventPosterPath("迪士尼世界购物", null))
+    }
 }

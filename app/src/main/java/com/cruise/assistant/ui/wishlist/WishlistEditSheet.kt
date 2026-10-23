@@ -298,16 +298,25 @@ fun WishlistEditSheet(
                 noLocation = noLocation,
                 presetOptions = presetOptions,
                 presetMode = presetMode,
-                onDeckChange = { deck = it },
-                onZoneChange = { zone = it },
-                onPlaceNameChange = { placeName = it },
+                onDeckChange = {
+                    deck = it
+                    noLocation = false
+                },
+                onZoneChange = {
+                    zone = it
+                    noLocation = false
+                },
+                onPlaceNameChange = {
+                    placeName = it
+                    noLocation = false
+                },
                 onNoLocationToggle = {
                     noLocation = it
                     if (it) {
                         deck = null
                         zone = null
                         placeName = ""
-                    } else if (deck == null) {
+                    } else if (deck == null && placeName.isBlank()) {
                         deck = 5
                     }
                 },
@@ -315,6 +324,7 @@ fun WishlistEditSheet(
                     deck = entry.deck
                     zone = entry.zone
                     placeName = entry.placeName
+                    noLocation = false
                     presetMode = true
                     if (title.isBlank() || categories.any { it.name == title }) {
                         title = entry.placeName

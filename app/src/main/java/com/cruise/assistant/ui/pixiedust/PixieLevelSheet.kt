@@ -144,7 +144,7 @@ fun PixieLevelSheet(
                         colorArgb = CATEGORY_PALETTE.first(),
                         iconKey = LEVEL_ICON_KEYS.first(),
                         rank = (levels.maxOfOrNull { it.rank } ?: 0) + 1,
-                        sortOrder = levels.size,
+                        sortOrder = (levels.maxOfOrNull { it.sortOrder } ?: -1) + 1,
                     )
                 }) { Text(stringResource(R.string.pixie_add_level)) }
             }

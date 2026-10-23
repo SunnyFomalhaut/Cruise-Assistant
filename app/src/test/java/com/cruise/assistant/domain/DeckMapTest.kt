@@ -74,5 +74,6 @@ class DeckMapTest {
         assertTrue(html.contains("航海家俱乐部 Navigator\\'s Club Restaurant"))
         assertTrue(html.contains("normalizeText"))
         assertTrue(html.contains("navigator"))
+        assertTrue(html.contains("safeHtmlTarget"))
     }
 }

@@ -114,17 +114,17 @@ class EventRepository(
                     // 若不保留，编辑会静默"复活"被停用的事件（WHOLE_GROUP 时整组已停用成员一起复活）。
                     isActive = target.isActive,
                 )
-                val timingUnchanged = merged.startTime == target.startTime &&
-                    merged.durationMinutes == target.durationMinutes
+                val showIds = showCategoryIds()
+                val oldRange = showEffectiveRange(target, isShow = target.categoryId in showIds)
+                val newRange = showEffectiveRange(merged, isShow = merged.categoryId in showIds)
+                val timingUnchanged = oldRange == newRange
                 val lane = if (timingUnchanged) {
                     target.lane
                 } else {
-                    val showIds = showCategoryIds()
                     val sameDay = eventDao.getByDate(merged.date).map { it.toDomain() }.filter { it.isActive }
-                    val range = showEffectiveRange(merged, isShow = merged.categoryId in showIds)
                     assignLane(
-                        range.first,
-                        range.second,
+                        newRange.first,
+                        newRange.second,
                         sameDay,
                         excludeId = merged.id,
                         rangeOf = showRangeOf(showIds),
@@ -234,13 +234,21 @@ class EventRepository(
                 }
             }
             val presetKeyOrder = DISNEY_ADVENTURE_SHOWS.mapIndexed { idx, s -> s.key to idx }.toMap()
+            val showIds = showCategoryIds()
+            val rangeOf = showRangeOf(showIds)
             for (date in affectedDates) {
                 val dayEvents = eventDao.getByDate(date)
                 val showPresetsOnDay = dayEvents
-                    .filter { it.presetKey != null && it.presetKey in presetKeyOrder }
+                    .filter { it.isActive && it.presetKey != null && it.presetKey in presetKeyOrder }
                     .sortedWith(compareBy({ presetKeyOrder[it.presetKey] ?: Int.MAX_VALUE }, { it.startTime }))
                 if (showPresetsOnDay.isNotEmpty()) {
+                    val showPresetIds = showPresetsOnDay.mapTo(mutableSetOf()) { it.id }
                     val occupied = mutableListOf<Triple<Int, Int, Int>>()
+                    dayEvents.filter { it.isActive && it.id !in showPresetIds }.forEach { other ->
+                        val domain = other.toDomain()
+                        val (s, e) = rangeOf(domain)
+                        occupied += Triple(domain.lane, s, e)
+                    }
                     val updated = showPresetsOnDay.map { entity ->
                         val startMin = entity.startTime.hour * 60 + entity.startTime.minute
                         val waitMins = entity.waitMinutes ?: resolveDefaultWaitMinutes(entity.placeName, entity.deck, entity.title, entity.presetKey)

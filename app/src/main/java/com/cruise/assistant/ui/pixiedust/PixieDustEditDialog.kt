@@ -30,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import com.cruise.assistant.R
 import com.cruise.assistant.domain.PixieDustRecord
 import com.cruise.assistant.domain.PixieLevel
+import com.cruise.assistant.domain.StateroomValidationStatus
 import com.cruise.assistant.domain.isValidRoomInput
+import com.cruise.assistant.domain.validateStateroomInput
 
 /** 编辑一条记录：楼层/房号/等级/备注（+收到的已回礼），底部删除。时间戳不可改。 */
 @Composable
@@ -50,6 +52,13 @@ fun PixieDustEditDialog(
     var replied by remember { mutableStateOf(initial.replied) }
     var note by remember { mutableStateOf(initial.note) }
     var confirmDelete by remember { mutableStateOf(false) }
+
+    val isSameAsInitialRoom = deck == initial.deck && room == initial.room
+    val roomValid = isValidRoomInput(room) && (
+        isSameAsInitialRoom ||
+            validateStateroomInput("$deck${room.padStart(3, '0')}").status == StateroomValidationStatus.VALID
+        )
+    val levelValid = levels.any { it.id == levelId } || levelId == initial.levelId
 
     fun build(): PixieDustRecord = initial.copy(
         deck = deck,
@@ -93,7 +102,7 @@ fun PixieDustEditDialog(
                         Text(stringResource(R.string.pixie_deck_format, deck))
                     }
                     DropdownMenu(expanded = deckExpanded, onDismissRequest = { deckExpanded = false }) {
-                        deckRange.forEach { d ->
+                        deckRange.filter { it != 14 }.forEach { d ->
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.pixie_deck_format, d)) },
                                 onClick = { deck = d; deckExpanded = false },
@@ -109,7 +118,7 @@ fun PixieDustEditDialog(
                     label = { Text(stringResource(R.string.pixie_room_hint)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    isError = !isValidRoomInput(room),
+                    isError = !roomValid,
                 )
                 Spacer(Modifier.height(8.dp))
                 // 等级
@@ -131,7 +140,7 @@ fun PixieDustEditDialog(
                                 if (checked) onRequestReply(build())  // 上报请求，弹窗流程由外层接管
                                 else replied = false
                             },
-                            enabled = isValidRoomInput(room),
+                            enabled = roomValid,
                         )
                         Text(stringResource(R.string.pixie_replied))
                     }
@@ -149,7 +158,7 @@ fun PixieDustEditDialog(
         confirmButton = {
             TextButton(
                 onClick = { onSave(build()) },
-                enabled = isValidRoomInput(room) && levels.any { it.id == levelId },
+                enabled = roomValid && levelValid,
             ) { Text(stringResource(R.string.pixie_level_save)) }
         },
         dismissButton = {

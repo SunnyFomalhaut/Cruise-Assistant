@@ -55,4 +55,11 @@ class LocationFormatterTest {
         // 通知正文/编辑界面等不传 compact → 保持 "Deck N"
         assertEquals("Deck 6 船中 花园舞台", formatLocation(6, ShipZone.MID, "花园舞台"))
     }
+
+    @Test
+    fun decklessNamedVenue_returnsPlaceNameWhenZoneIsNull() {
+        assertEquals("客房送餐 Room Service", formatLocation(null, null, "客房送餐 Room Service"))
+        assertEquals("客房送餐 Room Service", formatLocation(null, null, "  客房送餐 Room Service  ", compact = true))
+        assertNull(formatLocation(null, null, "   "))
+    }
 }

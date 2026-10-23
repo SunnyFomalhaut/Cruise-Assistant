@@ -156,4 +156,15 @@ class PixieDustLinkageTest {
         val list = listOf(received(1, 11, "550", 1, 100))
         assertFalse(hasGivenForRoom(list, 11, "550"))
     }
+
+    @Test
+    fun `has given for room respects existing replied count to prevent 1-to-many auto reply`() {
+        val singleGiven = listOf(given(1, 11, "550", 1, 100))
+        assertTrue(hasGivenForRoom(singleGiven, 11, "550", existingRepliedCount = 0))
+        assertFalse(hasGivenForRoom(singleGiven, 11, "550", existingRepliedCount = 1))
+
+        val twoGiven = listOf(given(1, 11, "550", 1, 100), given(2, 11, "550", 1, 200))
+        assertTrue(hasGivenForRoom(twoGiven, 11, "550", existingRepliedCount = 1))
+        assertFalse(hasGivenForRoom(twoGiven, 11, "550", existingRepliedCount = 2))
+    }
 }

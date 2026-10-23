@@ -959,7 +959,18 @@
         {
           "start": "00:00",
           "end": "23:59",
-          "meal": "snack"
+          "meal": "lunch"
+        },
+        {
+          "start": "00:00",
+          "end": "23:59",
+          "meal": "dinner"
+        },
+        {
+          "start": "00:00",
+          "end": "23:59",
+          "meal": "snack",
+          "lateNight": true
         }
       ]
     },

@@ -3,7 +3,7 @@ package com.cruise.assistant.domain
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import java.util.concurrent.ConcurrentHashMap
+import java.util.Collections
 
 /**
  * 设施与事件海报底图管理器：
@@ -11,7 +11,16 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object PosterManager {
 
-    private val cache = ConcurrentHashMap<String, Bitmap>()
+    private const val MAX_CACHE_ENTRIES = 24
+    private const val MAX_POSTER_DIMENSION = 1080
+
+    private val cache: MutableMap<String, Bitmap> = Collections.synchronizedMap(
+        object : LinkedHashMap<String, Bitmap>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bitmap>?): Boolean {
+                return size > MAX_CACHE_ENTRIES
+            }
+        }
+    )
 
     /**
      * 8 部演出专属海报 asset 路径映射表（presetKey / 标题 / 核心关键词）
@@ -281,6 +290,7 @@ object PosterManager {
         "royal studio" to "posters/shops/disney_royal_studio.jpg",
         "达菲与朋友商店" to "posters/shops/duffy_and_friends_shop.jpg",
         "duffy and friends shop" to "posters/shops/duffy_and_friends_shop.jpg",
+        "达菲商店" to "posters/shops/duffy_and_friends_shop.jpg",
         "漫威造型工作室" to "posters/shops/marvel_style_studio.jpg",
         "marvel style studio" to "posters/shops/marvel_style_studio.jpg",
         "国家地理" to "posters/shops/national_geographic.jpg",
@@ -391,23 +401,25 @@ object PosterManager {
         // 1. PresetKey 精确匹配演出海报
         if (key != null) {
             showPosterRegistry[key]?.let { return it }
+            eventPosterRegistry[key]?.let { return it }
         }
 
-        // 2. 演出关键词/标题匹配
+        // 2. 具体设施/商店/餐厅事件注册表优先于泛化单字演出关键词（避免"达菲与朋友商店"被"达菲"抢先匹配为演出海报），
+        // 按 key 长度降序匹配，保证长词（如"迪士尼世界二号店"）优先于短词（"迪士尼世界"）。
+        eventPosterRegistry[title]?.let { return it }
+        val customEventMatch = eventPosterRegistry.entries
+            .sortedByDescending { it.key.length }
+            .firstOrNull { title.contains(it.key) }
+            ?.value
+        if (customEventMatch != null) {
+            return customEventMatch
+        }
+
+        // 3. 演出关键词/标题匹配
         for ((keywords, path) in showKeywordRegistry) {
             if (keywords.any { kw -> title.contains(kw) || (key != null && key.contains(kw)) }) {
                 return path
             }
-        }
-
-        // 3. 其他非演出事件自定义注册表
-        if (key != null && eventPosterRegistry.containsKey(key)) {
-            return eventPosterRegistry[key]
-        }
-        val customEventMatch = eventPosterRegistry[title]
-            ?: eventPosterRegistry.entries.firstOrNull { title.contains(it.key) }?.value
-        if (customEventMatch != null) {
-            return customEventMatch
         }
 
         return null
@@ -419,7 +431,10 @@ object PosterManager {
     fun getFacilityPosterPath(placeName: String): String? {
         val trimmed = placeName.trim().lowercase()
         return facilityPosterRegistry[trimmed]
-            ?: facilityPosterRegistry.entries.firstOrNull { trimmed.contains(it.key) }?.value
+            ?: facilityPosterRegistry.entries
+                .sortedByDescending { it.key.length }
+                .firstOrNull { trimmed.contains(it.key) }
+                ?.value
     }
 
     /**
@@ -442,8 +457,24 @@ object PosterManager {
         cache[path]?.let { if (!it.isRecycled) return it }
 
         return try {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             context.assets.open(path).use { stream ->
-                BitmapFactory.decodeStream(stream)?.also { bitmap ->
+                BitmapFactory.decodeStream(stream, null, bounds)
+            }
+            var inSampleSize = 1
+            if (bounds.outHeight > MAX_POSTER_DIMENSION || bounds.outWidth > MAX_POSTER_DIMENSION) {
+                val halfHeight = bounds.outHeight / 2
+                val halfWidth = bounds.outWidth / 2
+                while (halfHeight / inSampleSize >= MAX_POSTER_DIMENSION || halfWidth / inSampleSize >= MAX_POSTER_DIMENSION) {
+                    inSampleSize *= 2
+                }
+            }
+            val decodeOptions = BitmapFactory.Options().apply {
+                this.inSampleSize = inSampleSize
+                inJustDecodeBounds = false
+            }
+            context.assets.open(path).use { stream ->
+                BitmapFactory.decodeStream(stream, null, decodeOptions)?.also { bitmap ->
                     cache[path] = bitmap
                 }
             }

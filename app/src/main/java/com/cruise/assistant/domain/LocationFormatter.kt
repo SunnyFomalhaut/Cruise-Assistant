@@ -13,10 +13,11 @@ fun formatLocation(
     placeName: String?,
     compact: Boolean = false,
 ): String? {
-    if (deck == null) return null
+    val cleanPlace = placeName?.trim()?.takeIf { it.isNotEmpty() }
+    if (deck == null) return if (zone == null) cleanPlace else null
     return buildString {
         append(if (compact) "D" else "Deck ").append(deck)
         zone?.let { append(" ").append(it.label) }
-        placeName?.trim()?.takeIf { it.isNotEmpty() }?.let { append(" ").append(it) }
+        cleanPlace?.let { append(" ").append(it) }
     }
 }

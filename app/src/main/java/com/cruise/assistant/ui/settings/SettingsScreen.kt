@@ -635,13 +635,18 @@ fun SettingsScreen(
                     )
                     Spacer(Modifier.height(6.dp))
                     TimeWheel(
-                        value = minuteToTime(state.settings.displayEndMinute),
+                        value = if (state.settings.displayEndMinute >= 1440) {
+                            LocalTime.of(0, 0)
+                        } else {
+                            minuteToTime(state.settings.displayEndMinute)
+                        },
                         onValueChange = {
                             val minutes = it.hour * 60 + it.minute
-                            onRangeChange(
-                                state.settings.displayStartMinute,
-                                if (minutes >= 23 * 60 + 30) 1440 else minutes,
-                            )
+                            onRangeChange(state.settings.displayStartMinute, minutes)
+                        },
+                        isEndOfDay24 = state.settings.displayEndMinute >= 1440,
+                        onEndOfDay24Select = {
+                            onRangeChange(state.settings.displayStartMinute, 1440)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         minuteStep = 30,
