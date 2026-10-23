@@ -21,5 +21,6 @@ __pycache__/
 .swiftpm/
 build_derived/
 build_derived_device/
+tmpver/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
