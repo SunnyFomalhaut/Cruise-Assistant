@@ -15,9 +15,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C924DDAB8F1548F48C55C03D"
+               BlueprintIdentifier = "EE0AEF6EA855404C83282FD6"
                BuildableName = "CruiseAssistant.app"
                BlueprintName = "CruiseAssistant"
+               ReferencedContainer = "container:CruiseAssistant.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "02507119F34A44619107E494"
+               BuildableName = "CruiseAssistantUITests.xctest"
+               BlueprintName = "CruiseAssistantUITests"
                ReferencedContainer = "container:CruiseAssistant.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -29,6 +43,18 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "02507119F34A44619107E494"
+               BuildableName = "CruiseAssistantUITests.xctest"
+               BlueprintName = "CruiseAssistantUITests"
+               ReferencedContainer = "container:CruiseAssistant.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -44,7 +70,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C924DDAB8F1548F48C55C03D"
+            BlueprintIdentifier = "EE0AEF6EA855404C83282FD6"
             BuildableName = "CruiseAssistant.app"
             BlueprintName = "CruiseAssistant"
             ReferencedContainer = "container:CruiseAssistant.xcodeproj">
@@ -61,7 +87,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C924DDAB8F1548F48C55C03D"
+            BlueprintIdentifier = "EE0AEF6EA855404C83282FD6"
             BuildableName = "CruiseAssistant.app"
             BlueprintName = "CruiseAssistant"
             ReferencedContainer = "container:CruiseAssistant.xcodeproj">

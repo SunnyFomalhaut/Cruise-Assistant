@@ -22,7 +22,17 @@ def create_xcodeproj():
                 
     source_files.sort()
     print(f"Found {len(source_files)} source files.")
-    
+
+    # Collect UI test swift files relative to IOS/CruiseAssistantUITests
+    ui_test_files = []
+    ui_test_dir = os.path.join(ios_dir, "CruiseAssistantUITests")
+    for root, dirs, files in os.walk(ui_test_dir):
+        for f in files:
+            if f.endswith(".swift"):
+                ui_test_files.append(os.path.relpath(os.path.join(root, f), ui_test_dir).replace("\\", "/"))
+    ui_test_files.sort()
+    print(f"Found {len(ui_test_files)} UI test files.")
+
     # Project UUIDs
     proj_uuid = generate_uuid()
     target_uuid = generate_uuid()
@@ -39,7 +49,22 @@ def create_xcodeproj():
     resources_phase_uuid = generate_uuid()
     frameworks_phase_uuid = generate_uuid()
     app_product_uuid = generate_uuid()
-    
+
+    # UI test target UUIDs
+    ui_target_uuid = generate_uuid()
+    ui_product_uuid = generate_uuid()
+    ui_group_uuid = generate_uuid()
+    ui_sources_phase_uuid = generate_uuid()
+    ui_frameworks_phase_uuid = generate_uuid()
+    ui_config_list = generate_uuid()
+    ui_debug_config = generate_uuid()
+    ui_release_config = generate_uuid()
+    ui_proxy_uuid = generate_uuid()
+    ui_dependency_uuid = generate_uuid()
+    ui_file_refs = {}
+    for uf in ui_test_files:
+        ui_file_refs[uf] = (generate_uuid(), generate_uuid())
+
     file_refs = {}
     for sf in source_files:
         f_uuid = generate_uuid()
@@ -63,11 +88,27 @@ def create_xcodeproj():
     pbxproj.append("/* Begin PBXBuildFile section */")
     for sf, (f_uuid, b_uuid) in file_refs.items():
         pbxproj.append(f"\t\t{b_uuid} /* {os.path.basename(sf)} in {'Sources' if sf.endswith('.swift') else 'Resources'} */ = {{isa = PBXBuildFile; fileRef = {f_uuid} /* {os.path.basename(sf)} */; }};")
+    for uf, (f_uuid, b_uuid) in ui_file_refs.items():
+        pbxproj.append(f"\t\t{b_uuid} /* {os.path.basename(uf)} in Sources */ = {{isa = PBXBuildFile; fileRef = {f_uuid} /* {os.path.basename(uf)} */; }};")
     pbxproj.append("/* End PBXBuildFile section */")
-    
+
+    # PBXContainerItemProxy
+    pbxproj.append("/* Begin PBXContainerItemProxy section */")
+    pbxproj.append(f"\t\t{ui_proxy_uuid} /* PBXContainerItemProxy */ = {{")
+    pbxproj.append("\t\t\tisa = PBXContainerItemProxy;")
+    pbxproj.append(f"\t\t\tcontainerPortal = {proj_uuid} /* Project object */;")
+    pbxproj.append("\t\t\tproxyType = 1;")
+    pbxproj.append(f"\t\t\tremoteGlobalIDString = {target_uuid};")
+    pbxproj.append("\t\t\tremoteInfo = CruiseAssistant;")
+    pbxproj.append("\t\t};")
+    pbxproj.append("/* End PBXContainerItemProxy section */")
+
     # PBXFileReference
     pbxproj.append("/* Begin PBXFileReference section */")
     pbxproj.append(f"\t\t{app_product_uuid} /* CruiseAssistant.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CruiseAssistant.app; sourceTree = BUILT_PRODUCTS_DIR; }};")
+    pbxproj.append(f"\t\t{ui_product_uuid} /* CruiseAssistantUITests.xctest */ = {{isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CruiseAssistantUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; }};")
+    for uf, (f_uuid, _) in ui_file_refs.items():
+        pbxproj.append(f"\t\t{f_uuid} /* {os.path.basename(uf)} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = \"{uf}\"; sourceTree = \"<group>\"; }};")
     for sf, (f_uuid, b_uuid) in file_refs.items():
         if sf.endswith(".swift"):
             pbxproj.append(f"\t\t{f_uuid} /* {os.path.basename(sf)} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = \"{sf}\"; sourceTree = \"<group>\"; }};")
@@ -86,14 +127,22 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t);")
     pbxproj.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     pbxproj.append("\t\t};")
+    pbxproj.append(f"\t\t{ui_frameworks_phase_uuid} /* Frameworks */ = {{")
+    pbxproj.append("\t\t\tisa = PBXFrameworksBuildPhase;")
+    pbxproj.append("\t\t\tbuildActionMask = 2147483647;")
+    pbxproj.append("\t\t\tfiles = (")
+    pbxproj.append("\t\t\t);")
+    pbxproj.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
+    pbxproj.append("\t\t};")
     pbxproj.append("/* End PBXFrameworksBuildPhase section */")
-    
+
     # PBXGroup
     pbxproj.append("/* Begin PBXGroup section */")
     pbxproj.append(f"\t\t{main_group_uuid} = {{")
     pbxproj.append("\t\t\tisa = PBXGroup;")
     pbxproj.append("\t\t\tchildren = (")
     pbxproj.append(f"\t\t\t\t{sources_group_uuid} /* CruiseAssistant */,")
+    pbxproj.append(f"\t\t\t\t{ui_group_uuid} /* CruiseAssistantUITests */,")
     pbxproj.append(f"\t\t\t\t{products_group_uuid} /* Products */,")
     pbxproj.append("\t\t\t);")
     pbxproj.append("\t\t\tsourceTree = \"<group>\";")
@@ -108,11 +157,22 @@ def create_xcodeproj():
     pbxproj.append("\t\t\tpath = CruiseAssistant;")
     pbxproj.append("\t\t\tsourceTree = \"<group>\";")
     pbxproj.append("\t\t};")
-    
+
+    pbxproj.append(f"\t\t{ui_group_uuid} /* CruiseAssistantUITests */ = {{")
+    pbxproj.append("\t\t\tisa = PBXGroup;")
+    pbxproj.append("\t\t\tchildren = (")
+    for uf, (f_uuid, _) in ui_file_refs.items():
+        pbxproj.append(f"\t\t\t\t{f_uuid} /* {os.path.basename(uf)} */,")
+    pbxproj.append("\t\t\t);")
+    pbxproj.append("\t\t\tpath = CruiseAssistantUITests;")
+    pbxproj.append("\t\t\tsourceTree = \"<group>\";")
+    pbxproj.append("\t\t};")
+
     pbxproj.append(f"\t\t{products_group_uuid} /* Products */ = {{")
     pbxproj.append("\t\t\tisa = PBXGroup;")
     pbxproj.append("\t\t\tchildren = (")
     pbxproj.append(f"\t\t\t\t{app_product_uuid} /* CruiseAssistant.app */,")
+    pbxproj.append(f"\t\t\t\t{ui_product_uuid} /* CruiseAssistantUITests.xctest */,")
     pbxproj.append("\t\t\t);")
     pbxproj.append("\t\t\tname = Products;")
     pbxproj.append("\t\t\tsourceTree = \"<group>\";")
@@ -138,6 +198,23 @@ def create_xcodeproj():
     pbxproj.append(f"\t\t\tproductReference = {app_product_uuid} /* CruiseAssistant.app */;")
     pbxproj.append("\t\t\tproductType = \"com.apple.product-type.application\";")
     pbxproj.append("\t\t};")
+    pbxproj.append(f"\t\t{ui_target_uuid} /* CruiseAssistantUITests */ = {{")
+    pbxproj.append("\t\t\tisa = PBXNativeTarget;")
+    pbxproj.append(f"\t\t\tbuildConfigurationList = {ui_config_list} /* Build configuration list for PBXNativeTarget \"CruiseAssistantUITests\" */;")
+    pbxproj.append("\t\t\tbuildPhases = (")
+    pbxproj.append(f"\t\t\t\t{ui_sources_phase_uuid} /* Sources */,")
+    pbxproj.append(f"\t\t\t\t{ui_frameworks_phase_uuid} /* Frameworks */,")
+    pbxproj.append("\t\t\t);")
+    pbxproj.append("\t\t\tbuildRules = (")
+    pbxproj.append("\t\t\t);")
+    pbxproj.append("\t\t\tdependencies = (")
+    pbxproj.append(f"\t\t\t\t{ui_dependency_uuid} /* PBXTargetDependency */,")
+    pbxproj.append("\t\t\t);")
+    pbxproj.append("\t\t\tname = CruiseAssistantUITests;")
+    pbxproj.append("\t\t\tproductName = CruiseAssistantUITests;")
+    pbxproj.append(f"\t\t\tproductReference = {ui_product_uuid} /* CruiseAssistantUITests.xctest */;")
+    pbxproj.append("\t\t\tproductType = \"com.apple.product-type.bundle.ui-testing\";")
+    pbxproj.append("\t\t};")
     pbxproj.append("/* End PBXNativeTarget section */")
     
     # PBXProject
@@ -153,6 +230,10 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t\t\t\tCreatedOnToolsVersion = 16.0;")
     pbxproj.append("\t\t\t\t\t\tDevelopmentTeam = AMLWQR59H4;")
     pbxproj.append("\t\t\t\t\t\tProvisioningStyle = Automatic;")
+    pbxproj.append("\t\t\t\t\t};")
+    pbxproj.append(f"\t\t\t\t\t{ui_target_uuid} = {{")
+    pbxproj.append("\t\t\t\t\t\tCreatedOnToolsVersion = 16.0;")
+    pbxproj.append(f"\t\t\t\t\t\tTestTargetID = {target_uuid};")
     pbxproj.append("\t\t\t\t\t};")
     pbxproj.append("\t\t\t\t};")
     pbxproj.append("\t\t\t};")
@@ -171,6 +252,7 @@ def create_xcodeproj():
     pbxproj.append("\t\t\tprojectRoot = \"\";")
     pbxproj.append("\t\t\ttargets = (")
     pbxproj.append(f"\t\t\t\t{target_uuid} /* CruiseAssistant */,")
+    pbxproj.append(f"\t\t\t\t{ui_target_uuid} /* CruiseAssistantUITests */,")
     pbxproj.append("\t\t\t);")
     pbxproj.append("\t\t};")
     pbxproj.append("/* End PBXProject section */")
@@ -201,7 +283,26 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t);")
     pbxproj.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     pbxproj.append("\t\t};")
+    pbxproj.append(f"\t\t{ui_sources_phase_uuid} /* Sources */ = {{")
+    pbxproj.append("\t\t\tisa = PBXSourcesBuildPhase;")
+    pbxproj.append("\t\t\tbuildActionMask = 2147483647;")
+    pbxproj.append("\t\t\tfiles = (")
+    for uf in ui_test_files:
+        _, b_uuid = ui_file_refs[uf]
+        pbxproj.append(f"\t\t\t\t{b_uuid} /* {os.path.basename(uf)} in Sources */,")
+    pbxproj.append("\t\t\t);")
+    pbxproj.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
+    pbxproj.append("\t\t};")
     pbxproj.append("/* End PBXSourcesBuildPhase section */")
+
+    # PBXTargetDependency
+    pbxproj.append("/* Begin PBXTargetDependency section */")
+    pbxproj.append(f"\t\t{ui_dependency_uuid} /* PBXTargetDependency */ = {{")
+    pbxproj.append("\t\t\tisa = PBXTargetDependency;")
+    pbxproj.append(f"\t\t\ttarget = {target_uuid} /* CruiseAssistant */;")
+    pbxproj.append(f"\t\t\ttargetProxy = {ui_proxy_uuid} /* PBXContainerItemProxy */;")
+    pbxproj.append("\t\t};")
+    pbxproj.append("/* End PBXTargetDependency section */")
     
     # XCBuildConfiguration
     pbxproj.append("/* Begin XCBuildConfiguration section */")
@@ -315,6 +416,27 @@ def create_xcodeproj():
     pbxproj.append("\t\t\t};")
     pbxproj.append("\t\t\tname = Release;")
     pbxproj.append("\t\t};")
+
+    for ui_config_uuid, ui_config_name in ((ui_debug_config, "Debug"), (ui_release_config, "Release")):
+        pbxproj.append(f"\t\t{ui_config_uuid} /* {ui_config_name} */ = {{")
+        pbxproj.append("\t\t\tisa = XCBuildConfiguration;")
+        pbxproj.append("\t\t\tbuildSettings = {")
+        pbxproj.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+        pbxproj.append("\t\t\t\tCURRENT_PROJECT_VERSION = 53;")
+        pbxproj.append("\t\t\t\tDEVELOPMENT_TEAM = AMLWQR59H4;")
+        pbxproj.append("\t\t\t\tGENERATE_INFOPLIST_FILE = YES;")
+        pbxproj.append("\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;")
+        pbxproj.append("\t\t\t\tMARKETING_VERSION = 1.12.1;")
+        pbxproj.append("\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = com.cruise.assistant.ios.uitests;")
+        pbxproj.append("\t\t\t\tPRODUCT_NAME = \"$(TARGET_NAME)\";")
+        pbxproj.append("\t\t\t\tSDKROOT = iphoneos;")
+        pbxproj.append("\t\t\t\tSWIFT_EMIT_LOC_STRINGS = NO;")
+        pbxproj.append("\t\t\t\tSWIFT_VERSION = 6.0;")
+        pbxproj.append("\t\t\t\tTARGETED_DEVICE_FAMILY = \"1,2\";")
+        pbxproj.append("\t\t\t\tTEST_TARGET_NAME = CruiseAssistant;")
+        pbxproj.append("\t\t\t};")
+        pbxproj.append(f"\t\t\tname = {ui_config_name};")
+        pbxproj.append("\t\t};")
     pbxproj.append("/* End XCBuildConfiguration section */")
     
     # XCConfigurationList
@@ -334,6 +456,16 @@ def create_xcodeproj():
     pbxproj.append("\t\t\tbuildConfigurations = (")
     pbxproj.append(f"\t\t\t\t{debug_config_target} /* Debug */,")
     pbxproj.append(f"\t\t\t\t{release_config_target} /* Release */,")
+    pbxproj.append("\t\t\t);")
+    pbxproj.append("\t\t\tdefaultConfigurationIsVisible = 0;")
+    pbxproj.append("\t\t\tdefaultConfigurationName = Release;")
+    pbxproj.append("\t\t};")
+
+    pbxproj.append(f"\t\t{ui_config_list} /* Build configuration list for PBXNativeTarget \"CruiseAssistantUITests\" */ = {{")
+    pbxproj.append("\t\t\tisa = XCConfigurationList;")
+    pbxproj.append("\t\t\tbuildConfigurations = (")
+    pbxproj.append(f"\t\t\t\t{ui_debug_config} /* Debug */,")
+    pbxproj.append(f"\t\t\t\t{ui_release_config} /* Release */,")
     pbxproj.append("\t\t\t);")
     pbxproj.append("\t\t\tdefaultConfigurationIsVisible = 0;")
     pbxproj.append("\t\t\tdefaultConfigurationName = Release;")
@@ -371,6 +503,20 @@ def create_xcodeproj():
                ReferencedContainer = "container:CruiseAssistant.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "{ui_target_uuid}"
+               BuildableName = "CruiseAssistantUITests.xctest"
+               BlueprintName = "CruiseAssistantUITests"
+               ReferencedContainer = "container:CruiseAssistant.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -379,6 +525,18 @@ def create_xcodeproj():
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "{ui_target_uuid}"
+               BuildableName = "CruiseAssistantUITests.xctest"
+               BlueprintName = "CruiseAssistantUITests"
+               ReferencedContainer = "container:CruiseAssistant.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

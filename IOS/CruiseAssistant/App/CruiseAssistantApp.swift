@@ -44,9 +44,16 @@ public struct CruiseAssistantApp: App {
     @StateObject private var coordinator: NavigationCoordinator
     public let container: AppContainer
 
+    /// Launch argument used by the UI tests to start from a clean, in-memory store (Debug builds only).
+    public static let uiTestingInMemoryArgument = "-UITestingInMemoryStore"
+
     public init() {
-        let stdContainer = AppContainer.standard()
-        self.container = stdContainer
+        #if DEBUG
+        let useInMemoryStore = ProcessInfo.processInfo.arguments.contains(Self.uiTestingInMemoryArgument)
+        #else
+        let useInMemoryStore = false
+        #endif
+        self.container = useInMemoryStore ? AppContainer.inMemory() : AppContainer.standard()
         _coordinator = StateObject(wrappedValue: NavigationCoordinator())
     }
 
