@@ -262,6 +262,64 @@ final class RepositoryTests: XCTestCase {
         XCTAssertNil(unfinalized!.finalizedAt)
     }
 
+    // MARK: - Voyage Archive Tests
+
+    private func createArchiveTestVoyage() {
+        _ = voyageRepo.createVoyage(
+            shipName: "Disney Adventure",
+            boardDate: SimpleDate(year: 2026, month: 8, day: 23),
+            boardTime: SimpleTime(hour: 13, minute: 0),
+            disembarkDate: SimpleDate(year: 2026, month: 8, day: 26)
+        )
+    }
+
+    func testArchiveCurrentVoyage_storesCustomName_andRestoresById() {
+        createArchiveTestVoyage()
+        _ = pixieDustRepo.addRecord(direction: .given, deck: 10, room: "001", levelId: 1, levelNameSnapshot: "普通", note: "Gift")
+        let eventCount = eventRepo.getAllEvents().count
+
+        let named = voyageRepo.archiveCurrentVoyage(customName: "八月首航")
+        XCTAssertEqual(named?.customName, "八月首航")
+        XCTAssertEqual(named?.name, "八月首航")
+        XCTAssertEqual(named?.pixieCount, 1)
+
+        let unnamed = voyageRepo.archiveCurrentVoyage(customName: nil)
+        XCTAssertEqual(unnamed?.name, "Disney Adventure", "Unnamed archives fall back to the ship name")
+
+        voyageRepo.resetVoyage()
+        XCTAssertNil(voyageRepo.getVoyage())
+
+        XCTAssertTrue(voyageRepo.restoreArchive(id: named!.id))
+        XCTAssertEqual(voyageRepo.getVoyage()?.shipName, "Disney Adventure")
+        XCTAssertEqual(eventRepo.getAllEvents().count, eventCount)
+        XCTAssertFalse(voyageRepo.restoreArchive(id: 9999), "Unknown archive id should report failure")
+    }
+
+    func testImportArchive_appliesCustomName() {
+        createArchiveTestVoyage()
+        let source = voyageRepo.archiveCurrentVoyage(customName: nil)!
+        let json = serializeArchiveSnapshot(source.snapshot)
+
+        let imported = voyageRepo.importArchive(jsonString: json, customName: "导入的存档")
+        XCTAssertEqual(imported?.name, "导入的存档")
+        XCTAssertEqual(imported?.eventCount, source.eventCount)
+        XCTAssertNil(voyageRepo.importArchive(jsonString: "not json", customName: nil))
+    }
+
+    func testArchiveEntry_decodesLegacyJSONWithoutCustomName() throws {
+        createArchiveTestVoyage()
+        let entry = voyageRepo.archiveCurrentVoyage(customName: "临时")!
+
+        // Simulate an archive persisted before `customName` existed.
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(entry)) as? [String: Any])
+        object.removeValue(forKey: "customName")
+        let legacyData = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(VoyageArchiveEntry.self, from: legacyData)
+        XCTAssertNil(decoded.customName)
+        XCTAssertEqual(decoded.name, decoded.shipName)
+    }
+
     // MARK: - Category Repository Tests
 
     func testCategoryRepository() {

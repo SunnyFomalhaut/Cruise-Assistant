@@ -6,10 +6,9 @@ public struct SettingsView: View {
 
     @State private var showingEditVoyageSheet: Bool = false
     @State private var showingResetAlert: Bool = false
-    @State private var showingBackupSheet: Bool = false
     @State private var showingImportArchiveSheet: Bool = false
     @State private var selectedArchiveEntry: VoyageArchiveEntry? = nil
-    @State private var exportedJSONText: String = ""
+    @State private var exportedJSON: ExportedJSON? = nil
 
     public init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
@@ -69,11 +68,11 @@ public struct SettingsView: View {
                 )
             }
         }
-        .sheet(isPresented: $showingBackupSheet) {
+        .sheet(item: $exportedJSON) { export in
             BackupExportSheet(
-                jsonText: exportedJSONText,
+                jsonText: export.text,
                 onDismiss: {
-                    showingBackupSheet = false
+                    exportedJSON = nil
                 }
             )
         }
@@ -96,10 +95,10 @@ public struct SettingsView: View {
                     selectedArchiveEntry = nil
                 },
                 onExportJSON: {
-                    exportedJSONText = entry.payloadJson
+                    let json = serializeArchiveSnapshot(entry.snapshot)
                     selectedArchiveEntry = nil
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showingBackupSheet = true
+                        exportedJSON = ExportedJSON(text: json)
                     }
                 },
                 onDelete: {
@@ -492,8 +491,7 @@ public struct SettingsView: View {
         Section(header: Label("数据与备份", systemImage: "externaldrive.fill")) {
             Button {
                 if let json = viewModel.exportBackupJSON() {
-                    exportedJSONText = json
-                    showingBackupSheet = true
+                    exportedJSON = ExportedJSON(text: json)
                 }
             } label: {
                 HStack {
@@ -604,7 +602,7 @@ private struct EditVoyageSheet: View {
         if !legs.isEmpty {
             return legs
         }
-        let nights = boardDate.daysUntil(disembarkDate)
+        let nights = boardDate.daysBetween(disembarkDate)
         if nights == 3 || nights == 4 {
             return [nights]
         }
@@ -709,7 +707,7 @@ private struct EditVoyageSheet: View {
                         if let nextNights = nextLegToAppend {
                             Button {
                                 if legs.isEmpty {
-                                    let first = boardDate.daysUntil(disembarkDate)
+                                    let first = boardDate.daysBetween(disembarkDate)
                                     legs = [first, nextNights]
                                 } else {
                                     legs.append(nextNights)
@@ -806,8 +804,8 @@ private struct ArchiveDetailSheet: View {
     @State private var showingRestoreConfirm: Bool = false
     @State private var showingDeleteConfirm: Bool = false
 
-    private var snapshot: ArchiveSnapshot? {
-        parseArchiveSnapshot(entry.payloadJson)
+    private func previewTimeLabel(_ ev: CruiseEvent) -> String {
+        "\(ev.date.monthDayFormatted) \(ev.startTime.description)"
     }
 
     var body: some View {
@@ -837,23 +835,21 @@ private struct ArchiveDetailSheet: View {
                     }
                 }
 
-                if let snap = snapshot {
-                    Section(header: Text("日程预览 (\(snap.events.count))")) {
-                        ForEach(snap.events.prefix(15)) { ev in
-                            HStack {
-                                Text("\(ev.date.monthDayFormatted) \(ev.startTime.description)")
-                                    .font(.system(size: 12, design: .monospaced))
-                                    .foregroundColor(Slate500)
-                                Text(ev.title)
-                                    .font(.system(size: 14, weight: .medium))
-                                Spacer()
-                            }
+                Section(header: Text("日程预览 (\(entry.snapshot.events.count))")) {
+                    ForEach(entry.snapshot.events.prefix(15)) { ev in
+                        HStack {
+                            Text(previewTimeLabel(ev))
+                                .font(.system(size: 12, design: .monospaced))
+                                .foregroundColor(Slate500)
+                            Text(ev.title)
+                                .font(.system(size: 14, weight: .medium))
+                            Spacer()
                         }
-                        if snap.events.count > 15 {
-                            Text("... 共 \(snap.events.count) 项日程")
-                                .font(.caption)
-                                .foregroundColor(Slate400)
-                        }
+                    }
+                    if entry.snapshot.events.count > 15 {
+                        Text("... 共 \(entry.snapshot.events.count) 项日程")
+                            .font(.caption)
+                            .foregroundColor(Slate400)
                     }
                 }
 
@@ -966,6 +962,13 @@ private struct ArchiveImportSheet: View {
 }
 
 // MARK: - Backup Export Sheet
+
+/// Presentation payload for `BackupExportSheet`. Using `.sheet(item:)` guarantees the sheet renders the
+/// text it was opened with; `.sheet(isPresented:)` captured a stale (empty) string on first presentation.
+private struct ExportedJSON: Identifiable {
+    let id = UUID()
+    let text: String
+}
 
 private struct BackupExportSheet: View {
     let jsonText: String

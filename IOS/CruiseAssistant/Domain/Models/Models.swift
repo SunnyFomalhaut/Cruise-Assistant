@@ -608,6 +608,16 @@ public struct VoyageArchiveEntry: Identifiable, Codable, Hashable, Sendable {
     public var pixieGivenCount: Int
     public var pixieReceivedCount: Int
     public var snapshot: ArchiveSnapshot
+    /// User-supplied archive name; optional so archives saved before this field existed still decode.
+    public var customName: String?
+
+    /// Display name: the custom name when set, otherwise the ship name.
+    public var name: String {
+        if let customName, !customName.isEmpty { return customName }
+        return shipName
+    }
+
+    public var pixieCount: Int { pixieGivenCount + pixieReceivedCount }
 
     public init(
         id: Int64 = 0,
@@ -618,7 +628,8 @@ public struct VoyageArchiveEntry: Identifiable, Codable, Hashable, Sendable {
         eventCount: Int,
         pixieGivenCount: Int,
         pixieReceivedCount: Int,
-        snapshot: ArchiveSnapshot
+        snapshot: ArchiveSnapshot,
+        customName: String? = nil
     ) {
         self.id = id
         self.shipName = shipName
@@ -629,6 +640,7 @@ public struct VoyageArchiveEntry: Identifiable, Codable, Hashable, Sendable {
         self.pixieGivenCount = pixieGivenCount
         self.pixieReceivedCount = pixieReceivedCount
         self.snapshot = snapshot
+        self.customName = customName
     }
 }
 
@@ -659,12 +671,17 @@ public struct LevelCount: Hashable, Codable, Sendable {
     }
 }
 
-public struct RoomGroup: Hashable, Codable, Sendable {
+public struct RoomGroup: Identifiable, Hashable, Codable, Sendable {
     public let deck: Int
     public let room: String
     public let lastTimestamp: Int64
     public let total: Int
     public let levelCounts: [LevelCount]
+
+    public var id: String { "\(deck)-\(room)" }
+    public var fullRoom: String {
+        room.hasPrefix("\(deck)") && room.count >= 4 ? room : "\(deck)\(room)"
+    }
 
     public init(deck: Int, room: String, lastTimestamp: Int64, total: Int, levelCounts: [LevelCount]) {
         self.deck = deck

@@ -24,11 +24,13 @@ public protocol VoyageRepositoryProtocol: Sendable {
     func addPresetShows(dinnerTime: SimpleTime?)
     func getArchives() -> [VoyageArchiveEntry]
     @discardableResult
-    func archiveCurrentVoyage() -> VoyageArchiveEntry?
+    func archiveCurrentVoyage(customName: String?) -> VoyageArchiveEntry?
     func deleteArchive(id: Int64)
-    func restoreArchive(_ entry: VoyageArchiveEntry)
+    /// Returns `false` when no archive with `id` exists.
     @discardableResult
-    func importArchive(json: String) -> VoyageArchiveEntry?
+    func restoreArchive(id: Int64) -> Bool
+    @discardableResult
+    func importArchive(jsonString: String, customName: String?) -> VoyageArchiveEntry?
 }
 
 public extension VoyageRepositoryProtocol {
@@ -491,21 +493,24 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
     }
 
     @discardableResult
-    public func archiveCurrentVoyage() -> VoyageArchiveEntry? {
-        database.createArchiveFromCurrentState()
+    public func archiveCurrentVoyage(customName: String?) -> VoyageArchiveEntry? {
+        database.createArchiveFromCurrentState(customName: customName)
     }
 
     public func deleteArchive(id: Int64) {
         database.deleteVoyageArchive(id: id)
     }
 
-    public func restoreArchive(_ entry: VoyageArchiveEntry) {
+    @discardableResult
+    public func restoreArchive(id: Int64) -> Bool {
+        guard let entry = database.getVoyageArchive(byId: id) else { return false }
         database.restoreArchive(entry.snapshot)
+        return true
     }
 
     @discardableResult
-    public func importArchive(json: String) -> VoyageArchiveEntry? {
-        guard let snapshot = parseArchiveSnapshot(json) else { return nil }
+    public func importArchive(jsonString: String, customName: String?) -> VoyageArchiveEntry? {
+        guard let snapshot = parseArchiveSnapshot(jsonString) else { return nil }
         let givenCount = snapshot.pixieDust.filter { $0.direction == .given }.count
         let receivedCount = snapshot.pixieDust.filter { $0.direction == .received }.count
         let entry = VoyageArchiveEntry(
@@ -517,7 +522,8 @@ public final class VoyageRepository: VoyageRepositoryProtocol, @unchecked Sendab
             eventCount: snapshot.events.count,
             pixieGivenCount: givenCount,
             pixieReceivedCount: receivedCount,
-            snapshot: snapshot
+            snapshot: snapshot,
+            customName: customName
         )
         return database.saveVoyageArchive(entry)
     }

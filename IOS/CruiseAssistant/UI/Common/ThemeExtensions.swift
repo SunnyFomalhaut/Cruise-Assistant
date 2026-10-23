@@ -302,6 +302,11 @@ extension SimpleDate {
         "\(year)年\(month)月\(day)日"
     }
 
+    /// Formats as "MM-dd" (fixed width, for monospaced lists).
+    public var monthDayFormatted: String {
+        String(format: "%02d-%02d", month, day)
+    }
+
     /// Creates today's date in local calendar.
     public static func today() -> SimpleDate {
         SimpleDate(date: Date())

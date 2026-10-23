@@ -58,8 +58,11 @@ public struct WallpaperPickerView: View {
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(WallpaperPreset.allCases) { preset in
                     if preset == .custom {
+                        // Built outside the label closure: PhotosPicker's label is nonisolated,
+                        // so calling this main-actor method inside it fails Swift 6 isolation checks.
+                        let card = wallpaperCardContent(preset: preset)
                         PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                            wallpaperCardContent(preset: preset)
+                            card
                         }
                         .buttonStyle(.plain)
                     } else {

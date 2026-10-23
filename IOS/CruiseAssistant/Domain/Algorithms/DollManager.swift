@@ -42,7 +42,8 @@ public struct DollAsset: Equatable, Sendable {
 /// Event card doll watermark manager: selects character and pose deterministically by eventId and card dimensions.
 public enum DollManager {
     private static let cacheLock = NSLock()
-    private static var imageCache: [String: PlatformDollImage] = [:]
+    /// Guarded by `cacheLock`.
+    nonisolated(unsafe) private static var imageCache: [String: PlatformDollImage] = [:]
 
     /// Duo / group horizontal assets for single-lane long events (>= 60 min).
     public static let duoAssets: [String] = [

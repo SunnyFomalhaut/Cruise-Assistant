@@ -163,7 +163,8 @@ public struct RoomPair: Identifiable, Equatable, Hashable, Sendable {
 
     public var totalGivenCount: Int { given.count }
     public var totalReceivedCount: Int { received.count }
-    public var unrepliedCount: Int { received.filter { !$0.replied }.count }
+    public var unrepliedReceived: [PixieDustRecord] { received.filter { !$0.replied } }
+    public var unrepliedCount: Int { unrepliedReceived.count }
     public var hasUnreplied: Bool { unrepliedCount > 0 }
     public var isBalanced: Bool { given.count == received.count && !hasUnreplied }
 

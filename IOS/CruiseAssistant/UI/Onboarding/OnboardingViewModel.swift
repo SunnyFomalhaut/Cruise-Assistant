@@ -106,13 +106,13 @@ public final class OnboardingViewModel: ObservableObject, @unchecked Sendable {
         guard !legList.isEmpty else { return nil }
         let total = legList.reduce(0, +)
         let disembark = boardDate.plusDays(total)
-        let weeks = max(0, boardDate.daysUntil(disembark) / 7)
+        let weeks = max(0, boardDate.daysBetween(disembark) / 7)
         let prefix = weeks > 0 ? String(repeating: "下", count: weeks) : ""
         return MultiLegSummary(
             legsLabel: legList.map(String.init).joined(separator: "+"),
             totalNights: total,
-            boardDow: boardDate.chineseWeekdayShort,
-            disembarkDow: prefix + disembark.chineseWeekdayShort
+            boardDow: boardDate.dayOfWeekShort,
+            disembarkDow: prefix + disembark.dayOfWeekShort
         )
     }
 

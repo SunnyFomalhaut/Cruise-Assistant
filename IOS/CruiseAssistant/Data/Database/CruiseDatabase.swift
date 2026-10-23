@@ -648,7 +648,7 @@ public final class CruiseDatabase: @unchecked Sendable {
     }
 
     @discardableResult
-    public func createArchiveFromCurrentState() -> VoyageArchiveEntry? {
+    public func createArchiveFromCurrentState(customName: String? = nil) -> VoyageArchiveEntry? {
         lock.lock()
         defer { lock.unlock() }
         guard let voyage = state.voyage else { return nil }
@@ -672,7 +672,8 @@ public final class CruiseDatabase: @unchecked Sendable {
             eventCount: state.events.count,
             pixieGivenCount: givenCount,
             pixieReceivedCount: receivedCount,
-            snapshot: snapshot
+            snapshot: snapshot,
+            customName: customName
         )
         return saveVoyageArchive(entry)
     }

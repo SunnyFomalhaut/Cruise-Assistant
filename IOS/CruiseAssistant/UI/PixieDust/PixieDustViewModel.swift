@@ -386,7 +386,7 @@ public final class PixieDustViewModel: ObservableObject {
         self.allReceivedRecords = sortForSweepDelivery(records: received, levels: levels)
 
         self.groupedGiven = groupGivenByRoom(records: given, levels: levels)
-        self.allRoomPairs = pairByRoomForSweep(given: given, received: received, levels: levels)
+        self.allRoomPairs = pairByRoomForSweep(given: given, received: received)
         applyFilters()
     }
 
